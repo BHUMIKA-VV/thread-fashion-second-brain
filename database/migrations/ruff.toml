@@ -1,0 +1,5 @@
+extend = "../../backend/pyproject.toml"
+
+[lint]
+# Generated migrations contain long SQL literals; keep them verbatim.
+extend-ignore = ["E501"]

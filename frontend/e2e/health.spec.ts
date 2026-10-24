@@ -15,11 +15,15 @@ test("system page shows the live API and database through the proxy", async ({ p
   await expect(status.getByText("Online")).toBeVisible();
   await expect(status.getByText("Connected")).toBeVisible();
   await expect(status.getByText("Available")).toBeVisible();
+  await expect(status.getByText("Up to date")).toBeVisible();
 });
 
 test("the /api proxy reaches FastAPI", async ({ request }) => {
   const response = await request.get("/api/health");
 
   expect(response.status()).toBe(200);
-  expect(await response.json()).toMatchObject({ status: "ok", database: { status: "ok" } });
+  expect(await response.json()).toMatchObject({
+    status: "ok",
+    database: { status: "ok", schema_up_to_date: true },
+  });
 });

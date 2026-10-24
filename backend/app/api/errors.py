@@ -7,6 +7,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.repositories.errors import ConflictError, NotFoundError
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,6 +34,18 @@ def register_error_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=error_body("validation_error", "Request validation failed", details),
+        )
+
+    @app.exception_handler(NotFoundError)
+    async def not_found(_: Request, exc: NotFoundError) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND, content=error_body("not_found", str(exc))
+        )
+
+    @app.exception_handler(ConflictError)
+    async def conflict(_: Request, exc: ConflictError) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT, content=error_body("conflict", str(exc))
         )
 
     @app.exception_handler(Exception)

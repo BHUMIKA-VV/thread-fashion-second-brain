@@ -19,7 +19,25 @@ const healthy: HealthResponse = {
   app: "Thread API",
   version: "0.1.0",
   environment: "development",
-  database: { status: "ok", server_version: "16.9", pgvector_available: true, latency_ms: 2.1 },
+  database: {
+    status: "ok",
+    server_version: "16.9",
+    pgvector_available: true,
+    latency_ms: 2.1,
+    schema_revision: "abc123",
+    schema_head: "abc123",
+    schema_up_to_date: true,
+  },
+};
+
+const unavailableDb: HealthResponse["database"] = {
+  status: "unavailable",
+  server_version: null,
+  pgvector_available: null,
+  latency_ms: null,
+  schema_revision: null,
+  schema_head: null,
+  schema_up_to_date: null,
 };
 
 describe("SystemStatus", () => {
@@ -30,14 +48,24 @@ describe("SystemStatus", () => {
     expect(await screen.findByText("Online")).toBeInTheDocument();
     expect(screen.getByText("Connected")).toBeInTheDocument();
     expect(screen.getByText("Available")).toBeInTheDocument();
+    expect(screen.getByText("Up to date")).toBeInTheDocument();
+  });
+
+  it("flags pending migrations with the command to run", async () => {
+    const behind: HealthResponse = {
+      ...healthy,
+      status: "degraded",
+      database: { ...healthy.database, schema_revision: null, schema_up_to_date: false },
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(behind, { status: 503 }));
+    renderWithQuery();
+
+    expect(await screen.findByText("Pending")).toBeInTheDocument();
+    expect(screen.getByText("alembic upgrade head")).toBeInTheDocument();
   });
 
   it("shows a degraded API when the database is down (503 with body)", async () => {
-    const degraded: HealthResponse = {
-      ...healthy,
-      status: "degraded",
-      database: { status: "unavailable", server_version: null, pgvector_available: null, latency_ms: null },
-    };
+    const degraded: HealthResponse = { ...healthy, status: "degraded", database: unavailableDb };
     vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(degraded, { status: 503 }));
     renderWithQuery();
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Database, RefreshCw, Server } from "lucide-react";
+import { Database, Layers, RefreshCw, Server } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -88,7 +88,30 @@ export function SystemStatus() {
             />
           )}
         </Row>
+        <Row icon={<Layers className="size-4" aria-hidden />} label="Database migrations">
+          {db?.schema_up_to_date == null ? (
+            <StatusBadge tone="neutral" label={error ? "Unknown" : "Checking…"} />
+          ) : (
+            <>
+              <StatusBadge
+                tone={db.schema_up_to_date ? "success" : "warning"}
+                label={db.schema_up_to_date ? "Up to date" : "Pending"}
+              />
+              <span className="font-mono text-xs text-ink-muted">
+                {db.schema_revision ?? "none"}
+                {!db.schema_up_to_date && db.schema_head ? ` → ${db.schema_head}` : ""}
+              </span>
+            </>
+          )}
+        </Row>
       </div>
+
+      {db?.schema_up_to_date === false && (
+        <p className="mt-4 rounded-xl bg-warning/5 px-4 py-3 text-sm text-warning">
+          The database schema is behind the code. Run{" "}
+          <code className="font-mono">alembic upgrade head</code> in the backend folder.
+        </p>
+      )}
 
       {error && (
         <p role="alert" className="mt-4 rounded-xl bg-danger/5 px-4 py-3 text-sm text-danger">

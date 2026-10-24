@@ -2,8 +2,11 @@ from collections.abc import Iterator
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import Session
 
+from app.db import migrations
 from app.db.session import get_db
 from app.main import app
 
@@ -28,12 +31,9 @@ def test_health_reports_degraded_when_database_is_down(client: TestClient) -> No
     assert response.status_code == 503
     body = response.json()
     assert body["status"] == "degraded"
-    assert body["database"] == {
-        "status": "unavailable",
-        "server_version": None,
-        "pgvector_available": None,
-        "latency_ms": None,
-    }
+    assert body["database"]["status"] == "unavailable"
+    assert body["database"]["server_version"] is None
+    assert body["database"]["schema_up_to_date"] is None
     # Driver error text must not leak to clients.
     assert "connection refused" not in response.text
 
@@ -47,6 +47,29 @@ def test_health_ok_against_real_database(db_client: TestClient) -> None:
     assert body["status"] == "ok"
     assert body["database"]["status"] == "ok"
     assert body["database"]["server_version"].startswith("16")
+    assert body["database"]["schema_revision"] == migrations.head_revision()
+    assert body["database"]["schema_up_to_date"] is True
+
+
+@pytest.mark.db
+def test_health_is_degraded_when_migrations_have_not_run(
+    client: TestClient, empty_db_url: str
+) -> None:
+    engine = create_engine(empty_db_url)
+
+    def override() -> Iterator[Session]:
+        with Session(engine) as session:
+            yield session
+
+    app.dependency_overrides[get_db] = override
+    response = client.get("/health")
+    engine.dispose()
+
+    assert response.status_code == 503
+    body = response.json()
+    assert body["database"]["status"] == "ok"
+    assert body["database"]["schema_revision"] is None
+    assert body["database"]["schema_up_to_date"] is False
     assert body["database"]["pgvector_available"] is True
 
 

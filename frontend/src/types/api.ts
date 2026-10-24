@@ -9,6 +9,9 @@ export type DatabaseHealth = {
   server_version: string | null;
   pgvector_available: boolean | null;
   latency_ms: number | null;
+  schema_revision: string | null;
+  schema_head: string | null;
+  schema_up_to_date: boolean | null;
 };
 
 export type HealthResponse = {
