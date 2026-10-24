@@ -36,8 +36,24 @@ class Settings(BaseSettings):
     dev_user_id: UUID = UUID("00000000-0000-4000-8000-000000000001")
     dev_user_name: str = "Local developer"
 
+    # Uploaded files. Kept outside the frontend's public/ folder and served only through the
+    # API, which checks ownership. Relative paths resolve against the repo root.
+    storage_dir: Path = Path("storage")
+
+    # Upload limits.
+    max_upload_bytes: int = Field(default=15 * 1024 * 1024, gt=0)
+    max_image_side: int = Field(default=8000, gt=0)
+    min_image_side: int = Field(default=64, gt=0)
+    # Decompression-bomb guard: total pixels Pillow may decode.
+    max_image_pixels: int = Field(default=40_000_000, gt=0)
+    thumbnail_side: int = Field(default=640, gt=0)
+
     # Read by the Next.js proxy; declared here so the shared .env is self-documenting.
     api_url: str = "http://127.0.0.1:8010"
+
+    @property
+    def storage_root(self) -> Path:
+        return self.storage_dir if self.storage_dir.is_absolute() else REPO_ROOT / self.storage_dir
 
 
 @lru_cache

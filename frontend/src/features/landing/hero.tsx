@@ -42,8 +42,11 @@ export function Hero() {
         from ikat to houndstooth — and finds kindred pieces in your own library.
       </motion.p>
       <motion.div {...rise(0.24)} className="mt-10 flex flex-wrap gap-3">
-        <ButtonLink href="/settings">
-          Check system status <ArrowRight aria-hidden className="size-4" />
+        <ButtonLink href="/upload">
+          Start uploading <ArrowRight aria-hidden className="size-4" />
+        </ButtonLink>
+        <ButtonLink href="/gallery" variant="secondary">
+          Browse your gallery
         </ButtonLink>
       </motion.div>
 

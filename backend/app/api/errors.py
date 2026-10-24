@@ -8,6 +8,14 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.repositories.errors import ConflictError, NotFoundError
+from app.services.images import ImageValidationError
+
+IMAGE_ERROR_STATUS = {
+    "too_large": status.HTTP_413_CONTENT_TOO_LARGE,
+    "unsupported_format": status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+    "invalid_image": status.HTTP_422_UNPROCESSABLE_CONTENT,
+    "bad_dimensions": status.HTTP_422_UNPROCESSABLE_CONTENT,
+}
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +53,15 @@ def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(ConflictError)
     async def conflict(_: Request, exc: ConflictError) -> JSONResponse:
         return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT, content=error_body("conflict", str(exc))
+            status_code=status.HTTP_409_CONFLICT,
+            content=error_body("conflict", str(exc), exc.details),
+        )
+
+    @app.exception_handler(ImageValidationError)
+    async def invalid_image(_: Request, exc: ImageValidationError) -> JSONResponse:
+        return JSONResponse(
+            status_code=IMAGE_ERROR_STATUS.get(exc.code, 422),
+            content=error_body(exc.code, str(exc)),
         )
 
     @app.exception_handler(Exception)

@@ -6,8 +6,15 @@ import type { NextConfig } from "next";
 loadEnvConfig(path.resolve(process.cwd(), ".."));
 
 const apiUrl = process.env.THREAD_API_URL ?? "http://127.0.0.1:8010";
+const maxUploadBytes = Number(process.env.THREAD_MAX_UPLOAD_BYTES ?? 15 * 1024 * 1024);
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Next buffers proxied request bodies and, by default, truncates them at 10 MB, which
+    // broke uploads between 10 and 15 MB. Allow 2x the API limit so slightly-too-large files
+    // still reach FastAPI whole and get its proper 413 instead of a dropped connection.
+    proxyClientMaxBodySize: maxUploadBytes * 2,
+  },
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

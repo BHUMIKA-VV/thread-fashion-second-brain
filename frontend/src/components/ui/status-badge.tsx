@@ -1,12 +1,14 @@
 import { cn } from "@/lib/cn";
 
-export type StatusTone = "success" | "warning" | "danger" | "neutral";
+/** "neutral" pulses (work in progress); "idle" is static (waiting, nothing running). */
+export type StatusTone = "success" | "warning" | "danger" | "neutral" | "idle";
 
 const tones: Record<StatusTone, string> = {
   success: "bg-success/10 text-success",
   warning: "bg-warning/10 text-warning",
   danger: "bg-danger/10 text-danger",
   neutral: "bg-ink/5 text-ink-muted",
+  idle: "bg-ink/5 text-ink-muted",
 };
 
 const dots: Record<StatusTone, string> = {
@@ -14,6 +16,7 @@ const dots: Record<StatusTone, string> = {
   warning: "bg-warning",
   danger: "bg-danger",
   neutral: "bg-ink-muted animate-pulse",
+  idle: "bg-ink-muted/60",
 };
 
 export function StatusBadge({ tone, label }: { tone: StatusTone; label: string }) {

@@ -1,10 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-test("landing page renders and links to system status", async ({ page }) => {
+test("landing page renders and links into the app", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText("remembered");
-  await page.getByRole("link", { name: "Check system status" }).click();
+  await page.getByRole("link", { name: "Start uploading" }).click();
+  await expect(page).toHaveURL(/\/upload$/);
+  await page.getByRole("link", { name: "System" }).click();
   await expect(page).toHaveURL(/\/settings$/);
 });
 

@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, status
 
 from app.core.config import Settings, get_settings
+from app.storage import LocalStorage, Storage
 
 
 def get_current_user_id(settings: Annotated[Settings, Depends(get_settings)]) -> UUID:
@@ -23,3 +24,7 @@ def get_current_user_id(settings: Annotated[Settings, Depends(get_settings)]) ->
 
 
 CurrentUserId = Annotated[UUID, Depends(get_current_user_id)]
+
+
+def get_storage(settings: Annotated[Settings, Depends(get_settings)]) -> Storage:
+    return LocalStorage(settings.storage_root)

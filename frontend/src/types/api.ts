@@ -1,5 +1,47 @@
 // Mirrors backend/app/schemas. Keep in sync when the API changes.
 
+export const ITEM_TYPES = ["outfit", "garment", "fabric", "accessory", "other"] as const;
+export type ItemType = (typeof ITEM_TYPES)[number];
+
+export type ProcessingStatus =
+  | "queued"
+  | "processing"
+  | "completed"
+  | "partially_completed"
+  | "failed";
+
+export type Item = {
+  id: string;
+  type: ItemType;
+  suggested_type: ItemType | null;
+  notes: string | null;
+  source_url: string | null;
+  processing_status: ProcessingStatus;
+  processing_error: string | null;
+  width: number;
+  height: number;
+  mime_type: string;
+  file_size: number;
+  created_at: string;
+  updated_at: string;
+  /** Relative to the API root; prefix with API_BASE. */
+  image_url: string;
+  thumbnail_url: string;
+};
+
+export type ItemList = {
+  items: Item[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type ItemUpdate = {
+  type?: ItemType;
+  notes?: string | null;
+  source_url?: string | null;
+};
+
 export type ApiErrorBody = {
   error: { code: string; message: string; details: unknown };
 };

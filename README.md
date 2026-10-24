@@ -4,10 +4,11 @@ A personal visual library for fashion: upload outfits, garments and fabric swatc
 extracts their palette, tags style and textile craft (including Indian traditions such as ikat,
 bandhani and chikankari) and finds similar pieces in your own library.
 
-> **Status: Milestone 2 (Database and persistence) complete.** The app shell, API skeleton,
-> health checks, full PostgreSQL schema, Alembic migrations and owner-scoped repositories work.
-> Upload, palette extraction, tagging and similarity search arrive in Milestones 3–6. This README
-> documents only what exists today.
+> **Status: Milestone 3 (Upload and storage) complete.** You can upload images (drag and drop,
+> file picker or phone camera), browse them in a gallery, edit their details and delete them.
+> Images are validated, stored privately and marked "Awaiting analysis". Palette extraction,
+> tagging and similarity search arrive in Milestones 4–6 — no analysis results are shown or
+> invented before then. This README documents only what exists today.
 
 ## Architecture (current)
 
@@ -31,11 +32,13 @@ backend/            FastAPI app (Python 3.11)
   app/db/           declarative base, engine/session, Alembic helpers
   app/models/       SQLAlchemy 2 models (users, items, palettes, tags, embeddings, collections)
   app/repositories/ owner-scoped data access
-  app/schemas/      Pydantic response models
+  app/schemas/      Pydantic request/response models
+  app/services/     image validation (images.py) and upload/delete use-cases (items.py)
+  app/storage/      storage interface (base.py) and local filesystem backend (local.py)
   alembic.ini       Alembic config (no credentials; URL comes from THREAD_DATABASE_URL)
   tests/            pytest suite
 frontend/           Next.js App Router + TypeScript (strict) + Tailwind 4
-  src/app/          routes: / (landing), /settings (system status)
+  src/app/          routes: / (landing), /upload, /gallery, /items/[id], /settings (system status)
   src/components/   design-system primitives (Button, StatusBadge, header)
   src/features/     feature modules (landing hero, system status)
   src/lib, services, types   API client, typed API calls, API types
@@ -110,6 +113,8 @@ Open <http://127.0.0.1:3100>. The **System** page shows live API, PostgreSQL and
 | `THREAD_TEST_DATABASE_URL` | backend tests | must point at `thread_test`, never the dev database |
 | `THREAD_APP_ENV`, `THREAD_LOG_LEVEL` | backend | `development` / `test` / `production`; log level |
 | `THREAD_DEV_USER_ID`, `THREAD_DEV_USER_NAME` | backend | optional; the local development owner (defaults are built in) |
+| `THREAD_STORAGE_DIR` | backend | where uploaded files are stored (default `storage/`) |
+| `THREAD_MAX_UPLOAD_BYTES`, `THREAD_MAX_IMAGE_SIDE`, `THREAD_MIN_IMAGE_SIDE`, `THREAD_MAX_IMAGE_PIXELS`, `THREAD_THUMBNAIL_SIDE` | backend (+ proxy limit) | upload limits; defaults 15 MB, 8000 px, 64 px, 40 MP, 640 px |
 | `THREAD_API_URL` | frontend (server side) | where the `/api` proxy forwards; default `http://127.0.0.1:8010` |
 
 Backend settings are read **only** with the `THREAD_` prefix. Machine-wide variables from other
@@ -167,6 +172,68 @@ For the local MVP, `get_current_user_id` returns a fixed development user
 to run when `THREAD_APP_ENV=production`, so real authentication must be added before any
 deployment.
 
+## Uploads and storage
+
+### API
+
+| Method & path | Purpose |
+|---|---|
+| `POST /items` | Multipart upload: `file` (required), `type` (`outfit`/`garment`/`fabric`/`accessory`/`other`, default `other`). Returns **201** with the item. |
+| `GET /items?type=&limit=&offset=` | Your items, newest first, with `total` for paging. |
+| `GET /items/{id}` | One item. |
+| `PATCH /items/{id}` | Change `type`, `notes` (≤ 5000 chars) or `source_url` (http/https only). `null` clears notes/URL. |
+| `DELETE /items/{id}` | **204**; removes the record and its files. |
+| `GET /items/{id}/image?variant=original\|thumbnail` | The stored image, after an ownership check. |
+
+Errors use one JSON shape, `{"error": {"code", "message", "details"}}`:
+
+| Status | `code` | When |
+|---|---|---|
+| 409 | `conflict` | Same file already in your library; `details.existing_item_id` points at it |
+| 413 | `too_large` | Larger than `THREAD_MAX_UPLOAD_BYTES` (15 MB) |
+| 415 | `unsupported_format` | A real image, but not JPEG, PNG or WebP (e.g. GIF, BMP, TIFF) |
+| 422 | `invalid_image` / `bad_dimensions` / `validation_error` | Not an image, damaged/truncated, outside the size limits, or a bad field |
+
+### What happens to an upload
+
+1. The body is read in chunks and refused as soon as it exceeds the size limit.
+2. The **bytes** are inspected with Pillow — the filename and the browser's Content-Type are
+   ignored. Only JPEG, PNG and WebP pass.
+3. Dimensions are checked from the header **before** any pixels are decoded (max 8000 px per
+   side, min 64 px, max 40 MP), which stops decompression bombs; then the image is fully decoded
+   to catch truncated or corrupt files.
+4. A SHA-256 of the uploaded bytes detects duplicates per user.
+5. The camera's EXIF orientation is applied, then the image is re-encoded **without EXIF or other
+   metadata** (photos can carry GPS location). The ICC colour profile is kept so colours stay
+   accurate for palette extraction. A 640 px WebP thumbnail is generated.
+6. Files are written, then the database row is committed (`processing_status = queued`).
+
+**Consistency.** If writing a file or the database insert fails, every file written for that
+upload is deleted again, so a row never points at a missing file. Deleting commits the row
+removal first, then removes files. The worst case after a crash is an unreferenced file on disk,
+never a broken row.
+
+### Storage
+
+Files live under `THREAD_STORAGE_DIR` (default `storage/` at the repo root, git-ignored), outside
+anything the frontend serves publicly. Keys are generated by the server —
+`users/<user-id>/items/<item-id>/original.<ext>` and `.../thumbnail.webp` — never derived from user
+filenames. The local backend validates every key against a strict pattern, refuses anything that
+resolves outside the root (path traversal), and opens files in exclusive-create mode so nothing is
+overwritten. Images are only reachable through `GET /items/{id}/image`, which checks ownership and
+accepts only the two named variants; responses carry `Cache-Control: private`,
+`X-Content-Type-Options: nosniff` and a restrictive `Content-Security-Policy`.
+
+To add S3 or Cloudinary later, implement the `Storage` protocol in `app/storage/base.py`
+(`save`, `read`, `delete`, `exists`) and return it from `get_storage` in `app/api/deps.py`.
+
+### Proxy body size
+
+The Next.js `/api` proxy buffers request bodies and truncates them at 10 MB by default, which
+breaks larger uploads. `next.config.ts` raises `experimental.proxyClientMaxBodySize` to twice
+`THREAD_MAX_UPLOAD_BYTES`, so slightly-too-large files still reach FastAPI and get a proper 413.
+The upload page also rejects files over 15 MB before sending them.
+
 ## Health check
 
 `GET /health` (or `/api/health` through the frontend) returns:
@@ -194,7 +261,8 @@ npm run lint
 npm run typecheck
 npm test                       # Vitest unit/component tests
 npx playwright install chromium   # once
-npm run test:e2e               # Playwright; needs Docker Postgres running, starts/reuses both servers
+npm run test:e2e               # Playwright; needs Docker Postgres running, starts/reuses both servers.
+                               # Upload tests generate unique images in memory and delete what they create.
 npm run build
 ```
 
@@ -225,6 +293,6 @@ They are skipped with a clear reason if Postgres is not reachable.
 
 ## Roadmap
 
-Milestones 3–8: upload and storage, palette extraction, OpenCLIP
+Milestones 4–8: palette extraction, OpenCLIP
 embeddings and tags, pgvector similarity, gallery and collections, end-to-end quality and full
 documentation.

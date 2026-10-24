@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import Select, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -28,7 +28,11 @@ class ItemRepository:
                 self.db.flush()
         except IntegrityError as exc:
             if "uq_items_user_id_content_hash" in str(exc.orig):
-                raise ConflictError("This image is already in your library.") from exc
+                existing = self.find_by_hash(fields.get("content_hash", ""))
+                raise ConflictError(
+                    "This image is already in your library.",
+                    {"existing_item_id": str(existing.id) if existing else None},
+                ) from exc
             raise
         return item
 
@@ -46,14 +50,25 @@ class ItemRepository:
             select(Item).where(Item.user_id == self.owner_id, Item.content_hash == content_hash)
         )
 
-    def list(self, *, limit: int = 50, offset: int = 0) -> Sequence[Item]:
+    def _filtered(self, item_type: str | None) -> Select[tuple[Item]]:
+        query = select(Item).where(Item.user_id == self.owner_id)
+        if item_type is not None:
+            query = query.where(Item.type == item_type)
+        return query
+
+    def list(
+        self, *, item_type: str | None = None, limit: int = 50, offset: int = 0
+    ) -> Sequence[Item]:
         return self.db.scalars(
-            select(Item)
-            .where(Item.user_id == self.owner_id)
+            self._filtered(item_type)
             .order_by(Item.created_at.desc(), Item.id)
             .limit(limit)
             .offset(offset)
         ).all()
+
+    def count(self, *, item_type: str | None = None) -> int:
+        subquery = self._filtered(item_type).subquery()
+        return self.db.scalar(select(func.count()).select_from(subquery)) or 0
 
     def update(self, item_id: UUID, **fields: Any) -> Item:
         unknown = set(fields) - EDITABLE_FIELDS
@@ -65,8 +80,12 @@ class ItemRepository:
         self.db.flush()
         return item
 
-    def delete(self, item_id: UUID) -> None:
-        """Delete an item; the database cascades to palette, tags, embedding and memberships."""
+    def delete(self, item_id: UUID) -> Item:
+        """Delete an item; the database cascades to palette, tags, embedding and memberships.
+
+        Returns the deleted row so the caller can remove its stored files.
+        """
         item = self.get_or_raise(item_id)
         self.db.delete(item)
         self.db.flush()
+        return item

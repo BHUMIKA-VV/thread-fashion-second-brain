@@ -46,5 +46,30 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
     throw new ApiError(0, "network_error", "Network error. Check your connection.");
   }
   if (!response.ok) throw await toApiError(response);
+  if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
+}
+
+/** Absolute browser URL for an API-relative path such as an item's thumbnail_url. */
+export function apiUrl(path: string): string {
+  return `${API_BASE}${path}`;
+}
+
+/** ApiError from a raw status + body text (used by the XHR upload, which has no Response). */
+export function apiErrorFromText(status: number, bodyText: string): ApiError {
+  let body: unknown = null;
+  try {
+    body = JSON.parse(bodyText);
+  } catch {
+    // not JSON
+  }
+  if (isApiErrorBody(body)) {
+    return new ApiError(status, body.error.code, body.error.message, body.error.details);
+  }
+  if (status === 0) return new ApiError(0, "network_error", "Network error. Check your connection.");
+  return new ApiError(
+    status,
+    "unreachable",
+    status >= 500 ? "The Thread API is not reachable." : "Unexpected response.",
+  );
 }

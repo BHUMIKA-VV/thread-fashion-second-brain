@@ -15,7 +15,7 @@ ignore = []
 known-first-party = ["app", "tests"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]  # assert is how pytest works
+"tests/**" = ["S101", "S311"]  # pytest asserts; non-crypto randomness for test images
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
