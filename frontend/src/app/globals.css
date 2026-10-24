@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+/*
+ * Thread design tokens: warm ivory paper, charcoal ink, muted earth accents.
+ * Use these through Tailwind classes (bg-paper, text-ink, border-line, ...).
+ */
+:root {
+  --paper: #f7f3ec;
+  --paper-raised: #fbf8f3;
+  --ink: #22201c;
+  --ink-muted: #6b655c;
+  --line: #e2dacd;
+  --clay: #b4654a;
+  --ochre: #c49a45;
+  --sage: #7d8466;
+  --indigo: #3e4a6b;
+  --success: #4f6b45;
+  --warning: #a8742a;
+  --danger: #a3412f;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-line: var(--line);
+  --color-clay: var(--clay);
+  --color-ochre: var(--ochre);
+  --color-sage: var(--sage);
+  --color-indigo: var(--indigo);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-fraunces);
+  --shadow-soft: 0 1px 2px rgb(34 32 28 / 0.04), 0 8px 24px -12px rgb(34 32 28 / 0.12);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+::selection {
+  background: var(--clay);
+  color: var(--paper-raised);
+}
+
+/* Visible, consistent keyboard focus everywhere. */
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
