@@ -4,12 +4,12 @@ A personal visual library for fashion: upload outfits, garments and fabric swatc
 extracts their palette, tags style and textile craft (including Indian traditions such as ikat,
 bandhani and chikankari) and finds similar pieces in your own library.
 
-> **Status: Milestone 4 (Colour palettes) complete.** You can upload images (drag and drop,
-> file picker or phone camera), browse them in a gallery, edit and delete them, and every upload
-> gets a real colour palette — dominant colours with hex/RGB, human names (including Indian
-> colour names such as haldi yellow and sindoor red), percentages, a heuristic harmony label and
-> a downloadable palette card. Fashion tags and similarity search arrive in Milestones 5–6; no
-> results are shown or invented before then. This README documents only what exists today.
+> **Status: Milestone 5 (Visual similarity) complete.** You can upload images (drag and drop,
+> file picker or phone camera), browse them in a gallery, edit and delete them. Every upload gets
+> a real colour palette (hex/RGB, human and Indian colour names, percentages, heuristic harmony,
+> PNG card) and an OpenCLIP image embedding, and each item page shows **similar pieces from your
+> own library**, ranked by pgvector cosine similarity. Automatic fashion tags arrive in a later
+> milestone; nothing is shown or invented before then. This README documents only what exists today.
 
 ## Architecture (current)
 
@@ -30,6 +30,8 @@ configuration and, later, private images can stay behind the API.
 backend/            FastAPI app (Python 3.11)
   app/api/          routes, dependencies (current user), structured error handlers
   app/color/        LAB maths, palette extraction, naming, harmony, PNG card (+ data/ name lists)
+  app/ml/           pinned model spec, OpenCLIP embedder, lazily loaded process-wide registry
+  scripts/          fetch_model.py (explicit, one-off weights download)
   app/core/         settings (THREAD_ env prefix) and logging
   app/db/           declarative base, engine/session, Alembic helpers
   app/models/       SQLAlchemy 2 models (users, items, palettes, tags, embeddings, collections)
@@ -89,8 +91,13 @@ uv python install 3.11
 uv venv --python 3.11 .venv
 uv pip install --python .venv -r requirements-dev.txt
 .venv/Scripts/alembic upgrade head
+.venv/Scripts/python -m scripts.fetch_model      # optional, once: ~577 MiB image model (see below)
 .venv/Scripts/python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8010
 ```
+
+To keep every download inside the project, pass a project-local uv cache when installing, e.g.
+`uv pip install --python .venv --cache-dir ../.cache/uv -r requirements-dev.txt` (≈140 MB of
+wheels; PyTorch is ≈118 MB of that and installs to ≈450 MB).
 
 (On macOS/Linux use `.venv/bin/...`.) API docs: <http://127.0.0.1:8010/docs>.
 `alembic upgrade head` creates the pgvector extension and every table; rerunning it is a no-op.
@@ -118,6 +125,8 @@ Open <http://127.0.0.1:3100>. The **System** page shows live API, PostgreSQL and
 | `THREAD_STORAGE_DIR` | backend | where uploaded files are stored (default `storage/`) |
 | `THREAD_MAX_UPLOAD_BYTES`, `THREAD_MAX_IMAGE_SIDE`, `THREAD_MIN_IMAGE_SIDE`, `THREAD_MAX_IMAGE_PIXELS`, `THREAD_THUMBNAIL_SIDE` | backend (+ proxy limit) | upload limits; defaults 15 MB, 8000 px, 64 px, 40 MP, 640 px |
 | `THREAD_PALETTE_SIZE` | backend | colours to extract per image, 1–12 (default 6) |
+| `THREAD_MODEL_CACHE_DIR` | backend | where the image-model weights live (default `.cache/models`) |
+| `THREAD_EMBEDDINGS_ENABLED`, `THREAD_EMBEDDING_WARMUP` | backend | turn similarity off; load the model at start-up in the background (both default `true`) |
 | `THREAD_API_URL` | frontend (server side) | where the `/api` proxy forwards; default `http://127.0.0.1:8010` |
 
 Backend settings are read **only** with the `THREAD_` prefix. Machine-wide variables from other
@@ -214,7 +223,10 @@ Errors use one JSON shape, `{"error": {"code", "message", "details"}}`:
 **Consistency.** If writing a file or the database insert fails, every file written for that
 upload is deleted again, so a row never points at a missing file. Deleting commits the row
 removal first, then removes files. The worst case after a crash is an unreferenced file on disk,
-never a broken row.
+never a broken row. On Windows a file cannot be deleted while another request has it open (for
+example the same image being served at that moment, `WinError 32`); such locks last
+milliseconds, so the local storage retries a delete for up to ≈0.75 s before giving up and
+logging it.
 
 ### Storage
 
@@ -302,6 +314,85 @@ or two). Percentages are shares of the analysed pixels, so a photo's background 
 is a plain backdrop the mask can detect. Busy backgrounds are not removed yet. Treat the output as
 a faithful summary of the image, not a lab measurement of the garment.
 
+## Visual similarity (OpenCLIP + pgvector)
+
+Each image gets a 512-dimensional embedding from **OpenCLIP ViT-B/32** (`laion2b_s34b_b79k`), and
+"Similar pieces" on the item page lists your own most similar items by cosine similarity.
+
+### The model, pinned
+
+| | |
+|---|---|
+| Weights | `laion/CLIP-ViT-B-32-laion2B-s34B-b79K` → `open_clip_model.safetensors`, revision `1a25a446712ba5ee05982a381eed697ef9b435cf`, 605,143,316 bytes, SHA-256 `ac4f8c4b…56e6` (MIT licence) |
+| Stored at | `<repo>/.cache/models/ViT-B-32-laion2b_s34b_b79k/` (git-ignored; `THREAD_MODEL_CACHE_DIR`) |
+| Identifier | `open_clip/ViT-B-32/laion2b_s34b_b79k@1a25a44/pp1` — stored with every vector |
+| Runtime | CPU only (PyPI's Windows PyTorch wheel); 4 torch threads; ≈0.12 s per image |
+
+`python -m scripts.fetch_model` downloads exactly that file from the pinned revision, verifies the
+SHA-256, and points every Hugging Face cache for that process into `.cache/models` — nothing goes
+to the user-wide cache and no global settings change. **The API never downloads**: it loads the
+local file or reports the model as unavailable.
+
+### Exact preprocessing ("pp1")
+
+Indexing and search use the same path — search compares the stored vector of the query item:
+
+1. Flatten transparency onto white (RGBA/LA/P-with-alpha), convert to RGB.
+2. OpenCLIP's eval transform for this checkpoint: resize the shorter side to 224 px (bicubic),
+   centre-crop 224×224, scale to [0, 1], normalise with mean (0.48145466, 0.4578275,
+   0.40821073) and std (0.26862954, 0.26130258, 0.27577711).
+3. `encode_image` in float32, then **L2-normalise**, so cosine similarity = dot product and
+   pgvector's cosine distance `<=>` = 1 − similarity.
+
+The loaded model must produce 512-d vectors (checked at load) to match the `vector(512)` column.
+If the architecture, checkpoint, revision, preprocessing or normalisation ever changes, the
+identifier must change too: search only compares vectors with the **current** identifier and
+re-indexes older ones, so incompatible vectors are never mixed.
+
+### When indexing happens (no background worker yet)
+
+- The model loads **lazily, once per API process**, in a background thread at start-up if the
+  weights exist (≈15–20 s, mostly importing PyTorch; ≈55 s the very first time from a cold disk).
+  Start-up never waits for it, and nothing depends on it.
+- **Uploads never wait for the model.** If it is loaded, the upload is indexed (+≈0.12 s). If it
+  is still loading, `stage_status.embedding` is `pending`; without weights it is `unavailable`.
+  Either way the upload and its palette succeed.
+- `GET /items/{id}/similar?limit=1..50` (default 12) **never waits for the model either**. While it
+  loads, the API answers at once with `503 model_loading` and `Retry-After: 5` (and makes sure the
+  background load is running); the UI shows "Loading the image model…" and retries every 3 s.
+  Waiting inside one request was tried first and failed: a cold load (≈55 s) outlasted the
+  Next.js proxy's 30 s timeout. Once the model is ready, the request indexes the query item and
+  up to 50 of your not-yet-indexed items, then searches. Embeddings are deterministic, so
+  indexing late gives exactly the same vector as indexing early. Items whose embedding
+  **failed** are counted (`not_indexed`) but not retried on every search.
+- `POST /items/{id}/embedding` re-indexes one item on demand.
+- `processing_status` now reflects the stages that exist (palette + embedding): `completed`,
+  `partially_completed` (e.g. no model installed), `queued` (embedding pending) or `failed`.
+
+### The query
+
+```sql
+SET LOCAL hnsw.iterative_scan = relaxed_order;   -- pgvector >= 0.8
+SELECT items.*, embeddings.vector <=> :query AS distance
+FROM items JOIN embeddings ON embeddings.item_id = items.id
+WHERE items.user_id = :owner AND items.id <> :query_item AND embeddings.model_name = :model
+ORDER BY distance LIMIT :limit;
+```
+
+Ownership is part of the WHERE clause, so other users' items can never be returned — not even an
+identical image. The HNSW index (`vector_cosine_ops`) is approximate; `iterative_scan` keeps it
+scanning when the owner filter removes candidates, and results are re-sorted by exact distance.
+Errors: `503 model_loading` (retry soon), `503 model_unavailable` (not installed / failed to
+load), `422 embedding_failed`.
+
+### Limitations
+
+CLIP compares whole images, not garments: background, framing, lighting and colour all count, so
+two photos of different garments on the same backdrop can score high, and the same garment shot
+differently can score lower. Scores are **relative** (good for ranking within your library) and
+not calibrated probabilities; in our checks even unrelated images scored around 0.6–0.7. The
+model was trained on web images and may handle some regional garments and textiles less well.
+
 ## Health check
 
 `GET /health` (or `/api/health` through the frontend) returns:
@@ -358,11 +449,18 @@ They are skipped with a clear reason if Postgres is not reachable.
   development user.
 - **`permission denied to create extension "vector"`**: the database role cannot create
   extensions. Use the Docker Compose database, or enable pgvector as an administrator.
+- **Similar pieces says the image model is not installed**: run
+  `.venv/Scripts/python -m scripts.fetch_model` in `backend/`, then restart the API. Everything
+  else works without it.
+- **The API serves stale code after restarts on Windows** (e.g. a new route returns 404 only
+  sometimes): an orphaned `uvicorn --reload` worker from a killed server can keep the listening
+  socket. Find `python.exe` processes running `multiprocessing.spawn` whose parent no longer
+  exists and stop them, then restart the API.
 - **`ModuleNotFoundError: asyncpg`** or another project's database name: a generic variable is
   leaking in. Thread only reads `THREAD_*` variables; make sure your `.env` uses those names.
 
 ## Roadmap
 
-Milestones 5–8: palette extraction, OpenCLIP
+Milestones 6–8: palette extraction, OpenCLIP
 embeddings and tags, pgvector similarity, gallery and collections, end-to-end quality and full
 documentation.

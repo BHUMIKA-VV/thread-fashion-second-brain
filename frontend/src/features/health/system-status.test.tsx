@@ -28,6 +28,14 @@ const healthy: HealthResponse = {
     schema_head: "abc123",
     schema_up_to_date: true,
   },
+  embedding_model: {
+    state: "ready",
+    model: "open_clip/ViT-B-32/laion2b_s34b_b79k@1a25a44/pp1",
+    dimension: 512,
+    weights_present: true,
+    load_seconds: 15.2,
+    detail: null,
+  },
 };
 
 const unavailableDb: HealthResponse["database"] = {
@@ -49,6 +57,27 @@ describe("SystemStatus", () => {
     expect(screen.getByText("Connected")).toBeInTheDocument();
     expect(screen.getByText("Available")).toBeInTheDocument();
     expect(screen.getByText("Up to date")).toBeInTheDocument();
+    expect(screen.getByText("Ready")).toBeInTheDocument();
+    expect(screen.getByText("512-d · loaded in 15.2s")).toBeInTheDocument();
+  });
+
+  it("explains a missing image model without marking the API degraded", async () => {
+    const noModel: HealthResponse = {
+      ...healthy,
+      embedding_model: {
+        ...healthy.embedding_model,
+        state: "unavailable",
+        weights_present: false,
+        load_seconds: null,
+        detail: "The image model is not installed. Run `python -m scripts.fetch_model` in the backend folder.",
+      },
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(noModel));
+    renderWithQuery();
+
+    expect(await screen.findByText("Online")).toBeInTheDocument();
+    expect(screen.getByText("Not installed")).toBeInTheDocument();
+    expect(screen.getByText(/fetch_model/)).toBeInTheDocument();
   });
 
   it("flags pending migrations with the command to run", async () => {

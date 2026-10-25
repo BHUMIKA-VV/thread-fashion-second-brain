@@ -1,9 +1,11 @@
+import threading
 import uuid
 from pathlib import Path
 
 import pytest
 
 from app.storage import LocalStorage, item_key
+from app.storage import local as local_module
 from app.storage.base import InvalidKeyError, ObjectExistsError, ObjectNotFoundError
 
 
@@ -24,6 +26,39 @@ def test_save_read_delete_round_trip(storage: LocalStorage) -> None:
     storage.delete(key)  # idempotent
     # Empty per-item folders are tidied away, but the root itself stays.
     assert storage.root.is_dir() and not any(storage.root.iterdir())
+
+
+def test_delete_waits_out_a_brief_lock_from_a_concurrent_reader(storage: LocalStorage) -> None:
+    """On Windows an open file cannot be deleted (WinError 32); the lock is brief, so delete
+    retries. Elsewhere the unlink simply succeeds at once."""
+    key = item_key(uuid.uuid4(), uuid.uuid4(), "original.png")
+    storage.save(key, b"image bytes")
+    reader = (storage.root / key).open("rb")  # e.g. the same image being served right now
+    threading.Timer(0.2, reader.close).start()
+
+    storage.delete(key)
+
+    assert not storage.exists(key)
+
+
+def test_delete_gives_up_on_a_lock_that_does_not_go_away(
+    storage: LocalStorage, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    key = item_key(uuid.uuid4(), uuid.uuid4(), "original.png")
+    storage.save(key, b"x")
+    calls = 0
+
+    def always_locked(self: Path, missing_ok: bool = False) -> None:
+        nonlocal calls
+        calls += 1
+        raise PermissionError("in use")
+
+    monkeypatch.setattr(local_module, "DELETE_BACKOFF_SECONDS", 0)
+    monkeypatch.setattr(Path, "unlink", always_locked)
+
+    with pytest.raises(PermissionError):
+        storage.delete(key)
+    assert calls == local_module.DELETE_ATTEMPTS
 
 
 def test_never_overwrites(storage: LocalStorage) -> None:

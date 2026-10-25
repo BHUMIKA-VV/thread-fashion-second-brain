@@ -11,3 +11,7 @@ pillow==13.0.0
 python-multipart==0.0.32
 numpy==2.4.6
 scikit-learn==1.9.1
+# Image embeddings (Milestone 5). On Windows, PyPI's torch wheel is the CPU-only build.
+torch==2.14.1
+torchvision==0.29.1
+open_clip_torch==3.3.0

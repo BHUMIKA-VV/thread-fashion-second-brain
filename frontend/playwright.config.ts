@@ -35,7 +35,8 @@ export default defineConfig({
       cwd: "../backend",
       url: "http://127.0.0.1:8010/health",
       reuseExistingServer: true,
-      timeout: 60_000,
+      // A cold start imports scikit-learn and friends; on Windows that alone measured ~30 s.
+      timeout: 180_000,
     },
     {
       command: `npm run build && npx next start --hostname 127.0.0.1 --port ${E2E_PORT}`,

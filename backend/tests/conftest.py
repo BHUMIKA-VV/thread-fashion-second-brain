@@ -6,22 +6,46 @@ with random names; each disposable database is migrated with the real Alembic mi
 """
 
 import hashlib
+import os
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Any
 
-import pytest
+# This test process never loads the real image model at startup (set before the app imports;
+# affects only this process, not the user's environment).
+os.environ["THREAD_EMBEDDING_WARMUP"] = "false"
+
+import pytest  # noqa: E402
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, make_url, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from app.core.config import get_settings
-from app.db import migrations
-from app.db.session import get_db
-from app.main import app
-from app.models import Item, User
+from app.api.deps import get_current_user_id, get_storage  # noqa: E402
+from app.core.config import Settings, get_settings  # noqa: E402
+from app.db import migrations  # noqa: E402
+from app.db.session import get_db  # noqa: E402
+from app.main import app  # noqa: E402
+from app.ml import registry  # noqa: E402
+from app.models import Item, User  # noqa: E402
+from app.storage import LocalStorage  # noqa: E402
+from tests.fakes import FakeEmbedder  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def fake_embedder(request: pytest.FixtureRequest) -> Iterator[FakeEmbedder | None]:
+    """Every test gets a fast, deterministic fake embedder unless marked `ml` (real model)."""
+    registry.reset_for_tests()
+    if request.node.get_closest_marker("ml"):
+        yield None
+    else:
+        fake = FakeEmbedder()
+        registry._embedder = fake  # loaded and ready, as after a warm-up
+        registry._state = "ready"
+        yield fake
+    registry.reset_for_tests()
 
 
 @pytest.fixture
@@ -96,6 +120,45 @@ def db(migrated_db_url: str) -> Iterator[Session]:
 def db_client(client: TestClient, db: Session) -> TestClient:
     app.dependency_overrides[get_db] = lambda: db
     return client
+
+
+@pytest.fixture
+def storage(tmp_path: Path) -> LocalStorage:
+    return LocalStorage(tmp_path / "storage")
+
+
+@pytest.fixture
+def settings() -> Settings:
+    return get_settings().model_copy(update={"max_upload_bytes": 2 * 1024 * 1024})
+
+
+@pytest.fixture
+def api(
+    db: Session, owner: User, storage: LocalStorage, settings: Settings
+) -> Iterator[TestClient]:
+    """HTTP client acting as `owner`, on the test database and a temporary storage root."""
+    app.dependency_overrides.update(
+        {
+            get_db: lambda: db,
+            get_current_user_id: lambda: owner.id,
+            get_storage: lambda: storage,
+            get_settings: lambda: settings,
+        }
+    )
+    with TestClient(app, raise_server_exceptions=False) as client:
+        yield client
+    app.dependency_overrides.clear()
+
+
+def upload(
+    api: TestClient,
+    data: bytes,
+    item_type: str | None = "garment",
+    name: str = "photo.jpg",
+    content_type: str = "image/jpeg",
+) -> Any:
+    form = {"type": item_type} if item_type else {}
+    return api.post("/items", files={"file": (name, data, content_type)}, data=form)
 
 
 @pytest.fixture

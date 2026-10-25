@@ -51,12 +51,25 @@ class Settings(BaseSettings):
     # Number of dominant colours to extract (before near-duplicates are merged).
     palette_size: int = Field(default=6, ge=1, le=12)
 
+    # Image embeddings. Weights live under the project (git-ignored) and are fetched only by
+    # `python -m scripts.fetch_model`; the API never downloads them.
+    model_cache_dir: Path = Path(".cache/models")
+    embeddings_enabled: bool = True
+    # Load the model in a background thread at startup (if weights exist) so the first
+    # upload does not pay the load time. Startup never waits for it.
+    embedding_warmup: bool = True
+
     # Read by the Next.js proxy; declared here so the shared .env is self-documenting.
     api_url: str = "http://127.0.0.1:8010"
 
     @property
     def storage_root(self) -> Path:
         return self.storage_dir if self.storage_dir.is_absolute() else REPO_ROOT / self.storage_dir
+
+    @property
+    def model_cache_root(self) -> Path:
+        path = self.model_cache_dir
+        return path if path.is_absolute() else REPO_ROOT / path
 
 
 @lru_cache

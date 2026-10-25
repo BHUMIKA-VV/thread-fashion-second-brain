@@ -1,12 +1,22 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Database, Layers, RefreshCw, Server } from "lucide-react";
+import { Database, Layers, RefreshCw, ScanSearch, Server } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import { getHealth } from "@/services/health";
+import type { EmbeddingModelHealth } from "@/types/api";
+
+const MODEL_BADGE: Record<EmbeddingModelHealth["state"], { tone: StatusTone; label: string }> = {
+  ready: { tone: "success", label: "Ready" },
+  loading: { tone: "neutral", label: "Loading" },
+  not_loaded: { tone: "idle", label: "Loads on first use" },
+  unavailable: { tone: "warning", label: "Not installed" },
+  failed: { tone: "danger", label: "Failed to load" },
+  disabled: { tone: "idle", label: "Turned off" },
+};
 
 function Row({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
   return (
@@ -88,6 +98,20 @@ export function SystemStatus() {
             />
           )}
         </Row>
+        <Row icon={<ScanSearch className="size-4" aria-hidden />} label="Image model (similarity)">
+          {data ? (
+            <>
+              <StatusBadge {...MODEL_BADGE[data.embedding_model.state]} />
+              {data.embedding_model.state === "ready" && data.embedding_model.load_seconds != null && (
+                <span className="text-xs text-ink-muted">
+                  {data.embedding_model.dimension}-d · loaded in {data.embedding_model.load_seconds}s
+                </span>
+              )}
+            </>
+          ) : (
+            <StatusBadge tone="neutral" label={error ? "Unknown" : "Checking…"} />
+          )}
+        </Row>
         <Row icon={<Layers className="size-4" aria-hidden />} label="Database migrations">
           {db?.schema_up_to_date == null ? (
             <StatusBadge tone="neutral" label={error ? "Unknown" : "Checking…"} />
@@ -105,6 +129,12 @@ export function SystemStatus() {
           )}
         </Row>
       </div>
+
+      {data?.embedding_model.detail && (
+        <p className="mt-4 rounded-xl bg-warning/5 px-4 py-3 text-sm text-warning">
+          {data.embedding_model.detail}
+        </p>
+      )}
 
       {db?.schema_up_to_date === false && (
         <p className="mt-4 rounded-xl bg-warning/5 px-4 py-3 text-sm text-warning">

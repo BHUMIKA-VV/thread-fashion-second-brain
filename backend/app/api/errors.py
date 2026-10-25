@@ -7,7 +7,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.ml.registry import EmbedderLoading, EmbedderUnavailable
 from app.repositories.errors import ConflictError, NotFoundError
+from app.services.embeddings import EmbeddingFailed
 from app.services.images import ImageValidationError
 from app.services.palettes import PaletteExtractionError
 
@@ -63,6 +65,28 @@ def register_error_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=error_body("palette_failed", str(exc)),
+        )
+
+    @app.exception_handler(EmbedderLoading)
+    async def model_loading(_: Request, exc: EmbedderLoading) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=error_body("model_loading", str(exc)),
+            headers={"Retry-After": "5"},
+        )
+
+    @app.exception_handler(EmbedderUnavailable)
+    async def model_unavailable(_: Request, exc: EmbedderUnavailable) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=error_body("model_unavailable", str(exc)),
+        )
+
+    @app.exception_handler(EmbeddingFailed)
+    async def embedding_failed(_: Request, exc: EmbeddingFailed) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            content=error_body("embedding_failed", str(exc)),
         )
 
     @app.exception_handler(ImageValidationError)

@@ -10,7 +10,8 @@ from sqlalchemy.orm import Session
 from app.core.config import Settings, get_settings
 from app.db.migrations import head_revision
 from app.db.session import get_db
-from app.schemas.health import DatabaseHealth, HealthResponse
+from app.ml import registry
+from app.schemas.health import DatabaseHealth, EmbeddingModelHealth, HealthResponse
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["health"])
@@ -73,4 +74,5 @@ def health(
         version=settings.app_version,
         environment=settings.app_env,
         database=database,
+        embedding_model=EmbeddingModelHealth.model_validate(registry.status()),
     )

@@ -1,6 +1,5 @@
 """Upload, read, edit and delete items through the HTTP API (real DB, temp storage)."""
 
-from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -9,56 +8,16 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user_id, get_storage
-from app.core.config import Settings, get_settings
-from app.db.session import get_db
+from app.api.deps import get_current_user_id
 from app.main import app
 from app.models import Item, User
 from app.repositories.items import ItemRepository
 from app.storage import LocalStorage
 from app.storage.base import StorageError
-from tests.conftest import make_item
+from tests.conftest import make_item, upload
 from tests.images import image_bytes, open_image
 
 pytestmark = pytest.mark.db
-
-
-@pytest.fixture
-def storage(tmp_path: Path) -> LocalStorage:
-    return LocalStorage(tmp_path / "storage")
-
-
-@pytest.fixture
-def settings() -> Settings:
-    return get_settings().model_copy(update={"max_upload_bytes": 2 * 1024 * 1024})
-
-
-@pytest.fixture
-def api(
-    db: Session, owner: User, storage: LocalStorage, settings: Settings
-) -> Iterator[TestClient]:
-    app.dependency_overrides.update(
-        {
-            get_db: lambda: db,
-            get_current_user_id: lambda: owner.id,
-            get_storage: lambda: storage,
-            get_settings: lambda: settings,
-        }
-    )
-    with TestClient(app, raise_server_exceptions=False) as client:
-        yield client
-    app.dependency_overrides.clear()
-
-
-def upload(
-    api: TestClient,
-    data: bytes,
-    item_type: str | None = "garment",
-    name: str = "photo.jpg",
-    content_type: str = "image/jpeg",
-) -> Any:
-    form = {"type": item_type} if item_type else {}
-    return api.post("/items", files={"file": (name, data, content_type)}, data=form)
 
 
 def stored_files(storage: LocalStorage) -> list[Path]:
@@ -82,7 +41,7 @@ def test_upload_creates_record_and_files(
     assert response.status_code == 201, response.text
     body = response.json()
     assert body["type"] == "garment"
-    assert body["processing_status"] == "queued"
+    assert body["processing_status"] == "completed"  # palette + embedding both done
     assert (body["width"], body["height"], body["mime_type"]) == (640, 480, "image/jpeg")
     assert body["image_url"] == f"/items/{body['id']}/image?variant=original"
     assert response.headers["location"] == f"/items/{body['id']}"
@@ -94,7 +53,11 @@ def test_upload_creates_record_and_files(
     assert item is not None and item.user_id == owner.id
     assert item.original_key == f"users/{owner.id}/items/{item.id}/original.jpg"
     assert storage.exists(item.original_key) and storage.exists(item.thumbnail_key)
-    assert item.stage_status == {"thumbnail": "completed", "palette": "completed"}
+    assert item.stage_status == {
+        "thumbnail": "completed",
+        "palette": "completed",
+        "embedding": "completed",
+    }
     assert body["palette"]["colors"] and body["palette_card_url"] == f"/items/{item.id}/palette.png"
 
 

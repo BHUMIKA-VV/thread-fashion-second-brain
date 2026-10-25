@@ -9,15 +9,22 @@ from app.api.deps import CurrentUserId, get_storage
 from app.color.card import render_palette_card
 from app.core.config import Settings, get_settings
 from app.db.session import get_db
+from app.ml import model_spec, registry
 from app.models.enums import ItemType
 from app.repositories.errors import NotFoundError
-from app.schemas.items import ItemList, ItemRead, ItemUpdate
+from app.schemas.items import ItemList, ItemRead, ItemUpdate, SimilarItemRead, SimilarResponse
+from app.services.embeddings import EmbeddingService
 from app.services.images import ImageValidationError
 from app.services.items import ItemService
 from app.services.palettes import PaletteService
 from app.storage import Storage
 
 router = APIRouter(prefix="/items", tags=["items"])
+
+MODEL_503 = {
+    "description": "model_loading (retry after Retry-After seconds) or "
+    "model_unavailable (not installed / failed to load)"
+}
 
 PRIVATE_FILE_HEADERS = {
     "Cache-Control": "private, max-age=3600",
@@ -166,6 +173,57 @@ def extract_item_palette(
         item, n_colors=colors
     )
     return ItemRead.model_validate(item)
+
+
+@router.post(
+    "/{item_id}/embedding",
+    response_model=ItemRead,
+    responses={
+        422: {"description": "The image could not be embedded (code embedding_failed)"},
+        503: MODEL_503,
+    },
+)
+def index_item_embedding(item_id: UUID, service: Service) -> ItemRead:
+    """(Re-)compute this item's image embedding with the current model."""
+    item = service.items.get_or_raise(item_id)
+    EmbeddingService(service.db, service.storage, service.owner_id).index(
+        item, registry.get_embedder_nowait()
+    )
+    return ItemRead.model_validate(item)
+
+
+@router.get(
+    "/{item_id}/similar",
+    response_model=SimilarResponse,
+    responses={
+        422: {"description": "The query image could not be embedded (code embedding_failed)"},
+        503: MODEL_503,
+    },
+)
+def similar_items(
+    item_id: UUID,
+    service: Service,
+    limit: Annotated[int, Query(ge=1, le=50)] = 12,
+) -> SimilarResponse:
+    """Your most visually similar items (cosine similarity of OpenCLIP image embeddings).
+
+    Indexes the query item and any of your not-yet-indexed items first, so the first call after
+    many uploads can take a few seconds. Never waits for the model to load: while it loads
+    this returns 503 model_loading with Retry-After, and the client retries.
+    """
+    result = EmbeddingService(service.db, service.storage, service.owner_id).find_similar(
+        item_id, limit=limit
+    )
+    return SimilarResponse(
+        item_id=item_id,
+        model=model_spec.MODEL_NAME,
+        results=[
+            SimilarItemRead(item=ItemRead.model_validate(r.item), similarity=r.similarity)
+            for r in result.results
+        ],
+        compared=result.compared,
+        not_indexed=result.not_indexed,
+    )
 
 
 @router.get(

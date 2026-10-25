@@ -21,4 +21,5 @@ known-first-party = ["app", "tests"]
 testpaths = ["tests"]
 markers = [
   "db: needs the Docker Compose PostgreSQL test database",
+  "ml: loads the real OpenCLIP weights (skipped when they are not installed)",
 ]

@@ -12,9 +12,8 @@ from sqlalchemy.orm import Session
 from app.models import Item, Palette, User
 from app.services import palettes as palette_service
 from app.storage import LocalStorage
-from tests.conftest import make_item
+from tests.conftest import make_item, upload
 from tests.images import blocks, encode
-from tests.test_items_api import api, settings, storage, upload  # noqa: F401  (fixtures)
 
 pytestmark = pytest.mark.db
 
@@ -30,7 +29,7 @@ def palette_count(db: Session) -> int:
     return db.scalar(select(func.count()).select_from(Palette)) or 0
 
 
-def test_upload_extracts_and_stores_the_real_palette(api: TestClient, db: Session) -> None:  # noqa: F811
+def test_upload_extracts_and_stores_the_real_palette(api: TestClient, db: Session) -> None:
     response = upload(api, two_colour_png(), item_type="fabric", content_type="image/png")
 
     assert response.status_code == 201
@@ -56,7 +55,7 @@ def test_upload_extracts_and_stores_the_real_palette(api: TestClient, db: Sessio
     assert "lab" not in str(body["palette"])  # internal detail not exposed
 
 
-def test_product_photo_backdrop_is_masked(api: TestClient) -> None:  # noqa: F811
+def test_product_photo_backdrop_is_masked(api: TestClient) -> None:
     photo = encode(blocks((600, 800), (255, 255, 255), [((150, 150, 450, 650), (209, 41, 28))]))
 
     body = upload(api, photo, item_type="garment", content_type="image/png").json()
@@ -67,7 +66,7 @@ def test_product_photo_backdrop_is_masked(api: TestClient) -> None:  # noqa: F81
     ]
 
 
-def test_re_extraction_replaces_the_row(api: TestClient, db: Session) -> None:  # noqa: F811
+def test_re_extraction_replaces_the_row(api: TestClient, db: Session) -> None:
     item = upload(
         api, encode(Image.effect_noise((300, 300), 80).convert("RGB")), content_type="image/png"
     ).json()
@@ -82,7 +81,7 @@ def test_re_extraction_replaces_the_row(api: TestClient, db: Session) -> None:  
     assert api.post(f"/items/{item['id']}/palette", params={"colors": 13}).status_code == 422
 
 
-def test_palette_card_png(api: TestClient) -> None:  # noqa: F811
+def test_palette_card_png(api: TestClient) -> None:
     item = upload(api, two_colour_png(), item_type="fabric", content_type="image/png").json()
 
     response = api.get(f"/items/{item['id']}/palette.png")
@@ -96,7 +95,7 @@ def test_palette_card_png(api: TestClient) -> None:  # noqa: F811
     assert card.getpixel((60, 60)) == HALDI
 
 
-def test_no_palette_yet_means_404_for_the_card(api: TestClient, db: Session, owner: User) -> None:  # noqa: F811
+def test_no_palette_yet_means_404_for_the_card(api: TestClient, db: Session, owner: User) -> None:
     item = make_item(db, owner)
     response = api.get(f"/items/{item.id}/palette.png")
     assert response.status_code == 404
@@ -108,7 +107,7 @@ def test_no_palette_yet_means_404_for_the_card(api: TestClient, db: Session, own
 
 
 def test_extraction_failure_on_upload_keeps_the_upload_and_records_the_error(
-    api: TestClient,  # noqa: F811
+    api: TestClient,
     db: Session,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -136,9 +135,9 @@ def test_extraction_failure_on_upload_keeps_the_upload_and_records_the_error(
 
 
 def test_unreadable_stored_file_fails_cleanly_and_keeps_the_earlier_palette(
-    api: TestClient,  # noqa: F811
+    api: TestClient,
     db: Session,
-    storage: LocalStorage,  # noqa: F811
+    storage: LocalStorage,
 ) -> None:
     item = upload(api, two_colour_png(), content_type="image/png").json()
     row = db.get(Item, item["id"])
@@ -156,7 +155,7 @@ def test_unreadable_stored_file_fails_cleanly_and_keeps_the_earlier_palette(
     assert [c["hex"] for c in after["palette"]["colors"]] == ["#e3a018", "#263b5e"]
 
 
-def test_fully_transparent_image_gets_no_palette(api: TestClient, db: Session) -> None:  # noqa: F811
+def test_fully_transparent_image_gets_no_palette(api: TestClient, db: Session) -> None:
     transparent = encode(blocks((200, 200), (10, 20, 30, 0), mode="RGBA"))
 
     body = upload(api, transparent, content_type="image/png").json()
@@ -166,7 +165,7 @@ def test_fully_transparent_image_gets_no_palette(api: TestClient, db: Session) -
     assert palette_count(db) == 0
 
 
-def test_palette_endpoints_respect_ownership(api: TestClient, db: Session, stranger: User) -> None:  # noqa: F811
+def test_palette_endpoints_respect_ownership(api: TestClient, db: Session, stranger: User) -> None:
     foreign = make_item(db, stranger)
     assert api.post(f"/items/{foreign.id}/palette").status_code == 404
     assert api.get(f"/items/{foreign.id}/palette.png").status_code == 404

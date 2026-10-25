@@ -22,6 +22,7 @@ from app.models import Item
 from app.models.enums import ItemType
 from app.repositories.errors import ConflictError, NotFoundError
 from app.repositories.items import ItemRepository
+from app.services.embeddings import EmbeddingService
 from app.services.images import ImageLimits, process_upload
 from app.services.palettes import PaletteExtractionError, PaletteService
 from app.storage import Storage, item_key
@@ -97,6 +98,15 @@ class ItemService:
             PaletteService(self.db, self.storage, self.settings, self.owner_id).extract(
                 item, image_bytes=image.original
             )
+
+        # Similarity indexing is also best-effort and never waits for a model load.
+        try:
+            EmbeddingService(self.db, self.storage, self.owner_id).index_after_upload(
+                item, image.original
+            )
+        except Exception:
+            logger.exception("Unexpected error while indexing item %s", item.id)
+            self.db.rollback()
         return item
 
     def delete(self, item_id: UUID) -> None:

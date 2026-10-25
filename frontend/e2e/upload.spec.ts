@@ -18,8 +18,16 @@ test("upload → view → edit → find in gallery → delete", async ({ page, r
   const itemId = page.url().split("/").pop()!;
 
   try {
-    // Honest status: no palette or tags are invented before analysis exists.
-    await expect(page.getByText("Awaiting analysis")).toBeVisible();
+    // The badge reflects the real stage outcomes the API reports (e.g. "Partly analysed" on a
+    // machine without the image model) rather than a hard-coded state.
+    const status = (await (await request.get(`/api/items/${itemId}`)).json()).processing_status;
+    const label = {
+      queued: "Awaiting analysis",
+      completed: "Analysed",
+      partially_completed: "Partly analysed",
+    }[status as string];
+    expect(label, `unexpected status ${status}`).toBeTruthy();
+    await expect(page.getByText(label!, { exact: true })).toBeVisible();
     await expect(page.getByText("320 × 480px")).toBeVisible();
     const image = page.getByRole("figure").getByRole("img");
     await expect(image).toHaveJSProperty("naturalWidth", 320);

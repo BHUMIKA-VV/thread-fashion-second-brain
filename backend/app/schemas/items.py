@@ -70,6 +70,22 @@ class ItemRead(BaseModel):
         return f"/items/{self.id}/palette.png" if self.palette else None
 
 
+class SimilarItemRead(BaseModel):
+    item: ItemRead
+    similarity: float = Field(
+        description="Cosine similarity of the image embeddings (higher = more alike). "
+        "Useful for ranking; not a calibrated probability."
+    )
+
+
+class SimilarResponse(BaseModel):
+    item_id: UUID
+    model: str = Field(description="Embedding model + preprocessing version that was compared")
+    results: list[SimilarItemRead]
+    compared: int = Field(description="Your other items that were compared")
+    not_indexed: int = Field(description="Your other items that could not be compared")
+
+
 class ItemList(BaseModel):
     items: list[ItemRead]
     total: int

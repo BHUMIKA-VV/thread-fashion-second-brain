@@ -1,5 +1,5 @@
 import { API_BASE, apiErrorFromText, apiFetch } from "@/lib/api-client";
-import type { Item, ItemList, ItemType, ItemUpdate } from "@/types/api";
+import type { Item, ItemList, ItemType, ItemUpdate, SimilarResponse } from "@/types/api";
 
 export type ListItemsParams = { type?: ItemType; limit?: number; offset?: number };
 
@@ -25,6 +25,16 @@ export function updateItem(id: string, changes: ItemUpdate): Promise<Item> {
 export function extractPalette(id: string, colors?: number): Promise<Item> {
   const query = colors ? `?colors=${colors}` : "";
   return apiFetch<Item>(`/items/${encodeURIComponent(id)}/palette${query}`, { method: "POST" });
+}
+
+/** Owner-scoped visual neighbours. Rejects with code "model_unavailable" (503) or "embedding_failed" (422). */
+export function getSimilar(id: string, limit = 12): Promise<SimilarResponse> {
+  return apiFetch<SimilarResponse>(`/items/${encodeURIComponent(id)}/similar?limit=${limit}`);
+}
+
+/** (Re-)index this item's image embedding. */
+export function indexItem(id: string): Promise<Item> {
+  return apiFetch<Item>(`/items/${encodeURIComponent(id)}/embedding`, { method: "POST" });
 }
 
 export function deleteItem(id: string): Promise<void> {

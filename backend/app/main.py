@@ -10,6 +10,7 @@ from app.api.routes import health, items
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.db.session import get_session_factory
+from app.ml import registry
 from app.repositories.users import ensure_user
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,9 @@ def ensure_dev_user() -> None:
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     ensure_dev_user()
+    # Loads the image model in a daemon thread if its weights exist; never downloads and
+    # never delays startup.
+    registry.warm_up_in_background()
     yield
 
 

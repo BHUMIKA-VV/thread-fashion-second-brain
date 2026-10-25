@@ -8,6 +8,7 @@ import { useState, type FormEvent } from "react";
 
 import { ProcessingBadge } from "@/components/processing-badge";
 import { PaletteView } from "@/features/palette/palette-view";
+import { SimilarPieces } from "@/features/similar/similar-pieces";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { ApiError, apiUrl } from "@/lib/api-client";
 import { formatBytes } from "@/lib/upload-rules";
@@ -59,7 +60,10 @@ function ItemView({ item }: { item: Item }) {
 
         <div className="space-y-8">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-ink-muted">{item.type}</p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs uppercase tracking-[0.3em] text-ink-muted">{item.type}</p>
+              <ProcessingBadge status={item.processing_status} />
+            </div>
             <h1 className="mt-2 font-display text-3xl tracking-tight">Saved piece</h1>
             <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
               <dt className="text-ink-muted">Added</dt>
@@ -76,23 +80,12 @@ function ItemView({ item }: { item: Item }) {
           </div>
 
           <PaletteView item={item} />
-
-          <section aria-labelledby="analysis-title" className="rounded-2xl border border-line bg-paper-raised p-5">
-            <div className="flex items-center justify-between gap-4">
-              <h2 id="analysis-title" className="font-display text-xl">
-                Style analysis
-              </h2>
-              <ProcessingBadge status={item.processing_status} />
-            </div>
-            <p className="mt-3 text-sm text-ink-muted">
-              Fashion tags and similar pieces will appear here once style analysis is available.
-            </p>
-          </section>
-
           <EditForm item={item} />
           <DeleteControl item={item} />
         </div>
       </div>
+
+      <SimilarPieces itemId={item.id} />
     </div>
   );
 }

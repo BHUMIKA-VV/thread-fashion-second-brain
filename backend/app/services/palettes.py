@@ -22,6 +22,7 @@ from app.color.palette import extract_palette
 from app.core.config import Settings
 from app.models import Item, Palette
 from app.models.enums import ItemType
+from app.services.status import set_stage
 from app.storage import Storage
 
 logger = logging.getLogger(__name__)
@@ -31,11 +32,6 @@ PALETTE_FAILED_MESSAGE = "The colour palette could not be extracted from this im
 
 class PaletteExtractionError(Exception):
     """Extraction failed; the item has been marked accordingly."""
-
-
-def _set_stage(item: Item, stage: str, outcome: str) -> None:
-    # Assign a new dict: in-place JSONB mutation is not tracked by SQLAlchemy.
-    item.stage_status = {**(item.stage_status or {}), stage: outcome}
 
 
 class PaletteService:
@@ -64,7 +60,7 @@ class PaletteService:
                 )
         except Exception as exc:
             logger.exception("Palette extraction failed for item %s", item.id)
-            _set_stage(item, "palette", "failed")
+            set_stage(item, "palette", "failed")
             item.processing_error = PALETTE_FAILED_MESSAGE
             self.db.commit()
             raise PaletteExtractionError(PALETTE_FAILED_MESSAGE) from exc
@@ -97,7 +93,7 @@ class PaletteService:
                 | {"updated_at": func.clock_timestamp()},
             )
         )
-        _set_stage(item, "palette", "completed")
+        set_stage(item, "palette", "completed")
         if item.processing_error == PALETTE_FAILED_MESSAGE:
             item.processing_error = None
         self.db.commit()

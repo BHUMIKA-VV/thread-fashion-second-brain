@@ -30,7 +30,22 @@ export type Palette = {
   updated_at: string;
 };
 
-export type StageOutcome = "completed" | "failed";
+/** pending = waiting for the image model to load; unavailable = model not installed/off. */
+export type StageOutcome = "completed" | "failed" | "pending" | "unavailable";
+
+export type SimilarItem = {
+  item: Item;
+  /** Cosine similarity of image embeddings: good for ranking, not a probability. */
+  similarity: number;
+};
+
+export type SimilarResponse = {
+  item_id: string;
+  model: string;
+  results: SimilarItem[];
+  compared: number;
+  not_indexed: number;
+};
 
 export type Item = {
   id: string;
@@ -46,7 +61,7 @@ export type Item = {
   file_size: number;
   created_at: string;
   updated_at: string;
-  stage_status: Partial<Record<"thumbnail" | "palette", StageOutcome>>;
+  stage_status: Partial<Record<"thumbnail" | "palette" | "embedding", StageOutcome>>;
   palette: Palette | null;
   /** Relative to the API root; prefix with API_BASE. */
   image_url: string;
@@ -71,6 +86,15 @@ export type ApiErrorBody = {
   error: { code: string; message: string; details: unknown };
 };
 
+export type EmbeddingModelHealth = {
+  state: "disabled" | "not_loaded" | "loading" | "ready" | "unavailable" | "failed";
+  model: string;
+  dimension: number;
+  weights_present: boolean;
+  load_seconds: number | null;
+  detail: string | null;
+};
+
 export type DatabaseHealth = {
   status: "ok" | "unavailable";
   server_version: string | null;
@@ -87,4 +111,5 @@ export type HealthResponse = {
   version: string;
   environment: string;
   database: DatabaseHealth;
+  embedding_model: EmbeddingModelHealth;
 };
