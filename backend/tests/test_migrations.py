@@ -78,3 +78,46 @@ def test_models_and_migrations_do_not_drift(migrated_db_url: str) -> None:
     engine.dispose()
 
     assert diff == []
+
+
+MILESTONE_3_REVISION = "b987c40bd0a0"
+PALETTE_SOURCE_REVISION = "c3d1f2a7e9b4"
+
+
+def test_milestone_3_database_with_data_upgrades_to_head_and_back(empty_db_url: str) -> None:
+    """The realistic path: a database left at the Milestone 3 schema, holding data, upgrades
+    to the palette-source migration; downgrading relabels rows the old constraint rejects."""
+    migrations.upgrade(empty_db_url, MILESTONE_3_REVISION)
+    engine = create_engine(empty_db_url)
+    with engine.begin() as conn:
+        user_id = conn.execute(
+            text("INSERT INTO users (display_name) VALUES ('m3 user') RETURNING id")
+        ).scalar_one()
+        item_id = conn.execute(
+            text(
+                "INSERT INTO items (user_id, original_key, content_hash, mime_type, width,"
+                " height, file_size) VALUES (:u, 'users/x/items/y/original.jpg', :h,"
+                " 'image/jpeg', 10, 10, 10) RETURNING id"
+            ),
+            {"u": user_id, "h": "a" * 64},
+        ).scalar_one()
+        conn.execute(
+            text("INSERT INTO palettes (item_id, colors, source) VALUES (:i, '[]', 'original')"),
+            {"i": item_id},
+        )
+        # Before the migration, 'masked' violates the CHECK constraint.
+        with pytest.raises(Exception, match="ck_palettes_source"), conn.begin_nested():
+            conn.execute(text("UPDATE palettes SET source = 'masked'"))
+
+    migrations.upgrade(empty_db_url)  # -> head
+    with engine.begin() as conn:
+        revision = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
+        assert revision == PALETTE_SOURCE_REVISION == migrations.head_revision()
+        conn.execute(text("UPDATE palettes SET source = 'masked'"))  # now allowed
+        assert conn.execute(text("SELECT count(*) FROM items")).scalar_one() == 1  # data kept
+
+    migrations.downgrade(empty_db_url, MILESTONE_3_REVISION)
+    with engine.begin() as conn:
+        assert conn.execute(text("SELECT source FROM palettes")).scalar_one() == "original"
+    migrations.upgrade(empty_db_url)
+    engine.dispose()
