@@ -94,7 +94,8 @@ def test_upload_creates_record_and_files(
     assert item is not None and item.user_id == owner.id
     assert item.original_key == f"users/{owner.id}/items/{item.id}/original.jpg"
     assert storage.exists(item.original_key) and storage.exists(item.thumbnail_key)
-    assert item.stage_status == {"thumbnail": "completed"}
+    assert item.stage_status == {"thumbnail": "completed", "palette": "completed"}
+    assert body["palette"]["colors"] and body["palette_card_url"] == f"/items/{item.id}/palette.png"
 
 
 def test_user_filename_and_content_type_are_ignored(

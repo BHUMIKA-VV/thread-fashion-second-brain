@@ -42,6 +42,25 @@ def image_bytes(
     return buffer.getvalue()
 
 
+def blocks(
+    size: tuple[int, int],
+    background: tuple[int, ...],
+    regions: list[tuple[tuple[int, int, int, int], tuple[int, ...]]] = (),  # type: ignore[assignment]
+    mode: str = "RGB",
+) -> Image.Image:
+    """Solid colour blocks with exactly known areas: [(box, colour), ...]."""
+    image = Image.new(mode, size, background)
+    for box, color in regions:
+        image.paste(color, box)
+    return image
+
+
+def encode(image: Image.Image, fmt: str = "PNG") -> bytes:
+    buffer = io.BytesIO()
+    image.save(buffer, format=fmt)
+    return buffer.getvalue()
+
+
 def open_image(data: bytes) -> Image.Image:
     image = Image.open(io.BytesIO(data))
     image.load()

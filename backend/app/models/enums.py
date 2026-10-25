@@ -52,8 +52,9 @@ class Harmony(StrEnum):
 
 
 class PaletteSource(StrEnum):
-    CUTOUT = "cutout"
-    ORIGINAL = "original"
+    CUTOUT = "cutout"  # background removed by a segmentation model (later milestone)
+    ORIGINAL = "original"  # every visible pixel of the stored image
+    MASKED = "masked"  # plain backdrop detected from the border and excluded
 
 
 def sql_in(values: type[StrEnum]) -> str:

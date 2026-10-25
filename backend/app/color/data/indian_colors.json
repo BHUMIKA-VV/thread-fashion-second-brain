@@ -1,0 +1,31 @@
+{
+  "source": "Curated for Thread. Approximate reference shades for colour names used in Indian dress and textiles; hex values are representative, not standardised.",
+  "colors": [
+    ["haldi yellow", "#e3a018"],
+    ["kesari saffron", "#ff9933"],
+    ["sindoor red", "#d1291c"],
+    ["kumkum red", "#b0172a"],
+    ["anar red", "#b0213a"],
+    ["gulabi pink", "#e75480"],
+    ["rani pink", "#e0218a"],
+    ["gajri orange", "#ed7a3b"],
+    ["mehendi green", "#6b7c2a"],
+    ["tota green", "#3fb03a"],
+    ["pista green", "#93c572"],
+    ["neel indigo", "#263b5e"],
+    ["morpankhi blue", "#1b6f7a"],
+    ["firozi turquoise", "#30b5b0"],
+    ["aasmani blue", "#8fc1e3"],
+    ["jamuni purple", "#5d2e5c"],
+    ["baingani aubergine", "#4b1d3f"],
+    ["kattha brown", "#6b3a2a"],
+    ["mitti terracotta", "#b5603f"],
+    ["badami almond", "#c19a6b"],
+    ["chandan sandalwood", "#d9b38c"],
+    ["malai cream", "#f3e9d2"],
+    ["zari gold", "#c9a23a"],
+    ["chandi silver", "#c4c4c2"],
+    ["hathi grey", "#7d7a75"],
+    ["kajal black", "#1c1a1a"]
+  ]
+}

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { ProcessingBadge } from "@/components/processing-badge";
+import { PaletteView } from "@/features/palette/palette-view";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { ApiError, apiUrl } from "@/lib/api-client";
 import { formatBytes } from "@/lib/upload-rules";
@@ -74,17 +75,17 @@ function ItemView({ item }: { item: Item }) {
             </dl>
           </div>
 
+          <PaletteView item={item} />
+
           <section aria-labelledby="analysis-title" className="rounded-2xl border border-line bg-paper-raised p-5">
             <div className="flex items-center justify-between gap-4">
               <h2 id="analysis-title" className="font-display text-xl">
-                Analysis
+                Style analysis
               </h2>
               <ProcessingBadge status={item.processing_status} />
             </div>
             <p className="mt-3 text-sm text-ink-muted">
-              {item.processing_status === "queued"
-                ? "Palette, tags and similar pieces will appear here once this image has been analysed."
-                : item.processing_error ?? "Analysis results will appear here."}
+              Fashion tags and similar pieces will appear here once style analysis is available.
             </p>
           </section>
 

@@ -6,15 +6,24 @@ from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from app.api.deps import CurrentUserId, get_storage
+from app.color.card import render_palette_card
 from app.core.config import Settings, get_settings
 from app.db.session import get_db
 from app.models.enums import ItemType
+from app.repositories.errors import NotFoundError
 from app.schemas.items import ItemList, ItemRead, ItemUpdate
 from app.services.images import ImageValidationError
 from app.services.items import ItemService
+from app.services.palettes import PaletteService
 from app.storage import Storage
 
 router = APIRouter(prefix="/items", tags=["items"])
+
+PRIVATE_FILE_HEADERS = {
+    "Cache-Control": "private, max-age=3600",
+    "X-Content-Type-Options": "nosniff",
+    "Content-Security-Policy": "default-src 'none'; sandbox",
+}
 
 # Multipart framing (boundaries, headers, the "type" field) on top of the file itself.
 MULTIPART_OVERHEAD = 64 * 1024
@@ -138,12 +147,42 @@ def get_item_image(
     """Serve a stored image after an ownership check. Only named variants exist: there is no
     way to address an arbitrary storage path."""
     data, mime_type = service.read_image(item_id, variant)
+    return Response(content=data, media_type=mime_type, headers=PRIVATE_FILE_HEADERS)
+
+
+@router.post(
+    "/{item_id}/palette",
+    response_model=ItemRead,
+    responses={422: {"description": "Extraction failed (code palette_failed); nothing invented"}},
+)
+def extract_item_palette(
+    item_id: UUID,
+    service: Service,
+    colors: Annotated[int | None, Query(ge=1, le=12, description="Colours to extract")] = None,
+) -> ItemRead:
+    """(Re-)extract the colour palette from the stored image. Replaces any earlier palette."""
+    item = service.items.get_or_raise(item_id)
+    PaletteService(service.db, service.storage, service.settings, service.owner_id).extract(
+        item, n_colors=colors
+    )
+    return ItemRead.model_validate(item)
+
+
+@router.get(
+    "/{item_id}/palette.png",
+    response_class=Response,
+    responses={200: {"content": {"image/png": {}}}, 404: {"description": "No palette yet"}},
+)
+def get_palette_card(item_id: UUID, service: Service) -> Response:
+    """The item's palette as a downloadable 1200x675 PNG card."""
+    item = service.items.get_or_raise(item_id)
+    if item.palette is None or not item.palette.colors:
+        raise NotFoundError("This item has no palette yet.")
     return Response(
-        content=data,
-        media_type=mime_type,
+        content=render_palette_card(item.palette.colors),
+        media_type="image/png",
         headers={
-            "Cache-Control": "private, max-age=3600",
-            "X-Content-Type-Options": "nosniff",
-            "Content-Security-Policy": "default-src 'none'; sandbox",
+            **PRIVATE_FILE_HEADERS,
+            "Content-Disposition": f'attachment; filename="thread-palette-{item.id}.png"',
         },
     )

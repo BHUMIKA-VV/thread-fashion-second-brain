@@ -21,6 +21,12 @@ export function updateItem(id: string, changes: ItemUpdate): Promise<Item> {
   });
 }
 
+/** (Re-)extract the palette from the stored image. Rejects with code "palette_failed" on failure. */
+export function extractPalette(id: string, colors?: number): Promise<Item> {
+  const query = colors ? `?colors=${colors}` : "";
+  return apiFetch<Item>(`/items/${encodeURIComponent(id)}/palette${query}`, { method: "POST" });
+}
+
 export function deleteItem(id: string): Promise<void> {
   return apiFetch<void>(`/items/${encodeURIComponent(id)}`, { method: "DELETE" });
 }

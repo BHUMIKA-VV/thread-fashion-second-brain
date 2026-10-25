@@ -9,6 +9,7 @@ Consistency rules (the database is the source of truth):
   leaves an unreferenced file, never a row whose image is gone.
 """
 
+import contextlib
 import hashlib
 import logging
 import uuid
@@ -22,6 +23,7 @@ from app.models.enums import ItemType
 from app.repositories.errors import ConflictError, NotFoundError
 from app.repositories.items import ItemRepository
 from app.services.images import ImageLimits, process_upload
+from app.services.palettes import PaletteExtractionError, PaletteService
 from app.storage import Storage, item_key
 from app.storage.base import ObjectNotFoundError
 
@@ -78,7 +80,8 @@ class ItemService:
                 width=image.width,
                 height=image.height,
                 file_size=len(image.original),
-                # Analysis is a later milestone: the item waits honestly in "queued".
+                # Tags and embeddings come in later milestones, so the item stays "queued";
+                # per-stage outcomes are tracked in stage_status.
                 stage_status={"thumbnail": "completed"},
             )
             self.db.commit()
@@ -87,6 +90,13 @@ class ItemService:
             self._remove_files(written)
             raise
         logger.info("Stored item %s (%s, %dx%d)", item.id, image.format, image.width, image.height)
+
+        # The upload is already safely stored; palette extraction is best-effort on top of it.
+        # A failure is recorded on the item (stage_status + processing_error); retry via the API.
+        with contextlib.suppress(PaletteExtractionError):
+            PaletteService(self.db, self.storage, self.settings, self.owner_id).extract(
+                item, image_bytes=image.original
+            )
         return item
 
     def delete(self, item_id: UUID) -> None:

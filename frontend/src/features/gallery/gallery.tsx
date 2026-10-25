@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { ProcessingBadge } from "@/components/processing-badge";
+import { PaletteStrip } from "@/features/palette/palette-strip";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { apiUrl } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
@@ -143,6 +144,7 @@ function GalleryCard({ item, index }: { item: Item; index: number }) {
             className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
         </div>
+        {item.palette && <PaletteStrip colors={item.palette.colors} />}
         <div className="flex items-center justify-between gap-2 px-3 py-2.5">
           <span className="text-xs uppercase tracking-[0.18em] text-ink-muted">{item.type}</span>
           <ProcessingBadge status={item.processing_status} />

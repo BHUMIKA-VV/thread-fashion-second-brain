@@ -4,11 +4,12 @@ A personal visual library for fashion: upload outfits, garments and fabric swatc
 extracts their palette, tags style and textile craft (including Indian traditions such as ikat,
 bandhani and chikankari) and finds similar pieces in your own library.
 
-> **Status: Milestone 3 (Upload and storage) complete.** You can upload images (drag and drop,
-> file picker or phone camera), browse them in a gallery, edit their details and delete them.
-> Images are validated, stored privately and marked "Awaiting analysis". Palette extraction,
-> tagging and similarity search arrive in Milestones 4–6 — no analysis results are shown or
-> invented before then. This README documents only what exists today.
+> **Status: Milestone 4 (Colour palettes) complete.** You can upload images (drag and drop,
+> file picker or phone camera), browse them in a gallery, edit and delete them, and every upload
+> gets a real colour palette — dominant colours with hex/RGB, human names (including Indian
+> colour names such as haldi yellow and sindoor red), percentages, a heuristic harmony label and
+> a downloadable palette card. Fashion tags and similarity search arrive in Milestones 5–6; no
+> results are shown or invented before then. This README documents only what exists today.
 
 ## Architecture (current)
 
@@ -28,12 +29,13 @@ configuration and, later, private images can stay behind the API.
 ```
 backend/            FastAPI app (Python 3.11)
   app/api/          routes, dependencies (current user), structured error handlers
+  app/color/        LAB maths, palette extraction, naming, harmony, PNG card (+ data/ name lists)
   app/core/         settings (THREAD_ env prefix) and logging
   app/db/           declarative base, engine/session, Alembic helpers
   app/models/       SQLAlchemy 2 models (users, items, palettes, tags, embeddings, collections)
   app/repositories/ owner-scoped data access
   app/schemas/      Pydantic request/response models
-  app/services/     image validation (images.py) and upload/delete use-cases (items.py)
+  app/services/     image validation, upload/delete use-cases, palette extraction for items
   app/storage/      storage interface (base.py) and local filesystem backend (local.py)
   alembic.ini       Alembic config (no credentials; URL comes from THREAD_DATABASE_URL)
   tests/            pytest suite
@@ -115,6 +117,7 @@ Open <http://127.0.0.1:3100>. The **System** page shows live API, PostgreSQL and
 | `THREAD_DEV_USER_ID`, `THREAD_DEV_USER_NAME` | backend | optional; the local development owner (defaults are built in) |
 | `THREAD_STORAGE_DIR` | backend | where uploaded files are stored (default `storage/`) |
 | `THREAD_MAX_UPLOAD_BYTES`, `THREAD_MAX_IMAGE_SIDE`, `THREAD_MIN_IMAGE_SIDE`, `THREAD_MAX_IMAGE_PIXELS`, `THREAD_THUMBNAIL_SIDE` | backend (+ proxy limit) | upload limits; defaults 15 MB, 8000 px, 64 px, 40 MP, 640 px |
+| `THREAD_PALETTE_SIZE` | backend | colours to extract per image, 1–12 (default 6) |
 | `THREAD_API_URL` | frontend (server side) | where the `/api` proxy forwards; default `http://127.0.0.1:8010` |
 
 Backend settings are read **only** with the `THREAD_` prefix. Machine-wide variables from other
@@ -234,6 +237,71 @@ breaks larger uploads. `next.config.ts` raises `experimental.proxyClientMaxBodyS
 `THREAD_MAX_UPLOAD_BYTES`, so slightly-too-large files still reach FastAPI and get a proper 413.
 The upload page also rejects files over 15 MB before sending them.
 
+## Colour palettes
+
+Every upload gets a palette right after it is safely stored (a quick in-process step, typically
+well under a second; it will become a stage of the background worker in a later milestone). If
+extraction fails the upload still succeeds, the item records `stage_status.palette = "failed"`
+with a readable `processing_error`, and **no palette is shown** — colours are never guessed.
+
+| Method & path | Purpose |
+|---|---|
+| `POST /items/{id}/palette?colors=1..12` | (Re-)extract from the stored image; replaces the earlier palette (upsert). 422 `palette_failed` on failure — a palette extracted earlier is kept. |
+| `GET /items/{id}/palette.png` | 1200×675 PNG palette card (download). 404 if there is no palette. |
+
+Items include `palette` (`colors[]` with `hex`, `rgb`, `name`, `family`, `percentage`; `harmony`;
+`source`), `stage_status` and `palette_card_url`.
+
+### How LAB colour clustering works
+
+1. **Downscale** to at most 256 px with *nearest-neighbour* sampling. Averaging filters would
+   invent blended in-between colours along edges, which would appear as fake swatches.
+2. **Choose pixels.** Transparent pixels (alpha < 128) are ignored. For photos (not fabric
+   swatches) a cheap backdrop test runs: if ≥ 85% of the border ring is one colour (CIEDE2000 < 8
+   from its median), pixels clearly different from it (ΔE ≥ 12) are the subject. The mask is only
+   used when the subject covers 5–95% of the image; otherwise the whole image is used. The API
+   reports this as `source: "masked"` or `"original"`. (Model-based background removal is planned
+   for a later milestone.)
+3. **Convert sRGB → CIELAB** (D65). In LAB, equal distances look roughly equally different, so
+   clusters group colours the way people see them. Up to 20 000 pixels are sampled with a fixed seed.
+4. **K-means** (scikit-learn, k = `THREAD_PALETTE_SIZE`, default 6, fixed `random_state`), capped
+   at the number of distinct colours so tiny or flat images work.
+5. **Merge** clusters closer than CIEDE2000 6 (one colour, not two), and **drop slivers** under 1%
+   (edge noise, specks).
+6. **Percentages** from cluster sizes, rounded with the largest-remainder method so they sum to
+   exactly 100.0.
+7. **Convert each LAB centroid back to sRGB** (clipped to the displayable gamut, rounded). The hex,
+   RGB and stored LAB all describe that final sRGB colour, so the swatch on screen and the hex a
+   user copies are identical.
+
+Results are deterministic: the same image always gives the same palette.
+
+### Names, families and harmony
+
+- **Names** are the nearest reference colour by CIEDE2000 among the
+  [xkcd colour survey](https://xkcd.com/color/rgb.txt) (949 names, CC0, stored in
+  `backend/app/color/data/xkcd_colors.json`) and a curated Indian vocabulary
+  (`indian_colors.json`: haldi yellow, sindoor red, gulabi pink, mehendi green, neel indigo, rani
+  pink, firozi turquoise …). The Indian hex values are representative shades chosen for this
+  project, not a formal standard. Ties go to the first entry, so naming is deterministic.
+  Naming lives in its own module (`naming.py`) so it can be improved without touching extraction.
+- **Families** (red, orange, yellow, green, teal, blue, purple, pink, brown, beige, white, grey,
+  black) come from LCh lightness/chroma/hue ranges calibrated against reference colours, and are
+  stored in `palettes.color_families` (GIN-indexed) for colour filtering later.
+- **Harmony is a heuristic**, labelled as such in the UI. Using hues of clearly coloured swatches
+  (chroma ≥ 12, ≥ 5% share) in perceptual LCh space: *neutral* (none), *monochromatic* (within
+  30°), *analogous* (within 75°), *complementary* (two tight groups 150–210° apart), else *mixed*.
+  Note LCh is not the painter's RYB wheel: e.g. orange and a saturated royal blue are not opposite
+  in LCh, so that pair is labelled *mixed*.
+
+### Limitations
+
+Palettes describe the **photo**, not the fabric: lighting colour, camera white balance, shadows,
+highlights, sheen and JPEG compression all shift colours (a re-saved JPEG can move a hex by a unit
+or two). Percentages are shares of the analysed pixels, so a photo's background counts unless it
+is a plain backdrop the mask can detect. Busy backgrounds are not removed yet. Treat the output as
+a faithful summary of the image, not a lab measurement of the garment.
+
 ## Health check
 
 `GET /health` (or `/api/health` through the frontend) returns:
@@ -261,8 +329,10 @@ npm run lint
 npm run typecheck
 npm test                       # Vitest unit/component tests
 npx playwright install chromium   # once
-npm run test:e2e               # Playwright; needs Docker Postgres running, starts/reuses both servers.
-                               # Upload tests generate unique images in memory and delete what they create.
+npm run test:e2e               # Playwright; needs Docker Postgres running. Reuses the API on :8010
+                               # (or starts it) and always builds + starts a production frontend on
+                               # :3101 (next dev was too slow under parallel browsers and made tests
+                               # flaky). Tests generate unique images in memory and delete what they create.
 npm run build
 ```
 
@@ -293,6 +363,6 @@ They are skipped with a clear reason if Postgres is not reachable.
 
 ## Roadmap
 
-Milestones 4–8: palette extraction, OpenCLIP
+Milestones 5–8: palette extraction, OpenCLIP
 embeddings and tags, pgvector similarity, gallery and collections, end-to-end quality and full
 documentation.

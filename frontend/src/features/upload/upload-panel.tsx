@@ -7,6 +7,7 @@ import { useId, useRef, useState, type DragEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
+import { PaletteStrip } from "@/features/palette/palette-strip";
 import { cn } from "@/lib/cn";
 import { ACCEPT_ATTRIBUTE, formatBytes } from "@/lib/upload-rules";
 import { ITEM_TYPES, type ItemType } from "@/types/api";
@@ -23,7 +24,7 @@ const TYPE_LABELS: Record<ItemType, string> = {
 const STATUS: Record<UploadEntry["status"], { label: string; tone: StatusTone }> = {
   waiting: { label: "Waiting", tone: "idle" },
   uploading: { label: "Uploading", tone: "neutral" },
-  saving: { label: "Checking image", tone: "neutral" },
+  saving: { label: "Checking image & extracting colours", tone: "neutral" },
   done: { label: "Saved", tone: "success" },
   duplicate: { label: "Already saved", tone: "warning" },
   error: { label: "Not uploaded", tone: "danger" },
@@ -198,6 +199,9 @@ function QueueRow({
             <span className="text-xs text-danger">{entry.error}</span>
           )}
         </div>
+        {entry.status === "done" && entry.item?.palette && (
+          <PaletteStrip colors={entry.item.palette.colors} className="mt-2 max-w-60 rounded-full" />
+        )}
         {(entry.status === "uploading" || entry.status === "saving") && (
           <div
             role="progressbar"

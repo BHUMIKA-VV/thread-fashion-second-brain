@@ -30,6 +30,21 @@ describe("Gallery", () => {
     expect(screen.getByText("1 piece")).toBeInTheDocument();
   });
 
+  it("adds a palette strip when the item has a palette", async () => {
+    const item = makeItem({
+      palette: {
+        colors: [{ hex: "#d1291c", rgb: [209, 41, 28], name: "sindoor red", family: "red", percentage: 100 }],
+        harmony: "monochromatic",
+        source: "masked",
+        updated_at: "2026-10-24T10:00:00Z",
+      },
+    });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(listResponse([item]));
+    renderWithQuery(<Gallery />);
+
+    expect(await screen.findByRole("img", { name: "Palette: sindoor red" })).toBeInTheDocument();
+  });
+
   it("filters by type through the query string", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async () => listResponse([]));
     renderWithQuery(<Gallery />);

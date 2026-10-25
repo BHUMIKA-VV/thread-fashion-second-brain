@@ -4,12 +4,31 @@ from uuid import UUID
 
 from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, UrlConstraints, computed_field
 
-from app.models.enums import ItemType, ProcessingStatus
+from app.models.enums import Harmony, ItemType, PaletteSource, ProcessingStatus
 
 # http(s) only: rejects javascript:, data:, file: and friends.
 SourceUrl = Annotated[
     AnyHttpUrl, UrlConstraints(max_length=2048, allowed_schemes=["http", "https"])
 ]
+
+
+class PaletteColorRead(BaseModel):
+    hex: str = Field(description="sRGB hex of the displayed swatch, e.g. #e3a018")
+    rgb: tuple[int, int, int]
+    name: str = Field(description="Nearest name from the xkcd survey or the Indian vocabulary")
+    family: str = Field(description="Coarse family used for filtering, e.g. 'blue', 'beige'")
+    percentage: float = Field(description="Approximate share of the analysed pixels")
+
+
+class PaletteRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    colors: list[PaletteColorRead]
+    harmony: Harmony | None = Field(description="Heuristic label, not a measurement")
+    source: PaletteSource = Field(
+        description="original = whole image; masked = plain backdrop excluded"
+    )
+    updated_at: datetime
 
 
 class ItemRead(BaseModel):
@@ -30,6 +49,9 @@ class ItemRead(BaseModel):
     file_size: int
     created_at: datetime
     updated_at: datetime
+    # Per-stage outcome, e.g. {"thumbnail": "completed", "palette": "failed"}.
+    stage_status: dict[str, str]
+    palette: PaletteRead | None
 
     # Paths relative to the API root (the frontend prefixes its /api proxy).
     @computed_field  # type: ignore[prop-decorator]
@@ -41,6 +63,11 @@ class ItemRead(BaseModel):
     @property
     def thumbnail_url(self) -> str:
         return f"/items/{self.id}/image?variant=thumbnail"
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def palette_card_url(self) -> str | None:
+        return f"/items/{self.id}/palette.png" if self.palette else None
 
 
 class ItemList(BaseModel):

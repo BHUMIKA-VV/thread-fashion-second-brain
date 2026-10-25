@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models import Item
 from app.repositories.errors import ConflictError, NotFoundError
@@ -61,6 +61,7 @@ class ItemRepository:
     ) -> Sequence[Item]:
         return self.db.scalars(
             self._filtered(item_type)
+            .options(selectinload(Item.palette))  # one extra query, not one per item
             .order_by(Item.created_at.desc(), Item.id)
             .limit(limit)
             .offset(offset)

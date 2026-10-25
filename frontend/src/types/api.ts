@@ -10,6 +10,28 @@ export type ProcessingStatus =
   | "partially_completed"
   | "failed";
 
+export type PaletteColor = {
+  hex: string;
+  rgb: [number, number, number];
+  name: string;
+  family: string;
+  /** Approximate share of the analysed pixels; all colours sum to 100. */
+  percentage: number;
+};
+
+export type Harmony = "monochromatic" | "analogous" | "complementary" | "neutral" | "mixed";
+
+export type Palette = {
+  colors: PaletteColor[];
+  /** Heuristic label, not a measurement. */
+  harmony: Harmony | null;
+  /** original = whole image; masked = plain backdrop excluded; cutout = background removed. */
+  source: "original" | "masked" | "cutout";
+  updated_at: string;
+};
+
+export type StageOutcome = "completed" | "failed";
+
 export type Item = {
   id: string;
   type: ItemType;
@@ -24,9 +46,12 @@ export type Item = {
   file_size: number;
   created_at: string;
   updated_at: string;
+  stage_status: Partial<Record<"thumbnail" | "palette", StageOutcome>>;
+  palette: Palette | null;
   /** Relative to the API root; prefix with API_BASE. */
   image_url: string;
   thumbnail_url: string;
+  palette_card_url: string | null;
 };
 
 export type ItemList = {

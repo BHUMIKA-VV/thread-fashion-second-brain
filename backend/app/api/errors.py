@@ -9,6 +9,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.repositories.errors import ConflictError, NotFoundError
 from app.services.images import ImageValidationError
+from app.services.palettes import PaletteExtractionError
 
 IMAGE_ERROR_STATUS = {
     "too_large": status.HTTP_413_CONTENT_TOO_LARGE,
@@ -55,6 +56,13 @@ def register_error_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
             content=error_body("conflict", str(exc), exc.details),
+        )
+
+    @app.exception_handler(PaletteExtractionError)
+    async def palette_failed(_: Request, exc: PaletteExtractionError) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            content=error_body("palette_failed", str(exc)),
         )
 
     @app.exception_handler(ImageValidationError)

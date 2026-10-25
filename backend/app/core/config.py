@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     max_image_pixels: int = Field(default=40_000_000, gt=0)
     thumbnail_side: int = Field(default=640, gt=0)
 
+    # Number of dominant colours to extract (before near-duplicates are merged).
+    palette_size: int = Field(default=6, ge=1, le=12)
+
     # Read by the Next.js proxy; declared here so the shared .env is self-documenting.
     api_url: str = "http://127.0.0.1:8010"
 

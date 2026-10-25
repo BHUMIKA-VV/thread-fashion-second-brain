@@ -25,8 +25,11 @@ export function makeItem(overrides: Partial<Item> = {}): Item {
     file_size: 120_000,
     created_at: "2026-10-24T10:00:00Z",
     updated_at: "2026-10-24T10:00:00Z",
+    stage_status: { thumbnail: "completed" },
+    palette: null,
     image_url: `/items/${id}/image?variant=original`,
     thumbnail_url: `/items/${id}/image?variant=thumbnail`,
+    palette_card_url: null,
     ...overrides,
   };
 }
