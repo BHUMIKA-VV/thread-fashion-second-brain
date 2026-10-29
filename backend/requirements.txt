@@ -17,3 +17,7 @@ torchvision==0.29.1
 open_clip_torch==3.3.0
 # Deep analysis (Milestone 7b): Claude vision. Optional at runtime; unused without a key.
 anthropic==2.3.0
+# Accounts (Milestone 9a): argon2id password hashes. Email goes through httpx (already a
+# dependency of anthropic), pinned here because the app now imports it directly.
+argon2-cffi==25.1.0
+httpx==0.28.1

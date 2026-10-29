@@ -18,6 +18,8 @@ function routes(item: () => Item) {
     [`GET /api/items/${id}/similar`]: () =>
       Response.json({ error: { code: "model_loading", message: "Loading.", details: null } }, { status: 503 }),
     "GET /api/tags/vocabulary": () => Response.json({ version: "v", categories: [] }),
+    "GET /api/auth/session": () =>
+      Response.json({ id: "u1", display_name: "Owner", email: "o@example.com", email_verified: true, is_owner: true, has_password: true }),
     "GET /api/deep-analysis/status": () =>
       Response.json({ available: false, reason: "not_configured", provider: null, model: null, effort: null, daily_limit: 25, runs_today: 0, sent: [], not_sent: [] }),
     [`GET /api/items/${id}`]: () => Response.json(item()),

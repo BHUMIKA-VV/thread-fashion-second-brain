@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, File, Form, Query, Request, Response, Up
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
-from app.api.deps import CurrentUserId, get_storage
+from app.api.deps import CurrentUserId, VerifiedUser, get_storage
 from app.color.card import render_palette_card
 from app.core.config import Settings, get_settings
 from app.db.session import get_db
@@ -91,12 +91,16 @@ async def read_limited(upload: UploadFile, max_bytes: int) -> bytes:
 async def upload_item(
     request: Request,
     response: Response,
+    user: VerifiedUser,
     service: Service,
     settings: Annotated[Settings, Depends(get_settings)],
     file: Annotated[UploadFile, File(description="JPEG, PNG or WebP image")],
     type: Annotated[ItemType, Form()] = ItemType.OTHER,  # noqa: A002 (API field name)
 ) -> ItemRead:
-    """Upload one image. Returns at once; analysis status starts as `queued`."""
+    """Upload one image. Returns at once; analysis status starts as `queued`.
+
+    Needs a verified email address, and fits within the account's quota (the owner is
+    exempt)."""
     declared = request.headers.get("content-length")
     if (
         declared
@@ -107,6 +111,8 @@ async def upload_item(
             "too_large", f"The file is larger than {settings.max_upload_bytes // (1024 * 1024)} MB."
         )
     data = await read_limited(file, settings.max_upload_bytes)
+    if not user.is_owner:
+        await run_in_threadpool(service.check_quota, len(data))
     # Decoding, re-encoding and the DB write are blocking: keep them off the event loop.
     item = await run_in_threadpool(service.upload, data, type)
     response.headers["Location"] = f"/items/{item.id}"

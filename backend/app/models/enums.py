@@ -63,6 +63,11 @@ class PaletteSource(StrEnum):
     MASKED = "masked"  # plain backdrop detected from the border and excluded
 
 
+class TokenPurpose(StrEnum):
+    VERIFY_EMAIL = "verify_email"
+    RESET_PASSWORD = "reset_password"  # noqa: S105 (a token purpose, not a password)
+
+
 def sql_in(values: type[StrEnum]) -> str:
     """Render "'a', 'b'" for use inside a CHECK constraint."""
     return ", ".join(f"'{v.value}'" for v in values)

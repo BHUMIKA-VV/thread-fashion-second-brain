@@ -1,11 +1,9 @@
 """Repositories always filter by owner; other users' rows behave as if they do not exist."""
 
 import pytest
-from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user_id
 from app.core.config import Settings
 from app.models import Item, User
 from app.repositories.collections import CollectionRepository
@@ -158,19 +156,3 @@ def test_ensure_user_is_idempotent(db: Session) -> None:
     ensure_user(db, dev_id, "Local developer")
 
     assert db.scalar(select(func.count()).select_from(User).where(User.id == dev_id)) == 1
-
-
-def test_dev_user_is_used_outside_production() -> None:
-    settings = Settings(_env_file=None, database_url="postgresql+psycopg://unused/db")  # type: ignore[call-arg]
-
-    assert get_current_user_id(settings) == settings.dev_user_id
-
-
-def test_dev_user_is_refused_in_production() -> None:
-    settings = Settings(  # type: ignore[call-arg]
-        _env_file=None, database_url="postgresql+psycopg://unused/db", app_env="production"
-    )
-
-    with pytest.raises(HTTPException) as excinfo:
-        get_current_user_id(settings)
-    assert excinfo.value.status_code == 503

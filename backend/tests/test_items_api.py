@@ -8,13 +8,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user_id
+from app.api.deps import get_current_user
 from app.main import app
 from app.models import Item, User
 from app.repositories.items import ItemRepository
 from app.storage import LocalStorage
 from app.storage.base import StorageError
-from tests.conftest import make_item, upload
+from tests.conftest import as_user, make_item, upload
 from tests.images import image_bytes, open_image
 
 pytestmark = pytest.mark.db
@@ -299,7 +299,7 @@ def test_same_image_may_belong_to_two_users(
     data = image_bytes()
     upload(api, data)
 
-    app.dependency_overrides[get_current_user_id] = lambda: stranger.id
+    app.dependency_overrides[get_current_user] = lambda: as_user(stranger, owner=False)
     response = upload(api, data)
 
     assert response.status_code == 201

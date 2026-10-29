@@ -1,11 +1,14 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Suspense } from "react";
 
 import { Logo } from "@/components/brand/logo";
+import { useResetForAccount, useSession } from "@/features/auth/use-session";
 import { cn } from "@/lib/cn";
+import { signOut } from "@/services/auth";
 
 // The main sections. Overview and System are in the footer, to keep this compact.
 export const NAV = [
@@ -29,13 +32,16 @@ export function SiteHeader() {
           <Logo height={42} label="" priority className="hidden sm:block" />
           <Logo height={32} label="" priority className="sm:hidden" />
         </Link>
-        <nav aria-label="Main">
-          {/* The pathname is runtime data on dynamic routes, so the active state streams in;
-              the fallback renders the same links without highlighting. */}
-          <Suspense fallback={<NavLinks pathname={null} />}>
-            <ActiveNavLinks />
-          </Suspense>
-        </nav>
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-1">
+          <nav aria-label="Main">
+            {/* The pathname is runtime data on dynamic routes, so the active state streams in;
+                the fallback renders the same links without highlighting. */}
+            <Suspense fallback={<NavLinks pathname={null} />}>
+              <ActiveNavLinks />
+            </Suspense>
+          </nav>
+          <AccountLinks />
+        </div>
       </div>
     </header>
   );
@@ -66,5 +72,51 @@ function NavLinks({ pathname }: { pathname: string | null }) {
         );
       })}
     </ul>
+  );
+}
+
+const quiet = "text-[13px] tracking-[0.06em] text-ink-muted transition-colors hover:text-ink sm:text-sm";
+
+/** Who is signed in, and the way in or out. */
+function AccountLinks() {
+  const session = useSession();
+  const router = useRouter();
+  const resetForAccount = useResetForAccount();
+  const out = useMutation({
+    mutationFn: signOut,
+    onSuccess: () => {
+      resetForAccount(null);
+      router.push("/");
+    },
+  });
+
+  // Same width while loading, so the header doesn't jump.
+  if (session.isPending) return <span aria-hidden className="inline-block h-5 w-28" />;
+  if (!session.data) {
+    return (
+      <div className="flex items-center gap-4 border-l border-line pl-6">
+        <Link href="/login" className={quiet}>
+          Sign in
+        </Link>
+        <Link
+          href="/signup"
+          className="rounded-[2px] bg-ink px-3 py-1.5 text-[13px] tracking-[0.04em] text-paper-raised transition-colors hover:bg-indigo"
+        >
+          Create account
+        </Link>
+      </div>
+    );
+  }
+  const firstName = session.data.display_name.split(/\s+/)[0] || "Account";
+  return (
+    <div className="flex items-center gap-4 border-l border-line pl-6">
+      <Link href="/account" className={cn(quiet, "max-w-32 truncate")}>
+        <span className="sr-only">Your account: </span>
+        {firstName}
+      </Link>
+      <button type="button" onClick={() => out.mutate()} disabled={out.isPending} className={quiet}>
+        {out.isPending ? "Signing out…" : "Sign out"}
+      </button>
+    </div>
   );
 }

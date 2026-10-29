@@ -20,6 +20,8 @@ APP_TABLES = {
     "collection_items",
     "deep_analyses",
     "deep_analysis_usage",
+    "sessions",
+    "auth_tokens",
 }
 
 
@@ -188,5 +190,69 @@ def test_milestone_7_database_with_data_upgrades_to_deep_analysis_and_back(
     assert not {"deep_analyses", "deep_analysis_usage"} & table_names(empty_db_url)
     with engine.begin() as conn:
         assert conn.execute(text("SELECT ai_description FROM items")).scalar_one() == "kept"
+    migrations.upgrade(empty_db_url)
+    engine.dispose()
+
+
+DEEP_ANALYSIS_REVISION = "d7a1e3b5c9f2"
+
+
+def test_deep_analysis_database_with_data_upgrades_to_accounts_and_back(
+    empty_db_url: str,
+) -> None:
+    """Milestone 9a adds nullable columns and two tables: the development user and its items
+    survive both ways, emails are unique ignoring case, there is at most one owner, and
+    sessions and tokens go with their user."""
+    migrations.upgrade(empty_db_url, DEEP_ANALYSIS_REVISION)
+    engine = create_engine(empty_db_url)
+    with engine.begin() as conn:
+        dev = conn.execute(
+            text("INSERT INTO users (display_name) VALUES ('Local developer') RETURNING id")
+        ).scalar_one()
+        conn.execute(
+            text(
+                "INSERT INTO items (user_id, original_key, content_hash, mime_type, width,"
+                " height, file_size) VALUES (:u, 'a/original.jpg', :h, 'image/jpeg', 10, 10, 10)"
+            ),
+            {"u": dev, "h": "a" * 64},
+        )
+
+    migrations.upgrade(empty_db_url)  # -> head
+    new_user = text(
+        "INSERT INTO users (display_name, email, is_owner) VALUES ('x', :e, :o) RETURNING id"
+    )
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("SELECT email, password_hash, is_owner FROM users WHERE id = :u"), {"u": dev}
+        ).one()
+        assert tuple(row) == (None, None, False)
+        assert conn.execute(text("SELECT count(*) FROM items")).scalar_one() == 1
+        owner = conn.execute(new_user, {"e": "Me@Example.com", "o": True}).scalar_one()
+        with pytest.raises(Exception, match="uq_users_lower_email"), conn.begin_nested():
+            conn.execute(new_user, {"e": "me@example.COM", "o": False})
+        with pytest.raises(Exception, match="uq_users_single_owner"), conn.begin_nested():
+            conn.execute(new_user, {"e": "second@example.com", "o": True})
+        conn.execute(
+            text(
+                "INSERT INTO sessions (user_id, token_hash, expires_at)"
+                " VALUES (:u, :t, now() + interval '1 day')"
+            ),
+            {"u": owner, "t": b"s" * 32},
+        )
+        token = text(
+            "INSERT INTO auth_tokens (user_id, purpose, token_hash, expires_at)"
+            " VALUES (:u, :p, :t, now())"
+        )
+        conn.execute(token, {"u": owner, "p": "verify_email", "t": b"v" * 32})
+        with pytest.raises(Exception, match="ck_auth_tokens_purpose"), conn.begin_nested():
+            conn.execute(token, {"u": owner, "p": "login", "t": b"w" * 32})
+        conn.execute(text("DELETE FROM users WHERE id = :u"), {"u": owner})
+        assert conn.execute(text("SELECT count(*) FROM sessions")).scalar_one() == 0
+        assert conn.execute(text("SELECT count(*) FROM auth_tokens")).scalar_one() == 0
+
+    migrations.downgrade(empty_db_url, DEEP_ANALYSIS_REVISION)
+    assert not {"sessions", "auth_tokens"} & table_names(empty_db_url)
+    with engine.begin() as conn:
+        assert conn.execute(text("SELECT count(*) FROM items")).scalar_one() == 1
     migrations.upgrade(empty_db_url)
     engine.dispose()

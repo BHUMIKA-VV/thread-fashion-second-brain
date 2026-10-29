@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { PAGE, PageHeader } from "@/components/page-header";
 import { ButtonLink } from "@/components/ui/button";
+import { AuthGate } from "@/features/auth/auth-gate";
 import { Gallery } from "@/features/gallery/gallery";
 
 export const metadata: Metadata = { title: "Archive" };
@@ -20,7 +21,9 @@ export default function GalleryPage() {
         {/* The gallery reads its filters from the URL (useSearchParams), so Next requires a
             Suspense boundary for the prerendered page shell. */}
         <Suspense fallback={<div role="status" className="h-64 animate-pulse bg-ink/[0.05]" aria-label="Loading gallery" />}>
-          <Gallery />
+          <AuthGate>
+            <Gallery />
+          </AuthGate>
         </Suspense>
       </div>
     </div>

@@ -19,12 +19,13 @@ from sqlalchemy import Connection, create_engine, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.api.deps import get_current_user_id, get_storage
+from app.api.deps import get_current_user, get_storage
 from app.core.config import get_settings
 from app.db.session import get_db
 from app.main import app
 from app.models import Embedding, Item, User
 from app.services import tags as tags_module
+from app.services.auth import Principal
 from app.services.vanished import ItemDeleted, unless_deleted
 from app.storage import LocalStorage
 from tests.conftest import make_item
@@ -66,7 +67,7 @@ def committed(
     app.dependency_overrides.update(
         {
             get_db: request_session,
-            get_current_user_id: lambda: owner_id,
+            get_current_user: lambda: Principal(owner_id, is_owner=True, email_verified=True),
             get_storage: lambda: storage,
             get_settings: lambda: get_settings(),
         }

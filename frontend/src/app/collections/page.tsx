@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { PAGE, PageHeader } from "@/components/page-header";
+import { AuthGate } from "@/features/auth/auth-gate";
 import { CollectionsList } from "@/features/collections/collections-list";
 
 export const metadata: Metadata = { title: "Collections" };
@@ -14,7 +15,9 @@ export default function CollectionsPage() {
         description="Group pieces into private boards. Deleting a collection never deletes the pieces in it."
       />
       <div className="mt-10">
-        <CollectionsList />
+        <AuthGate what="your collections">
+          <CollectionsList />
+        </AuthGate>
       </div>
     </div>
   );

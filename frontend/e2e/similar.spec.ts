@@ -1,5 +1,6 @@
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import type { APIRequestContext } from "@playwright/test";
 
+import { expect, test } from "./helpers/auth";
 import { bandsPng, randomColour } from "./helpers/png";
 
 type Rgb = [number, number, number];

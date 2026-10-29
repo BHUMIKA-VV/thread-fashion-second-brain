@@ -7,6 +7,7 @@ import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
 import { ButtonLink } from "@/components/ui/button";
+import { useSession } from "@/features/auth/use-session";
 import { apiUrl } from "@/lib/api-client";
 import { listItems } from "@/services/items";
 import type { Item } from "@/types/api";
@@ -19,7 +20,14 @@ import type { Item } from "@/types/api";
  */
 export function Hero() {
   const reduceMotion = useReducedMotion();
-  const latest = useQuery({ queryKey: ["items", "list", "landing"], queryFn: () => listItems({ limit: 1 }) });
+  const session = useSession();
+  const signedIn = !!session.data;
+  // Only a signed-in visitor has an archive to show; everyone else sees the invitation.
+  const latest = useQuery({
+    queryKey: ["items", "list", "landing"],
+    queryFn: () => listItems({ limit: 1 }),
+    enabled: signedIn,
+  });
   const item = latest.data?.items[0];
 
   const rise = (delay: number) =>
@@ -57,7 +65,7 @@ export function Hero() {
           {...rise(0.18)}
           className="lg:col-span-4 lg:col-start-9 lg:row-span-3 lg:row-start-1 lg:mt-28"
         >
-          {item ? <Plate item={item} /> : <EmptyPlate pending={latest.isPending} />}
+          {item ? <Plate item={item} /> : <EmptyPlate pending={session.isPending || (signedIn && latest.isPending)} />}
         </motion.figure>
 
         <motion.div {...rise(0.24)} className="max-w-md lg:col-span-4 lg:col-start-2 lg:row-start-3">
@@ -66,12 +74,25 @@ export function Hero() {
             palette, names the craft, and finds the pieces in your archive that belong together.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <ButtonLink href="/gallery">
-              Enter the archive <ArrowRight aria-hidden className="size-4" />
-            </ButtonLink>
-            <ButtonLink href="/upload" variant="secondary">
-              Add a piece
-            </ButtonLink>
+            {session.data === null ? (
+              <>
+                <ButtonLink href="/signup">
+                  Begin your archive <ArrowRight aria-hidden className="size-4" />
+                </ButtonLink>
+                <ButtonLink href="/login" variant="secondary">
+                  Sign in
+                </ButtonLink>
+              </>
+            ) : (
+              <>
+                <ButtonLink href="/gallery">
+                  Enter the archive <ArrowRight aria-hidden className="size-4" />
+                </ButtonLink>
+                <ButtonLink href="/upload" variant="secondary">
+                  Add a piece
+                </ButtonLink>
+              </>
+            )}
           </div>
         </motion.div>
       </div>

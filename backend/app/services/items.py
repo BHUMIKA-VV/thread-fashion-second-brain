@@ -15,6 +15,7 @@ import logging
 import uuid
 from uuid import UUID
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
@@ -23,6 +24,7 @@ from app.models import Item
 from app.models.enums import ItemType
 from app.repositories.errors import ConflictError, NotFoundError
 from app.repositories.items import ItemRepository
+from app.services.auth import AuthRefused
 from app.services.embeddings import EmbeddingFailed, EmbeddingService
 from app.services.images import ImageLimits, process_upload
 from app.services.palettes import PaletteExtractionError, PaletteService
@@ -50,6 +52,29 @@ class ItemService:
         self.settings = settings
         self.owner_id = owner_id
         self.items = ItemRepository(db, owner_id)
+
+    def check_quota(self, incoming_bytes: int) -> None:
+        """Refuse an upload that would take the account past its piece or storage quota."""
+        count, used = self.db.execute(
+            select(func.count(), func.coalesce(func.sum(Item.file_size), 0)).where(
+                Item.user_id == self.owner_id
+            )
+        ).one()
+        if count >= self.settings.quota_items:
+            raise AuthRefused(
+                "quota_exceeded",
+                f"Your archive is full ({self.settings.quota_items} pieces). "
+                "Delete a piece to add another.",
+                403,
+            )
+        if used + incoming_bytes > self.settings.quota_bytes:
+            gib = self.settings.quota_bytes / 1024**3
+            raise AuthRefused(
+                "quota_exceeded",
+                f"Your archive has reached its {gib:g} GB storage limit. "
+                "Delete a piece to add another.",
+                403,
+            )
 
     def upload(self, data: bytes, item_type: ItemType = ItemType.OTHER) -> Item:
         # Hash the bytes exactly as received, so re-uploading the same file is detected.

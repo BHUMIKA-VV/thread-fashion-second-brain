@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, BackgroundTasks, Depends, status
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.api.deps import CurrentUserId, get_storage
+from app.api.deps import CurrentUserId, Owner, get_storage
 from app.core.config import Settings, get_settings
 from app.db.session import get_db, get_session_factory
 from app.ml.deep_analyzer import (
@@ -111,6 +111,7 @@ def get_deep_analysis(item_id: UUID, service: Service) -> DeepAnalysisRead:
     response_model=DeepAnalysisRead,
     status_code=status.HTTP_202_ACCEPTED,
     responses={
+        403: {"description": "Only the owner can run deep analysis (code owner_only)"},
         409: {"description": "Already running for this piece (code already_running)"},
         429: {"description": "Two runs in flight (busy) or the daily limit was reached"},
         503: {"description": "Deep analysis is not configured (deep_analysis_unavailable)"},
@@ -119,6 +120,7 @@ def get_deep_analysis(item_id: UUID, service: Service) -> DeepAnalysisRead:
 def start_deep_analysis(
     item_id: UUID,
     body: DeepAnalyzeRequest,  # validated: `confirm` must be true
+    _: Owner,  # it spends the owner's Anthropic credit
     service: Service,
     background: BackgroundTasks,
     storage: Annotated[Storage, Depends(get_storage)],

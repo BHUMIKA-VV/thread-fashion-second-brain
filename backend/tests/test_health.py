@@ -102,6 +102,8 @@ def test_data_requests_say_the_database_is_unavailable(client: TestClient) -> No
             yield session
 
     app.dependency_overrides[get_db] = override
+    # A session cookie, so checking who is signed in already needs the database.
+    client.cookies.set("thread_session", "some-session-token")
     try:
         for path in ("/items", "/collections", "/items/summary"):
             response = client.get(path)

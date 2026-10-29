@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import type { APIRequestContext, Page } from "@playwright/test";
 
+import { expect, test } from "./helpers/auth";
 import { bandsPng, randomColour } from "./helpers/png";
 
 // Every screen: security headers, no CSP violations, and no automated WCAG 2.2 AA findings.
@@ -39,6 +40,32 @@ async function axe(page: Page) {
   }));
 }
 
+async function checkScreen(page: Page, path: string) {
+  const problems = watchConsole(page);
+  const response = await page.goto(path);
+  const headers = response!.headers();
+  expect(headers["content-security-policy"], path).toContain("frame-ancestors 'none'");
+  expect(headers["x-content-type-options"], path).toBe("nosniff");
+  expect(headers["referrer-policy"], path).toBe("same-origin");
+  expect(headers["x-powered-by"], path).toBeUndefined();
+  await page.waitForLoadState("networkidle");
+  expect(problems, path).toEqual([]);
+  expect(await axe(page), path).toEqual([]);
+}
+
+test.describe("signed out", () => {
+  test.use({ signedIn: false });
+
+  test("public screens send security headers, have no CSP violations and pass automated WCAG checks", async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    for (const path of ["/", "/login", "/signup", "/forgot-password", "/reset-password?token=x", "/terms", "/privacy", "/gallery"]) {
+      await checkScreen(page, path);
+    }
+  });
+});
+
 test("every screen sends security headers, has no CSP violations and passes automated WCAG checks", async ({
   page,
   request,
@@ -60,19 +87,10 @@ test("every screen sends security headers, has no CSP violations and passes auto
       `/collections/${collection.id}`,
       `/items/${itemId}`,
       "/settings",
+      "/account",
+      "/accounts",
     ];
-    for (const path of screens) {
-      const problems = watchConsole(page);
-      const response = await page.goto(path);
-      const headers = response!.headers();
-      expect(headers["content-security-policy"], path).toContain("frame-ancestors 'none'");
-      expect(headers["x-content-type-options"], path).toBe("nosniff");
-      expect(headers["referrer-policy"], path).toBe("same-origin");
-      expect(headers["x-powered-by"], path).toBeUndefined();
-      await page.waitForLoadState("networkidle");
-      expect(problems, path).toEqual([]);
-      expect(await axe(page), path).toEqual([]);
-    }
+    for (const path of screens) await checkScreen(page, path);
   } finally {
     await request.delete(`/api/collections/${collection.id}`);
     await request.delete(`/api/items/${itemId}`);

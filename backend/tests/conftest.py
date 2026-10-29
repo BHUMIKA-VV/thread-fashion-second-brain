@@ -20,6 +20,11 @@ os.environ["THREAD_EMBEDDING_WARMUP"] = "false"
 # wins over .env), and never pick the local fake provider by accident.
 os.environ["THREAD_ANTHROPIC_API_KEY"] = ""
 os.environ["THREAD_DEEP_ANALYSIS_PROVIDER"] = "claude"
+# Requests without a session are signed out in tests (no local auto sign-in), and account
+# emails go to the in-memory outbox, never anywhere real.
+os.environ["THREAD_DEV_AUTO_SIGNIN"] = "false"
+os.environ["THREAD_MAIL_PROVIDER"] = "log"
+os.environ["THREAD_RESEND_API_KEY"] = ""
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient
@@ -27,13 +32,16 @@ from sqlalchemy import create_engine, make_url, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user_id, get_storage  # noqa: E402
+from app.api.deps import get_current_user, get_storage  # noqa: E402
 from app.core.config import Settings, get_settings  # noqa: E402
 from app.db import migrations  # noqa: E402
 from app.db.session import get_db  # noqa: E402
 from app.main import app  # noqa: E402
 from app.ml import registry  # noqa: E402
 from app.models import Item, User  # noqa: E402
+from app.services.auth import Principal  # noqa: E402
+from app.services.mailer import OUTBOX  # noqa: E402
+from app.services.rate_limit import limiter  # noqa: E402
 from app.storage import LocalStorage  # noqa: E402
 from tests.fakes import FakeEmbedder, fake_tagger  # noqa: E402
 
@@ -61,6 +69,21 @@ def no_deep_analyzer() -> Iterator[None]:
     app.dependency_overrides[get_deep_analyzer] = lambda: None
     yield
     app.dependency_overrides.pop(get_deep_analyzer, None)
+
+
+@pytest.fixture(autouse=True)
+def fresh_auth_state() -> Iterator[None]:
+    """Rate-limit counters and the email outbox start empty in every test."""
+    limiter.reset()
+    OUTBOX.clear()
+    yield
+    limiter.reset()
+    OUTBOX.clear()
+
+
+def as_user(user: User, *, owner: bool = True, verified: bool = True) -> Principal:
+    """A signed-in principal for dependency overrides."""
+    return Principal(user.id, is_owner=owner, email_verified=verified)
 
 
 @pytest.fixture
@@ -151,11 +174,12 @@ def settings() -> Settings:
 def api(
     db: Session, owner: User, storage: LocalStorage, settings: Settings
 ) -> Iterator[TestClient]:
-    """HTTP client acting as `owner`, on the test database and a temporary storage root."""
+    """HTTP client signed in as `owner` (verified, the owner account), on the test database
+    and a temporary storage root."""
     app.dependency_overrides.update(
         {
             get_db: lambda: db,
-            get_current_user_id: lambda: owner.id,
+            get_current_user: lambda: as_user(owner),
             get_storage: lambda: storage,
             get_settings: lambda: settings,
         }

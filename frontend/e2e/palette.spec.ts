@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "./helpers/auth";
 import { bandsPng, randomColour } from "./helpers/png";
 
 type Colour = { hex: string; percentage: number };

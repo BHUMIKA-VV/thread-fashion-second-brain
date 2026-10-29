@@ -241,11 +241,69 @@ require enabling pgvector in their console).
 ### Ownership and the development user
 
 Every repository is constructed with the current user's id and filters every query by it; another
-user's rows behave exactly like missing rows (404, never 403, so ids cannot be probed).
-For the local MVP, `get_current_user_id` returns a fixed development user
-(`THREAD_DEV_USER_ID`, created on startup). **This is not authentication**: the dependency refuses
-to run when `THREAD_APP_ENV=production`, so real authentication must be added before any
-deployment.
+user's rows behave exactly like missing rows (404, never 403, so ids cannot be probed). The id
+comes from the signed-in session (see [Accounts](#accounts)).
+
+The archive you built before accounts existed belongs to the **development user**
+(`THREAD_DEV_USER_ID`, created on startup outside production). In development only, a request
+without a session acts as that user (`THREAD_DEV_AUTO_SIGNIN`, default on), so local work needs no
+sign-in; it is never honoured in test or production. Claim it as your owner account to keep its
+pieces and sign in with a password:
+
+```bash
+cd backend
+.venv/Scripts/python -m scripts.claim_owner --email you@example.com --name "Your name"
+```
+
+## Accounts
+
+Anyone can create an account; every archive is private to its account.
+
+| Page | What it does |
+|---|---|
+| `/signup` | Name, email, password (12-128 characters), agreement to the terms. Always answers "check your email"; if the address already has an account, its owner gets an "you already have an account" email instead. |
+| `/verify-email` | Opened from the emailed link (24 h, single use). Uploading needs a confirmed address. |
+| `/login`, sign out | Email + password; `?next=` returns to the page that asked (same-site paths only). |
+| `/forgot-password`, `/reset-password` | A one-hour, single-use link; only the newest works. A reset signs out everywhere. |
+| `/account` | Change password (signs out other devices), sign out everywhere, delete the account. |
+| `/accounts` | Owner only: every account with its piece count; disable (signs out, blocks sign-in, keeps data) or re-enable. |
+| `/terms`, `/privacy` | Short, plain-language pages. Set `THREAD_CONTACT_EMAIL` for the contact address they show. |
+
+How it is built:
+
+- **Passwords** are hashed with argon2id (`argon2-cffi`, RFC 9106 defaults) and rehashed on sign-in
+  if the parameters change. Unknown emails still cost one hash, so timing doesn't reveal accounts.
+- **Sessions** are 256-bit random tokens in an `HttpOnly`, `SameSite=Lax` cookie (`Secure` in
+  production), valid 30 days. Only their SHA-256 hash is stored (`sessions`), so a database copy
+  can't be used to sign in. Email tokens (`auth_tokens`) are hashed the same way.
+- **Cross-site writes** are refused: state-changing requests whose `Origin` isn't in
+  `THREAD_ALLOWED_ORIGINS` (or that a browser marks `Sec-Fetch-Site: cross-site`) get 403
+  `bad_origin`.
+- **Rate limits** (in memory, per API process): sign-up and forgot-password per IP, sign-in per IP
+  and per address, and at most 3 account emails per address per hour. `THREAD_FORWARDED_HOPS`
+  says how many of your own proxies to trust in `X-Forwarded-For`.
+- **Quotas**: 200 pieces and 1 GB per account (`THREAD_QUOTA_ITEMS`, `THREAD_QUOTA_BYTES`); the
+  owner is exempt.
+- **Owner**: at most one (`uq_users_single_owner`). Only the owner can run Deep Analyze (it spends
+  the owner's Anthropic credit) and see `/accounts`. The owner account can't be deleted or disabled
+  from the app.
+- **Deleting an account** removes the user row, which cascades to its pieces, palettes, tags,
+  embeddings, collections, deep analyses, sessions and tokens, then deletes its image files.
+- **Email**: `THREAD_MAIL_PROVIDER=log` (development and tests) sends nothing. Messages go to an
+  in-memory outbox that `GET /dev/outbox?to=` shows, so you can click links locally; that route
+  exists only outside production with the log provider. `resend` sends through Resend
+  (`THREAD_RESEND_API_KEY`, `THREAD_EMAIL_FROM`). Addresses, bodies and links are never logged.
+- **Production refuses to start** without `THREAD_COOKIE_SECURE=true`, an `https://`
+  `THREAD_PUBLIC_URL`, https-only `THREAD_ALLOWED_ORIGINS`, and Resend configured.
+
+API: `POST /auth/signup`, `/auth/login`, `/auth/logout`, `/auth/logout-everywhere`,
+`/auth/verify-email`, `/auth/resend-verification`, `/auth/forgot-password`, `/auth/reset-password`,
+`/auth/change-password`, `/auth/delete-account`; `GET /auth/me` (401 when signed out) and
+`GET /auth/session` (null when signed out); owner-only `GET /admin/accounts` and
+`POST /admin/accounts/{id}/disable|enable`. Errors use the usual
+`{"error": {"code", "message"}}` body, with codes such as `invalid_credentials`,
+`email_not_verified`, `quota_exceeded`, `owner_only`, `rate_limited` (with `Retry-After`) and
+`invalid_token`.
 
 ## Uploads and storage
 
@@ -730,15 +788,18 @@ makes uploads slower rather than queued.
   foreign keys in the database itself. Other users' pieces answer 404.
 - **Secrets** live only in `.env` (git-ignored); `.env.example` holds placeholders. The Anthropic
   key is never logged or returned.
-- **Not authentication**: the app acts as one local development user and refuses to run that way
-  in production (see [Ownership](#ownership-and-the-development-user)).
+- **Accounts**: argon2id password hashes, hashed session tokens in an `HttpOnly` cookie,
+  cross-site write protection, rate limits, quotas and an owner-only moderation page (see
+  [Accounts](#accounts)). The local auto sign-in exists only in development.
 - **Dependencies**: `npm audit` and `pip-audit` (on the installed packages) reported no known
   vulnerabilities on 29 October 2026.
 
 ## Privacy and storage
 
-- Everything stays on your machine: the database runs in Docker (volume `thread-db-data`), image
-  files are in `storage/` (outside the web root, git-ignored) and the model runs locally.
+- Locally, everything stays on your machine: the database runs in Docker (volume
+  `thread-db-data`), image files are in `storage/` (outside the web root, git-ignored) and the
+  model runs locally. Each account's archive is private to it; the owner sees only account
+  names, emails and piece counts.
 - The only network calls are optional: `fetch_model` downloads the model weights once, and a deep
   analysis you confirm sends one resized, metadata-free image plus its palette names and visible
   tags to Anthropic (never notes or source URLs). No analytics or telemetry.
@@ -753,7 +814,9 @@ makes uploads slower rather than queued.
   Fabric, craft and authenticity cannot be established from a photo; the UI labels guesses.
 - **Colour** depends on lighting, white balance and compression; harmony labels are heuristic.
   There is no model-based background removal: photos use a simple plain-backdrop mask.
-- **One local user, no authentication**; not ready to be exposed beyond localhost.
+- **Accounts are email + password only** (no single sign-on, no two-factor). Rate limits live
+  in one API process's memory. There is no automated content moderation: the owner disables
+  accounts by hand, and the terms and contact address are the only reporting route.
 - **No background worker**: analysis runs inside requests; deep analysis runs in an API thread
   and is reported as interrupted if the server restarts mid-run.
 - **CPU only**: fine for a personal library; large imports would be slow.
@@ -790,10 +853,10 @@ npm run lint
 npm run typecheck
 npm test                       # Vitest unit/component tests
 npx playwright install chromium   # once
-npm run test:e2e               # Playwright; needs Docker Postgres running. Reuses the API on :8010
-                               # (or starts it) and always builds + starts a production frontend on
-                               # :3101 (next dev was too slow under parallel browsers and made tests
-                               # flaky). Tests generate unique images in memory and delete what they create.
+npm run test:e2e               # Playwright; needs Docker Postgres running. Starts its own API on
+                               # :8011 on a fresh `thread_e2e` database (backend/scripts/e2e_server.py)
+                               # and builds + starts a production frontend on :3101, so your archive
+                               # and your dev servers on :8010/:3100 are never touched.
 npm run build
 ```
 
@@ -801,7 +864,10 @@ The Playwright suite includes the **definition-of-done journey** (upload through
 picker, processing indicator, palette, AI tags, edits, similar pieces, search and filters, a
 collection) on desktop and mobile, and a **quality** test that checks every screen for security
 headers, CSP violations, automated WCAG 2.2 AA issues (axe) and keyboard focus. The e2e API runs
-deep analysis with the local fake analyzer, so end-to-end tests never call Claude.
+deep analysis with the local fake analyzer, so end-to-end tests never call Claude. Every test signs
+up its own account (verified through the local outbox) and deletes it afterwards; the Deep Analyze
+test signs in as an e2e owner account with a password generated per run. Images go to
+`.cache/e2e-storage/`, which each run empties.
 
 Run Ruff on migrations too: `.venv/Scripts/ruff check . ../database/migrations`.
 

@@ -271,3 +271,25 @@ export type DeepAnalysis = {
   prompt_version: string | null;
   usage: { input_tokens: number | null; output_tokens: number | null } | null;
 };
+
+/** The signed-in account (GET /auth/session, /auth/me). */
+export type Me = {
+  id: string;
+  display_name: string;
+  email: string | null;
+  email_verified: boolean;
+  is_owner: boolean;
+  has_password: boolean;
+};
+
+/** An account as the owner sees it (GET /admin/accounts). */
+export type AccountRead = {
+  id: string;
+  display_name: string;
+  email: string | null;
+  created_at: string;
+  email_verified: boolean;
+  disabled: boolean;
+  is_owner: boolean;
+  items: number;
+};

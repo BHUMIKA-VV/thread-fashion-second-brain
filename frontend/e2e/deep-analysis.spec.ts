@@ -1,5 +1,6 @@
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import type { APIRequestContext } from "@playwright/test";
 
+import { expect, test } from "./helpers/auth";
 import { bandsPng, randomColour } from "./helpers/png";
 
 async function uploadVia(request: APIRequestContext): Promise<string> {
@@ -16,12 +17,15 @@ async function uploadVia(request: APIRequestContext): Promise<string> {
   return (await response.json()).id;
 }
 
+// Deep analysis is owner-only (it spends the owner's Anthropic credit).
+test.use({ asOwner: true });
+
 test("deep analysis asks first, runs in the background and shows a labelled result", async ({ page, request }) => {
   test.setTimeout(90_000);
   const status = await (await request.get("/api/deep-analysis/status")).json();
   expect(
     status.provider,
-    "The API must run with THREAD_DEEP_ANALYSIS_PROVIDER=fake: stop any API on :8010 so Playwright starts its own.",
+    "The e2e API (scripts/e2e_server.py) always uses the fake analyzer.",
   ).toBe("fake");
 
   const id = await uploadVia(request);

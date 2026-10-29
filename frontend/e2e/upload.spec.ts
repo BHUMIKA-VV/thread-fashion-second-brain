@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-
+import { expect, test } from "./helpers/auth";
 import { randomColour, solidPng } from "./helpers/png";
 
 // These tests use the real dev stack and clean up the items they create.

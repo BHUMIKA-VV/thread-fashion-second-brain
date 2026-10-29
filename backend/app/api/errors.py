@@ -11,6 +11,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.ml.registry import EmbedderLoading, EmbedderUnavailable
 from app.repositories.errors import ConflictError, NotFoundError
+from app.services.auth import AuthRefused
 from app.services.deep_analysis import DeepAnalysisRefused, DeepAnalysisUnavailable
 from app.services.embeddings import EmbeddingFailed
 from app.services.images import ImageValidationError
@@ -77,6 +78,15 @@ def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(DeepAnalysisRefused)
     async def deep_analysis_refused(_: Request, exc: DeepAnalysisRefused) -> JSONResponse:
         return JSONResponse(status_code=exc.status_code, content=error_body(exc.code, exc.message))
+
+    @app.exception_handler(AuthRefused)
+    async def auth_refused(_: Request, exc: AuthRefused) -> JSONResponse:
+        headers = {"Retry-After": str(exc.retry_after)} if exc.retry_after else None
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=error_body(exc.code, exc.message),
+            headers=headers,
+        )
 
     @app.exception_handler(ConflictError)
     async def conflict(_: Request, exc: ConflictError) -> JSONResponse:
