@@ -36,12 +36,12 @@ export function CollectionDetailView({ id }: { id: string }) {
   });
 
   if (query.isPending) {
-    return <div className="h-[50vh] animate-pulse rounded-2xl bg-ink/[0.06]" aria-label="Loading collection" />;
+    return <div role="status" className="h-[50vh] animate-pulse rounded-[2px] bg-ink/[0.06]" aria-label="Loading collection" />;
   }
   if (query.isError) {
     const missing = query.error instanceof ApiError && query.error.status === 404;
     return (
-      <div role="alert" className="rounded-2xl border border-line bg-paper-raised p-10 text-center">
+      <div role="alert" className="rounded-[2px] border border-line bg-paper-raised p-10 text-center">
         <p className="font-display text-2xl">{missing ? "This collection doesn't exist" : "Couldn't load this collection"}</p>
         <ButtonLink href="/collections" variant="secondary" className="mt-6">
           All collections
@@ -66,7 +66,7 @@ export function CollectionDetailView({ id }: { id: string }) {
       )}
 
       {detail.items.length === 0 ? (
-        <p className="mt-10 rounded-2xl border border-dashed border-ink/20 px-6 py-14 text-center text-sm text-ink-muted">
+        <p className="mt-10 rounded-[2px] border border-dashed border-ink/20 px-6 py-14 text-center text-sm text-ink-muted">
           This collection is empty. Open any piece and use “Add to collection”.{" "}
           <Link href="/gallery" className="underline">
             Browse the gallery
@@ -109,15 +109,18 @@ function DetailsForm({ detail, onUpdated }: { detail: CollectionDetail; onUpdate
   };
 
   return (
-    <form onSubmit={submit} aria-label="Collection details" className="mt-6 space-y-3">
+    <form onSubmit={submit} aria-label="Collection details" className="mt-6 space-y-3 border-b border-line pb-8">
       <h1 className="sr-only">{detail.name}</h1>
+      <p className="text-[11px] uppercase tracking-[0.28em] text-ink-muted">
+        Collection · {detail.items.length} {detail.items.length === 1 ? "piece" : "pieces"}
+      </p>
       <label className="block">
         <span className="sr-only">Collection name</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={120}
-          className="w-full bg-transparent font-display text-4xl tracking-tight outline-none focus:underline"
+          className="w-full bg-transparent font-display text-5xl leading-none tracking-tight outline-none focus:underline sm:text-6xl"
         />
       </label>
       <label className="block">
@@ -131,10 +134,13 @@ function DetailsForm({ detail, onUpdated }: { detail: CollectionDetail; onUpdate
           className="w-full max-w-2xl resize-y bg-transparent text-ink-muted outline-none focus:text-ink"
         />
       </label>
-      <div className="flex items-center gap-3" aria-live="polite">
-        <Button type="submit" variant="secondary" disabled={!dirty || !name.trim() || save.isPending}>
-          {save.isPending ? "Saving…" : "Save details"}
-        </Button>
+      <div className="flex min-h-10 items-center gap-3" aria-live="polite">
+        {/* Shown once something changed: the title and description are edited in place. */}
+        {(dirty || save.isPending) && (
+          <Button type="submit" variant="secondary" disabled={!name.trim() || save.isPending}>
+            {save.isPending ? "Saving…" : "Save details"}
+          </Button>
+        )}
         {save.isError && (
           <span role="alert" className="text-sm text-danger">
             {save.error instanceof ApiError ? save.error.message : "Could not save."}
@@ -166,13 +172,13 @@ function EntryCard({
   const { item } = entry;
   const label = item.notes ? item.notes.slice(0, 60) : `${item.type} image`;
   return (
-    <article className="overflow-hidden rounded-xl border border-line bg-paper-raised shadow-soft" aria-label={label}>
-      <Link href={`/items/${item.id}`} className="block aspect-[3/4] overflow-hidden">
+    <article aria-label={label}>
+      <Link href={`/items/${item.id}`} className="block aspect-[3/4] overflow-hidden bg-paper-raised">
         {/* eslint-disable-next-line @next/next/no-img-element -- private image served by the API */}
         <img src={apiUrl(item.thumbnail_url)} alt={label} className="size-full object-cover" />
       </Link>
       {item.palette && <PaletteStrip colors={item.palette.colors} />}
-      <div className="space-y-2 p-3">
+      <div className="space-y-2 border-b border-line py-3">
         <label className="block text-xs text-ink-muted">
           Note in this collection
           <textarea
@@ -184,7 +190,7 @@ function EntryCard({
             maxLength={2000}
             rows={2}
             placeholder="Why it belongs here…"
-            className="mt-1 block w-full resize-y rounded-lg border border-line bg-paper px-2 py-1.5 text-sm text-ink"
+            className="mt-1 block w-full resize-y rounded-[2px] border border-line bg-paper-raised px-2 py-1.5 text-sm text-ink"
           />
         </label>
         <div className="flex flex-wrap items-center gap-1">
@@ -240,7 +246,7 @@ function DeleteCollection({ detail }: { detail: CollectionDetail }) {
           <Trash2 aria-hidden className="size-4" /> Delete collection
         </Button>
       ) : (
-        <div role="alertdialog" aria-labelledby="delete-collection-title" className="rounded-2xl border border-danger/30 bg-danger/5 p-5">
+        <div role="alertdialog" aria-labelledby="delete-collection-title" className="rounded-[2px] border border-danger/30 bg-danger/5 p-5">
           <p id="delete-collection-title" className="text-sm">
             Delete “{detail.name}”? The {detail.items.length}{" "}
             {detail.items.length === 1 ? "piece stays" : "pieces stay"} in your library; only the

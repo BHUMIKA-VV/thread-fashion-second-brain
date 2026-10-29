@@ -65,7 +65,7 @@ export function AddToCollection({ itemId }: { itemId: string }) {
   const error = toggle.error ?? createAndAdd.error;
 
   return (
-    <section aria-labelledby="collections-title" className="rounded-2xl border border-line bg-paper-raised p-5">
+    <section aria-labelledby="collections-title" className="border-t border-ink pt-5">
       <div className="flex items-center justify-between gap-3">
         <h2 id="collections-title" className="font-display text-xl">
           Collections
@@ -117,7 +117,7 @@ export function AddToCollection({ itemId }: { itemId: string }) {
                 onChange={(e) => setName(e.target.value)}
                 maxLength={120}
                 placeholder="e.g. Wedding guest ideas"
-                className="mt-1 block w-full rounded-lg border border-line bg-paper px-2 py-1.5 text-sm text-ink"
+                className="mt-1 block w-full rounded-[2px] border border-line bg-paper px-2 py-1.5 text-sm text-ink"
               />
             </label>
             <Button type="submit" variant="secondary" disabled={!name.trim() || createAndAdd.isPending}>

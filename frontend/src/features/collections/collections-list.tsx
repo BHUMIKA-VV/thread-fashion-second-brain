@@ -35,7 +35,7 @@ export function CollectionsList() {
       <form
         onSubmit={submit}
         aria-label="New collection"
-        className="flex flex-wrap items-end gap-3 rounded-2xl border border-line bg-paper-raised p-5"
+        className="flex flex-wrap items-end gap-3 border-y border-line py-5"
       >
         <label className="min-w-48 flex-1 text-xs text-ink-muted">
           Name
@@ -44,7 +44,7 @@ export function CollectionsList() {
             onChange={(e) => setName(e.target.value)}
             maxLength={120}
             placeholder="e.g. Summer linen"
-            className="mt-1 block w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink"
+            className="mt-1 block w-full rounded-[2px] border border-line bg-paper-raised px-3 py-2 text-sm text-ink"
           />
         </label>
         <label className="min-w-48 flex-[2] text-xs text-ink-muted">
@@ -53,7 +53,7 @@ export function CollectionsList() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             maxLength={2000}
-            className="mt-1 block w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink"
+            className="mt-1 block w-full rounded-[2px] border border-line bg-paper-raised px-3 py-2 text-sm text-ink"
           />
         </label>
         <Button type="submit" disabled={!name.trim() || create.isPending}>
@@ -69,7 +69,7 @@ export function CollectionsList() {
       {query.isPending ? (
         <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Loading collections">
           {[0, 1, 2].map((i) => (
-            <li key={i} className="h-64 animate-pulse rounded-2xl bg-ink/[0.06]" />
+            <li key={i} className="h-64 animate-pulse rounded-[2px] bg-ink/[0.06]" />
           ))}
         </ul>
       ) : query.isError ? (
@@ -80,11 +80,11 @@ export function CollectionsList() {
           </button>
         </div>
       ) : query.data.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-ink/20 px-6 py-14 text-center text-sm text-ink-muted">
+        <p className="border-b border-line px-6 py-14 text-center text-sm text-ink-muted">
           No collections yet. Create one above, then add pieces from any item page.
         </p>
       ) : (
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Your collections">
+        <ul className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3" aria-label="Your collections">
           {query.data.map((collection) => (
             <li key={collection.id}>
               <CollectionCard collection={collection} />
@@ -101,7 +101,7 @@ function CollectionCard({ collection }: { collection: CollectionSummary }) {
   return (
     <Link
       href={`/collections/${collection.id}`}
-      className="group block overflow-hidden rounded-2xl border border-line bg-paper-raised shadow-soft"
+      className="group block"
     >
       <div className="grid aspect-[4/3] grid-cols-2 grid-rows-2 gap-0.5 bg-line">
         {[0, 1, 2, 3].map((i) =>
@@ -113,8 +113,8 @@ function CollectionCard({ collection }: { collection: CollectionSummary }) {
           ),
         )}
       </div>
-      <div className="p-4">
-        <p className="font-display text-xl group-hover:underline">{collection.name}</p>
+      <div className="border-b border-line py-4">
+        <p className="font-display text-2xl underline-offset-4 group-hover:underline">{collection.name}</p>
         <p className="mt-1 text-xs text-ink-muted">
           {collection.item_count} {collection.item_count === 1 ? "piece" : "pieces"}
         </p>

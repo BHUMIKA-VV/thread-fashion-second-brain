@@ -3,10 +3,11 @@ import { expect, test } from "@playwright/test";
 test("landing page renders and links into the app", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("remembered");
-  await page.getByRole("link", { name: "Start uploading" }).click();
-  await expect(page).toHaveURL(/\/upload$/);
-  await page.getByRole("link", { name: "System" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Thread" })).toBeVisible(); // the wordmark
+  await expect(page.getByText("Everything you wear leaves a trace.").first()).toBeVisible();
+  await page.getByRole("link", { name: "Enter the archive" }).click();
+  await expect(page).toHaveURL(/\/gallery$/);
+  await page.getByRole("navigation", { name: "More" }).getByRole("link", { name: "System" }).click();
   await expect(page).toHaveURL(/\/settings$/);
 });
 

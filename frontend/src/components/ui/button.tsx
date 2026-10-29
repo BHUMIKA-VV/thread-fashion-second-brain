@@ -5,12 +5,13 @@ import { cn } from "@/lib/cn";
 
 type Variant = "primary" | "secondary" | "ghost";
 
+// Editorial, near-square controls: ink on ivory, a hairline border for the quieter action.
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium tracking-wide transition-colors disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-[2px] px-5 py-2.5 text-sm font-medium tracking-[0.02em] transition-colors disabled:pointer-events-none disabled:opacity-50";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-ink text-paper hover:bg-ink/85",
-  secondary: "border border-ink/20 bg-paper-raised text-ink hover:border-ink/50",
+  primary: "bg-ink text-paper-raised hover:bg-indigo",
+  secondary: "border border-ink/25 bg-transparent text-ink hover:border-ink",
   ghost: "text-ink hover:bg-ink/5",
 };
 

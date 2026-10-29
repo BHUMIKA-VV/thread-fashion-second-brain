@@ -8,24 +8,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { EMPTY_FILTERS, hasActiveFilters, tagLabel, type GalleryFilters } from "@/lib/gallery-filters";
 import { getLibrarySummary, getVocabulary } from "@/services/items";
+import { FAMILY_SWATCH } from "@/lib/colour-families";
 import { COLOR_FAMILIES, type ColorFamily, type SortOrder } from "@/types/api";
-
-// Swatch colours for the family filter (representative, for the buttons only).
-const FAMILY_SWATCH: Record<ColorFamily, string> = {
-  red: "#c0392b",
-  orange: "#e67e22",
-  yellow: "#f1c40f",
-  green: "#4a7c3a",
-  teal: "#16a085",
-  blue: "#2c5aa0",
-  purple: "#7d3c98",
-  pink: "#e75480",
-  brown: "#7b4a2a",
-  beige: "#d9c6a5",
-  white: "#ffffff",
-  grey: "#8a8a8a",
-  black: "#1c1a1a",
-};
 
 export const SEARCH_DEBOUNCE_MS = 300;
 
@@ -87,7 +71,7 @@ export function GalleryFilterBar({
             onChange={(e) => setText(e.target.value)}
             maxLength={100}
             placeholder="Search tags, colours, notes… e.g. ikat, haldi, linen"
-            className="w-full rounded-full border border-line bg-paper-raised py-2.5 pl-9 pr-4 text-sm outline-none focus:border-ink"
+            className="w-full rounded-[2px] border border-line bg-paper-raised py-2.5 pl-9 pr-4 text-sm outline-none focus:border-ink"
           />
         </label>
         <label className="text-xs text-ink-muted">
@@ -95,7 +79,7 @@ export function GalleryFilterBar({
           <select
             value={filters.sort}
             onChange={(e) => onChange({ ...filters, sort: e.target.value as SortOrder })}
-            className="mt-1 block rounded-full border border-line bg-paper-raised px-3 py-2 text-sm text-ink"
+            className="mt-1 block rounded-[2px] border border-line bg-paper-raised px-3 py-2 text-sm text-ink"
           >
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
@@ -121,7 +105,7 @@ export function GalleryFilterBar({
                 title={`${family}${count ? ` · ${count} pieces` : ""}`}
                 onClick={() => toggleColor(family)}
                 className={cn(
-                  "size-6 rounded-full border transition-transform",
+                  "size-6 border transition-transform",
                   active ? "scale-110 border-ink ring-2 ring-ink ring-offset-2 ring-offset-paper" : "border-ink/20",
                   !count && !active && "opacity-35",
                 )}
@@ -139,7 +123,7 @@ export function GalleryFilterBar({
               onChange={(e) => setTagText(e.target.value)}
               list={tagListId}
               placeholder="Filter by tag, e.g. craft:ikat"
-              className="w-56 rounded-full border border-line bg-paper-raised px-3 py-1.5 text-sm text-ink"
+              className="w-56 rounded-[2px] border border-line bg-paper-raised px-3 py-1.5 text-sm text-ink"
             />
           </label>
           <datalist id={tagListId}>
@@ -154,7 +138,7 @@ export function GalleryFilterBar({
       </div>
 
       {hasActiveFilters(filters) && (
-        <div className="flex flex-wrap items-center gap-2" aria-label="Active filters">
+        <div role="group" className="flex flex-wrap items-center gap-2" aria-label="Active filters">
           {filters.q.trim() && (
             <ActiveChip label={`“${filters.q.trim()}”`} onRemove={() => onChange({ ...filters, q: "" })} />
           )}
@@ -186,7 +170,7 @@ export function GalleryFilterBar({
 
 function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1 text-xs text-paper">
+    <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-ink px-3 py-1 text-xs text-paper">
       {label}
       <button type="button" onClick={onRemove} aria-label={`Remove filter ${label}`} className="opacity-80 hover:opacity-100">
         <X aria-hidden className="size-3" />

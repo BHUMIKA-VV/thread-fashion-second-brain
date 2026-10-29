@@ -49,7 +49,7 @@ export function TagsPanel({ item }: { item: Item }) {
   });
 
   return (
-    <section aria-labelledby="tags-title" className="rounded-2xl border border-line bg-paper-raised p-5">
+    <section aria-labelledby="tags-title" className="border-t border-ink pt-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="tags-title" className="font-display text-xl">
           Tags
@@ -67,7 +67,7 @@ export function TagsPanel({ item }: { item: Item }) {
 
       <div className="mt-3" aria-live="polite" aria-busy={query.isPending}>
         {query.isPending ? (
-          <div className="h-16 animate-pulse rounded-xl bg-ink/[0.06]" aria-label="Loading tags" />
+          <div role="status" className="h-16 animate-pulse rounded-[2px] bg-ink/[0.06]" aria-label="Loading tags" />
         ) : query.isError ? (
           <div role="alert" className="text-sm text-danger">
             Tags could not be loaded.{" "}
@@ -171,7 +171,7 @@ function TagList({
                   disabled={busy}
                   onClick={() => onRestore(tag)}
                   aria-label={`Restore ${tag.tag}`}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-ink/25 px-3 py-1 text-xs text-ink-muted line-through hover:text-ink"
+                  className="inline-flex items-center gap-1.5 rounded-[2px] border border-dashed border-ink/25 px-3 py-1 text-xs text-ink-muted line-through hover:text-ink"
                 >
                   {tag.tag} <RotateCcw aria-hidden className="size-3" />
                 </button>
@@ -194,7 +194,7 @@ function TagChip({ tag, disabled, onRemove }: { tag: ItemTag; disabled: boolean;
     <span
       title={title}
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm",
+        "inline-flex items-center gap-2 rounded-[2px] border px-3 py-1 text-sm",
         tag.source === "ai" ? "border-line bg-paper" : "border-clay/40 bg-clay/5",
         tag.outdated && "opacity-60",
       )}
@@ -247,7 +247,7 @@ function AddTagForm({ busy, onAdd }: { busy: boolean; onAdd: (edit: TagEdit) => 
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as TagCategory)}
-          className="mt-1 block rounded-lg border border-line bg-paper px-2 py-1.5 text-sm text-ink"
+          className="mt-1 block rounded-[2px] border border-line bg-paper px-2 py-1.5 text-sm text-ink"
         >
           {TAG_CATEGORIES.map((c) => (
             <option key={c} value={c}>
@@ -264,7 +264,7 @@ function AddTagForm({ busy, onAdd }: { busy: boolean; onAdd: (edit: TagEdit) => 
           list={listId}
           maxLength={40}
           placeholder="e.g. ikat, or your own"
-          className="mt-1 block w-full rounded-lg border border-line bg-paper px-2 py-1.5 text-sm text-ink"
+          className="mt-1 block w-full rounded-[2px] border border-line bg-paper px-2 py-1.5 text-sm text-ink"
         />
         <datalist id={listId}>
           {suggestions.map((tag) => (

@@ -7,9 +7,9 @@ export const metadata: Metadata = { title: "Collection" };
 
 export default function CollectionPage({ params }: PageProps<"/collections/[id]">) {
   return (
-    <div className="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8">
+    <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-8 sm:py-16">
       {/* Params are runtime data with Cache Components, so they are read inside Suspense. */}
-      <Suspense fallback={<div className="h-[50vh] animate-pulse rounded-2xl bg-ink/[0.06]" />}>
+      <Suspense fallback={<div className="h-[50vh] animate-pulse bg-ink/[0.05]" />}>
         {params.then(({ id }) => (
           <CollectionDetailView id={id} />
         ))}

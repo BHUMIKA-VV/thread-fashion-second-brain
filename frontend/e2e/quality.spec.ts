@@ -54,6 +54,7 @@ test("every screen sends security headers, has no CSP violations and passes auto
       "/",
       "/dashboard",
       "/gallery",
+      "/colour-lab",
       "/upload",
       "/collections",
       `/collections/${collection.id}`,

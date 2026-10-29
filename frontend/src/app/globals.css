@@ -1,22 +1,33 @@
 @import "tailwindcss";
 
 /*
- * Thread design tokens: warm ivory paper, charcoal ink, muted earth accents.
- * Use these through Tailwind classes (bg-paper, text-ink, border-line, ...).
+ * Thread design tokens. The brand palette (below) is the source; these semantic names are what
+ * components use (bg-paper, text-ink, border-line, ...). Warm ivory and ink dominate; indigo and
+ * terracotta are accents. Text colours are checked for WCAG AA (>= 4.5:1) on ivory and paper.
  */
 :root {
-  --paper: #f7f3ec;
-  --paper-raised: #fbf8f3;
-  --ink: #22201c;
-  --ink-muted: #6b655c;
-  --line: #e2dacd;
-  --clay: #b4654a;
-  --ochre: #c49a45;
-  --sage: #7d8466;
-  --indigo: #3e4a6b;
+  --paper: var(--brand-ivory); /* page ground */
+  --paper-raised: var(--brand-paper); /* raised surfaces, inputs */
+  --ink: var(--brand-ink);
+  --ink-muted: #5f6352; /* olive-tinted grey, 5.5:1 on ivory (the brand olive is 4.0:1) */
+  --line: var(--brand-sand);
+  --clay: var(--brand-terracotta); /* accent, 4.7:1 on ivory */
+  --sage: var(--brand-olive); /* decorative only, not for text */
+  --indigo: var(--brand-indigo);
   --success: #4f6b45;
-  --warning: #86591b; /* >= 5.2:1 on paper, raised paper and warning tints (WCAG AA) */
-  --danger: #a3412f;
+  --warning: #86591b; /* >= 5.4:1 on ivory and paper */
+  --danger: #9a3b2a;
+}
+
+/* Brand palette (the logo and identity). */
+:root {
+  --brand-ivory: #f6f1e8;
+  --brand-paper: #fffcf7;
+  --brand-ink: #202321;
+  --brand-indigo: #24466b;
+  --brand-terracotta: #ad4f36;
+  --brand-sand: #d9c8b1;
+  --brand-olive: #747a60;
 }
 
 @theme inline {
@@ -26,7 +37,6 @@
   --color-ink-muted: var(--ink-muted);
   --color-line: var(--line);
   --color-clay: var(--clay);
-  --color-ochre: var(--ochre);
   --color-sage: var(--sage);
   --color-indigo: var(--indigo);
   --color-success: var(--success);
@@ -34,7 +44,7 @@
   --color-danger: var(--danger);
   --font-sans: var(--font-inter);
   --font-display: var(--font-fraunces);
-  --shadow-soft: 0 1px 2px rgb(34 32 28 / 0.04), 0 8px 24px -12px rgb(34 32 28 / 0.12);
+  --shadow-soft: 0 1px 2px rgb(32 35 33 / 0.05);
 }
 
 body {
@@ -43,7 +53,7 @@ body {
 }
 
 ::selection {
-  background: var(--clay);
+  background: var(--indigo);
   color: var(--paper-raised);
 }
 

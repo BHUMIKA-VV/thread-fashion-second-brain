@@ -74,7 +74,7 @@ export function SimilarPieces({ itemId }: { itemId: string }) {
             aria-controls={`${tabsId}-panel`}
             onClick={() => setMode(m.mode)}
             className={cn(
-              "rounded-full border px-4 py-1.5 text-sm transition-colors",
+              "rounded-[2px] border px-4 py-1.5 text-sm transition-colors",
               mode === m.mode
                 ? "border-ink bg-ink text-paper"
                 : "border-line bg-paper-raised text-ink-muted hover:border-ink/40 hover:text-ink",
@@ -105,7 +105,7 @@ export function SimilarPieces({ itemId }: { itemId: string }) {
             onReindex={() => reindex.mutate()}
           />
         ) : query.data.results.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-ink/20 px-6 py-10 text-center text-sm text-ink-muted">
+          <p className="rounded-[2px] border border-dashed border-ink/20 px-6 py-10 text-center text-sm text-ink-muted">
             {query.data.notice ??
               (query.data.not_indexed > 0
                 ? "None of your other pieces could be compared yet."
@@ -114,7 +114,7 @@ export function SimilarPieces({ itemId }: { itemId: string }) {
         ) : (
           <>
             {query.data.notice && (
-              <p className="mb-4 rounded-xl bg-ink/[0.04] px-4 py-3 text-sm text-ink-muted">{query.data.notice}</p>
+              <p className="mb-4 rounded-[2px] bg-ink/[0.04] px-4 py-3 text-sm text-ink-muted">{query.data.notice}</p>
             )}
             <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {query.data.results.map((result, index) => (
@@ -147,7 +147,7 @@ function Loading({ message = "Comparing images…" }: { message?: string }) {
     <div>
       <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4" aria-label="Loading similar pieces">
         {Array.from({ length: 4 }, (_, i) => (
-          <li key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-ink/[0.06]" />
+          <li key={i} className="aspect-[3/4] animate-pulse rounded-[2px] bg-ink/[0.06]" />
         ))}
       </ul>
       <p className="mt-3 text-xs text-ink-muted">{message}</p>
@@ -174,7 +174,7 @@ function SimilarError({
         ? "This image could not be indexed for similarity search."
         : "Similar pieces could not be loaded.";
   return (
-    <div role="alert" className="rounded-2xl border border-line bg-paper-raised p-6">
+    <div role="alert" className="rounded-[2px] border border-line bg-paper-raised p-6">
       <p className="text-sm">{message}</p>
       {code === "model_unavailable" && (
         <p className="mt-2 text-xs text-ink-muted">
@@ -215,7 +215,7 @@ function SimilarCard({ result, index }: { result: SimilarItem; index: number }) 
     >
       <Link
         href={`/items/${item.id}`}
-        className="group block overflow-hidden rounded-xl border border-line bg-paper-raised shadow-soft"
+        className="group block overflow-hidden border-b border-line"
       >
         <div className="aspect-[3/4] overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element -- private image served by the API */}
@@ -227,7 +227,7 @@ function SimilarCard({ result, index }: { result: SimilarItem; index: number }) 
           />
         </div>
         {item.palette && <PaletteStrip colors={item.palette.colors} />}
-        <div className="flex items-center justify-between gap-2 px-3 py-2.5 text-xs">
+        <div className="flex items-center justify-between gap-2 py-2.5 text-xs">
           {/* The link's name is this visible text, then the longer description. */}
           <span className="uppercase tracking-[0.18em] text-ink-muted">{item.type}</span>{" "}
           <span className="font-mono">{score.short}</span>

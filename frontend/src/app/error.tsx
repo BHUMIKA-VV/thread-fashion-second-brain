@@ -12,12 +12,12 @@ export default function Error({ error, retry }: { error: unknown; retry: () => v
   }, [error]);
 
   return (
-    <div role="alert" className="mx-auto max-w-xl rounded-2xl border border-line bg-paper-raised p-10 text-center">
-      <h1 className="font-display text-3xl tracking-tight">Something went wrong</h1>
-      <p className="mt-2 text-sm text-ink-muted">
+    <div role="alert" className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-8 sm:py-28">
+      <h1 className="max-w-2xl font-display text-4xl tracking-tight sm:text-5xl">Something went wrong</h1>
+      <p className="mt-4 max-w-xl text-ink-muted">
         This page could not be shown. Your library is unaffected. Try again, or check the System page.
       </p>
-      <div className="mt-6 flex flex-wrap justify-center gap-3">
+      <div className="mt-10 flex flex-wrap gap-3">
         <Button onClick={() => retry()}>Try again</Button>
         <ButtonLink href="/settings" variant="secondary">
           System status

@@ -6,7 +6,8 @@ import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
 import { PaletteStrip } from "@/features/palette/palette-strip";
 import { apiUrl } from "@/lib/api-client";
-import { filtersToSearch, EMPTY_FILTERS } from "@/lib/gallery-filters";
+import { FAMILY_SWATCH } from "@/lib/colour-families";
+import { galleryLink } from "@/lib/gallery-filters";
 import { getLibrarySummary } from "@/services/items";
 import { ITEM_TYPES, type ItemType, type LibrarySummary } from "@/types/api";
 
@@ -18,19 +19,17 @@ const TYPE_NAMES: Record<ItemType, string> = {
   other: "Other",
 };
 
-const galleryLink = (change: Partial<typeof EMPTY_FILTERS>) =>
-  `/gallery?${filtersToSearch({ ...EMPTY_FILTERS, ...change })}`;
 
 /** Real counts from your library; no derived "insights". */
 export function Dashboard() {
   const query = useQuery({ queryKey: ["items", "summary"], queryFn: getLibrarySummary });
 
   if (query.isPending) {
-    return <div className="h-80 animate-pulse rounded-2xl bg-ink/[0.06]" aria-label="Loading dashboard" />;
+    return <div role="status" className="h-80 animate-pulse rounded-[2px] bg-ink/[0.06]" aria-label="Loading dashboard" />;
   }
   if (query.isError) {
     return (
-      <div role="alert" className="rounded-2xl border border-danger/20 bg-danger/5 p-8 text-center">
+      <div role="alert" className="rounded-[2px] border border-danger/20 bg-danger/5 p-8 text-center">
         <p className="font-display text-xl">The dashboard could not be loaded.</p>
         <p className="mt-2 text-sm text-ink-muted">{query.error.message}</p>
         <button type="button" className="mt-4 text-sm underline" onClick={() => void query.refetch()}>
@@ -42,7 +41,7 @@ export function Dashboard() {
   const summary = query.data;
   if (summary.total === 0) {
     return (
-      <div className="flex flex-col items-center rounded-2xl border border-dashed border-ink/20 px-6 py-20 text-center">
+      <div className="flex flex-col items-center rounded-[2px] border border-dashed border-ink/20 px-6 py-20 text-center">
         <p className="font-display text-2xl">Your library is empty</p>
         <p className="mt-2 text-sm text-ink-muted">Upload a few pieces and this page fills itself in.</p>
         <ButtonLink href="/upload" className="mt-6">
@@ -65,7 +64,7 @@ export function Dashboard() {
 
 function Counts({ summary }: { summary: LibrarySummary }) {
   return (
-    <ul aria-label="Library counts" className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <ul aria-label="Library counts" className="grid grid-cols-2 border-y border-line sm:grid-cols-4">
       <Stat label="Pieces" value={summary.total} href="/gallery" />
       {ITEM_TYPES.filter((t) => summary.by_type[t]).map((type) => (
         <Stat key={type} label={TYPE_NAMES[type]} value={summary.by_type[type] ?? 0} href={galleryLink({ type })} />
@@ -78,9 +77,9 @@ function Counts({ summary }: { summary: LibrarySummary }) {
 function Stat({ label, value, href }: { label: string; value: number; href: string }) {
   return (
     <li>
-      <Link href={href} className="block rounded-2xl border border-line bg-paper-raised p-4 hover:border-ink/40">
-        <span className="block text-xs uppercase tracking-[0.18em] text-ink-muted">{label}</span>
-        <span className="mt-1 block font-display text-3xl">{value}</span>
+      <Link href={href} className="group block h-full border-line py-6 pr-6 [li:not(:first-child)>&]:border-l [li:not(:first-child)>&]:pl-6">
+        <span className="block text-[11px] uppercase tracking-[0.24em] text-ink-muted">{label}</span>
+        <span className="mt-2 block font-display text-6xl leading-none underline-offset-8 group-hover:underline">{value}</span>
       </Link>
     </li>
   );
@@ -100,7 +99,7 @@ function Recent({ summary }: { summary: LibrarySummary }) {
       <ul className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-6">
         {summary.recent.map((item) => (
           <li key={item.id}>
-            <Link href={`/items/${item.id}`} className="block overflow-hidden rounded-lg border border-line">
+            <Link href={`/items/${item.id}`} className="block overflow-hidden rounded-[2px] border border-line">
               {/* eslint-disable-next-line @next/next/no-img-element -- private image served by the API */}
               <img src={apiUrl(item.thumbnail_url)} alt={`${item.type} image`} className="aspect-[3/4] w-full object-cover" />
               {item.palette && <PaletteStrip colors={item.palette.colors} />}
@@ -128,8 +127,11 @@ function Families({ summary }: { summary: LibrarySummary }) {
             <li key={family}>
               <Link href={galleryLink({ colors: [family] })} className="flex items-center gap-3 text-sm hover:underline">
                 <span className="w-16 capitalize">{family}</span>
-                <span className="h-2 flex-1 overflow-hidden rounded-full bg-ink/10">
-                  <span className="block h-full bg-ink/60" style={{ width: `${(items / max) * 100}%` }} />
+                <span className="h-2 flex-1 overflow-hidden bg-ink/[0.06]">
+                  <span
+                    className="block h-full border border-ink/15" // outlined so light families (white, beige) stay visible
+                    style={{ width: `${(items / max) * 100}%`, backgroundColor: FAMILY_SWATCH[family] }}
+                  />
                 </span>
                 <span className="w-8 text-right font-mono text-xs">{items}</span>
               </Link>
@@ -156,7 +158,7 @@ function Tags({ summary }: { summary: LibrarySummary }) {
             <li key={`${category}:${tag}`}>
               <Link
                 href={galleryLink({ tags: [`${category}:${tag}`] })}
-                className="inline-flex items-center gap-2 rounded-full border border-line bg-paper-raised px-3 py-1 text-sm hover:border-ink/40"
+                className="inline-flex items-center gap-2 rounded-[2px] border border-line bg-paper-raised px-3 py-1 text-sm hover:border-ink/40"
               >
                 {tag} <span className="text-xs text-ink-muted">{category} · {items}</span>
               </Link>

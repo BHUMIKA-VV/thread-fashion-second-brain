@@ -65,7 +65,7 @@ export function UploadPanel() {
               aria-checked={type === value}
               onClick={() => setType(value)}
               className={cn(
-                "rounded-full border px-4 py-2 text-sm transition-colors",
+                "rounded-[2px] border px-4 py-2 text-sm transition-colors",
                 type === value
                   ? "border-ink bg-ink text-paper"
                   : "border-line bg-paper-raised text-ink-muted hover:border-ink/40 hover:text-ink",
@@ -86,7 +86,7 @@ export function UploadPanel() {
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
         className={cn(
-          "flex flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-14 text-center transition-colors",
+          "flex flex-col items-center justify-center rounded-[2px] border border-dashed px-6 py-14 text-center transition-colors",
           dragging ? "border-clay bg-clay/5" : "border-ink/25 bg-paper-raised",
         )}
       >
@@ -150,7 +150,7 @@ export function UploadPanel() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="flex items-center gap-4 rounded-xl border border-line bg-paper-raised p-3"
+                  className="flex items-center gap-4 rounded-[2px] border border-line bg-paper-raised p-3"
                 >
                   <QueueRow entry={entry} onRemove={remove} onRetry={retry} />
                 </motion.li>
@@ -177,7 +177,7 @@ function QueueRow({
   return (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview */}
-      <img src={entry.previewUrl} alt="" className="size-16 shrink-0 rounded-lg object-cover" />
+      <img src={entry.previewUrl} alt="" className="size-16 shrink-0 rounded-[2px] object-cover" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="truncate text-sm font-medium">{entry.file.name}</p>

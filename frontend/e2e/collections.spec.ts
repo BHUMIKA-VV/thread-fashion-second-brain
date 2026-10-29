@@ -120,19 +120,26 @@ test("search, filter, collect, reorder, annotate, then delete the collection and
   }
 });
 
-test("navigation reaches every section and the dashboard links into the gallery", async ({ page }) => {
-  await page.goto("/dashboard");
+test("navigation reaches every section from the header and footer", async ({ page }) => {
+  await page.goto("/");
   const nav = page.getByRole("navigation", { name: "Main" });
-  await expect(nav.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
   for (const [label, path] of [
-    ["Gallery", "/gallery"],
-    ["Upload", "/upload"],
+    ["Archive", "/gallery"],
     ["Collections", "/collections"],
-    ["System", "/settings"],
-    ["Dashboard", "/dashboard"],
+    ["Upload", "/upload"],
   ] as const) {
     await nav.getByRole("link", { name: label }).click();
     await expect(page).toHaveURL(new RegExp(`${path}$`));
     await expect(nav.getByRole("link", { name: label })).toHaveAttribute("aria-current", "page");
   }
+  const more = page.getByRole("navigation", { name: "More" });
+  for (const [label, path] of [
+    ["Overview", "/dashboard"],
+    ["System", "/settings"],
+  ] as const) {
+    await more.getByRole("link", { name: label }).click();
+    await expect(page).toHaveURL(new RegExp(`${path}$`));
+  }
+  await page.getByRole("link", { name: "Thread, home" }).click();
+  await expect(page).toHaveURL(/\/$/);
 });

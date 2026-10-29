@@ -35,12 +35,12 @@ export function ItemDetail({ id }: { id: string }) {
   });
 
   if (query.isPending) {
-    return <div className="h-[60vh] animate-pulse rounded-2xl bg-ink/[0.06]" aria-busy="true" aria-label="Loading item" />;
+    return <div role="status" className="h-[60vh] animate-pulse rounded-[2px] bg-ink/[0.06]" aria-busy="true" aria-label="Loading item" />;
   }
   if (query.isError) {
     const missing = query.error instanceof ApiError && query.error.status === 404;
     return (
-      <div role="alert" className="rounded-2xl border border-line bg-paper-raised p-10 text-center">
+      <div role="alert" className="rounded-[2px] border border-line bg-paper-raised p-10 text-center">
         <p className="font-display text-2xl">{missing ? "This item doesn't exist" : "Couldn't load this item"}</p>
         <p className="mt-2 text-sm text-ink-muted">
           {missing ? "It may have been deleted." : query.error.message}
@@ -54,32 +54,52 @@ export function ItemDetail({ id }: { id: string }) {
   return <ItemView item={query.data} />;
 }
 
+/** A short, stable reference for the piece, like a catalogue number. */
+function recordNumber(id: string): string {
+  return id.slice(0, 6).toUpperCase();
+}
+
+/** The piece's own words when it has notes (first sentence), otherwise its type. */
+export function itemTitle(item: Item): string {
+  const first = item.notes?.split(/(?<=[.!?])\s/)[0]?.trim();
+  if (!first) return `Untitled ${item.type}`;
+  return first.length > 80 ? `${first.slice(0, 77).trimEnd()}…` : first.replace(/[.]$/, "");
+}
+
 function ItemView({ item }: { item: Item }) {
   return (
     <div>
       <Link href="/gallery" className="inline-flex items-center gap-2 text-sm text-ink-muted hover:text-ink">
-        <ArrowLeft aria-hidden className="size-4" /> Gallery
+        <ArrowLeft aria-hidden className="size-4" /> Archive
       </Link>
-      <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-        <figure className="overflow-hidden rounded-2xl border border-line bg-paper-raised shadow-soft">
-          {/* eslint-disable-next-line @next/next/no-img-element -- private image served by the API */}
-          <img
-            src={apiUrl(item.image_url)}
-            alt={item.notes ? item.notes.slice(0, 120) : `${item.type} image`}
-            width={item.width}
-            height={item.height}
-            className="h-auto w-full"
-          />
+      <div className="mt-6 grid gap-10 lg:grid-cols-12 lg:gap-12">
+        {/* The object itself: borderless, and held in view while the record scrolls. */}
+        <figure className="self-start lg:sticky lg:top-8 lg:col-span-7">
+          <div className="bg-paper-raised">
+            {/* eslint-disable-next-line @next/next/no-img-element -- private image served by the API */}
+            <img
+              src={apiUrl(item.image_url)}
+              alt={item.notes ? item.notes.slice(0, 120) : `${item.type} image`}
+              width={item.width}
+              height={item.height}
+              className="h-auto w-full"
+            />
+          </div>
+          <figcaption className="mt-3 text-xs text-ink-muted">
+            <span className="font-display italic text-ink">Record {recordNumber(item.id)}</span> · {item.type}
+          </figcaption>
         </figure>
 
-        <div className="space-y-8">
+        <div className="space-y-12 lg:col-span-5">
           <div>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-xs uppercase tracking-[0.3em] text-ink-muted">{item.type}</p>
+              <p className="text-[11px] uppercase tracking-[0.28em] text-ink-muted">
+                {item.type} · Record {recordNumber(item.id)}
+              </p>
               <ProcessingBadge status={item.processing_status} />
             </div>
-            <h1 className="mt-2 font-display text-3xl tracking-tight">Saved piece</h1>
-            <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+            <h1 className="mt-3 text-balance font-display text-4xl leading-tight tracking-tight">{itemTitle(item)}</h1>
+            <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 border-t border-line pt-4 text-sm">
               <dt className="text-ink-muted">Added</dt>
               <dd>{dateFormat.format(new Date(item.created_at))}</dd>
               <dt className="text-ink-muted">Dimensions</dt>
@@ -135,11 +155,11 @@ function EditForm({ item }: { item: Item }) {
   };
 
   const fieldClass =
-    "mt-1.5 w-full rounded-xl border border-line bg-paper-raised px-3.5 py-2.5 text-sm outline-none focus:border-ink";
+    "mt-1.5 w-full rounded-[2px] border border-line bg-paper-raised px-3.5 py-2.5 text-sm outline-none focus:border-ink";
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" aria-labelledby="details-title">
-      <h2 id="details-title" className="font-display text-xl">
+      <h2 id="details-title" className="border-t border-ink pt-5 font-display text-xl">
         Details
       </h2>
       <label className="block text-sm">
@@ -222,7 +242,7 @@ function DeleteControl({ item }: { item: Item }) {
     );
   }
   return (
-    <div role="alertdialog" aria-labelledby="delete-title" className="rounded-2xl border border-danger/30 bg-danger/5 p-5">
+    <div role="alertdialog" aria-labelledby="delete-title" className="rounded-[2px] border border-danger/30 bg-danger/5 p-5">
       <p id="delete-title" className="text-sm">
         Delete this image and its notes permanently? This cannot be undone.
       </p>

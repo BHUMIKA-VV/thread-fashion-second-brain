@@ -41,7 +41,7 @@ export function DeepAnalysisPanel({ itemId }: { itemId: string }) {
   const running = current?.status === "running";
 
   return (
-    <section aria-labelledby="deep-analysis-title" className="rounded-2xl border border-line bg-paper-raised p-5">
+    <section aria-labelledby="deep-analysis-title" className="border-t border-ink pt-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="deep-analysis-title" className="font-display text-xl">
           Deep analysis
@@ -56,7 +56,7 @@ export function DeepAnalysisPanel({ itemId }: { itemId: string }) {
 
       <div className="mt-3 space-y-4 text-sm" aria-live="polite">
         {status.isPending ? (
-          <div className="h-10 animate-pulse rounded-xl bg-ink/[0.06]" aria-label="Loading deep analysis" />
+          <div role="status" className="h-10 animate-pulse rounded-[2px] bg-ink/[0.06]" aria-label="Loading deep analysis" />
         ) : status.isError ? (
           <p role="alert" className="text-danger">
             Deep analysis status could not be loaded.
@@ -109,7 +109,7 @@ function Unavailable({ status }: { status: DeepAnalysisStatus }) {
 function ProviderNote({ status }: { status: DeepAnalysisStatus }) {
   if (status.provider === "fake") {
     return (
-      <p className="rounded-lg bg-ink/[0.04] px-3 py-2 text-xs text-ink-muted">
+      <p className="rounded-[2px] bg-ink/[0.04] px-3 py-2 text-xs text-ink-muted">
         Test analyzer: canned results; nothing leaves this computer.
       </p>
     );
@@ -138,7 +138,7 @@ function Confirm({
       role="alertdialog"
       aria-labelledby="deep-confirm-title"
       aria-describedby="deep-confirm-body"
-      className="rounded-2xl border border-line bg-paper p-4"
+      className="rounded-[2px] border border-line bg-paper p-4"
     >
       <p id="deep-confirm-title" className="font-medium">
         {fake ? "Run the test analyzer?" : "Send this piece to Anthropic?"}

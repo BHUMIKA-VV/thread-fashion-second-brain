@@ -57,7 +57,7 @@ export function SystemStatus() {
   return (
     <section
       aria-labelledby="system-status-title"
-      className="rounded-2xl border border-line bg-paper-raised p-6 shadow-soft"
+      className="rounded-[2px] border border-line bg-paper-raised p-6 shadow-soft"
     >
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -132,7 +132,7 @@ export function SystemStatus() {
       </div>
 
       {db?.status === "unavailable" && (
-        <p role="alert" className="mt-4 rounded-xl bg-danger/5 px-4 py-3 text-sm text-danger">
+        <p role="alert" className="mt-4 rounded-[2px] bg-danger/5 px-4 py-3 text-sm text-danger">
           PostgreSQL is not reachable. Start it with{" "}
           <code className="font-mono">docker compose up -d --wait</code> from the repository root, then press
           Refresh.
@@ -140,20 +140,20 @@ export function SystemStatus() {
       )}
 
       {data?.embedding_model.detail && (
-        <p className="mt-4 rounded-xl bg-warning/5 px-4 py-3 text-sm text-warning">
+        <p className="mt-4 rounded-[2px] bg-warning/5 px-4 py-3 text-sm text-warning">
           {data.embedding_model.detail}
         </p>
       )}
 
       {db?.schema_up_to_date === false && (
-        <p className="mt-4 rounded-xl bg-warning/5 px-4 py-3 text-sm text-warning">
+        <p className="mt-4 rounded-[2px] bg-warning/5 px-4 py-3 text-sm text-warning">
           The database schema is behind the code. Run{" "}
           <code className="font-mono">alembic upgrade head</code> in the backend folder.
         </p>
       )}
 
       {error && (
-        <p role="alert" className="mt-4 rounded-xl bg-danger/5 px-4 py-3 text-sm text-danger">
+        <p role="alert" className="mt-4 rounded-[2px] bg-danger/5 px-4 py-3 text-sm text-danger">
           {error.message} Start it with the backend command in the README, then press Refresh.
         </p>
       )}

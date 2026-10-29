@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
 
+import { PAGE, PageHeader } from "@/components/page-header";
 import { Dashboard } from "@/features/dashboard/dashboard";
 
-export const metadata: Metadata = { title: "Dashboard" };
+export const metadata: Metadata = { title: "Overview" };
 
 export default function DashboardPage() {
   return (
-    <div className="mx-auto w-full max-w-6xl px-5 py-16 sm:px-8">
-      <p className="text-xs uppercase tracking-[0.3em] text-ink-muted">Overview</p>
-      <h1 className="mt-3 font-display text-4xl tracking-tight">Dashboard</h1>
+    <div className={PAGE}>
+      <PageHeader
+        kicker="Your archive at a glance"
+        title="Overview"
+        description="Real counts from your archive; each one opens the matching pieces."
+      />
       <div className="mt-10">
         <Dashboard />
       </div>

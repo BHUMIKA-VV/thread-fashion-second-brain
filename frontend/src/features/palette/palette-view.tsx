@@ -43,7 +43,7 @@ export function PaletteView({ item }: { item: Item }) {
   const failed = item.stage_status.palette === "failed";
 
   return (
-    <section aria-labelledby="palette-title" className="rounded-2xl border border-line bg-paper-raised p-5">
+    <section aria-labelledby="palette-title" className="border-t border-ink pt-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="palette-title" className="font-display text-xl">
           Colour palette
@@ -52,7 +52,7 @@ export function PaletteView({ item }: { item: Item }) {
           <a
             href={apiUrl(item.palette_card_url)}
             download
-            className="inline-flex items-center gap-1.5 rounded-full border border-ink/20 px-3.5 py-1.5 text-xs font-medium hover:border-ink/50"
+            className="inline-flex items-center gap-1.5 rounded-[2px] border border-ink/20 px-3.5 py-1.5 text-xs font-medium hover:border-ink/50"
           >
             <Download aria-hidden className="size-3.5" /> Export card
           </a>
@@ -61,8 +61,8 @@ export function PaletteView({ item }: { item: Item }) {
 
       <div className="mt-4" aria-live="polite" aria-busy={extraction.isPending}>
         {extraction.isPending ? (
-          <div className="space-y-3" aria-label="Extracting palette">
-            <div className="h-14 animate-pulse rounded-xl bg-ink/[0.06]" />
+          <div role="status" className="space-y-3" aria-label="Extracting palette">
+            <div className="h-14 animate-pulse rounded-[2px] bg-ink/[0.06]" />
             <p className="text-sm text-ink-muted">Extracting colours…</p>
           </div>
         ) : palette ? (
@@ -103,7 +103,7 @@ function PaletteDetails({ palette }: { palette: Palette }) {
   return (
     <div>
       {/* Proportional band: each colour's width is its share of the image. */}
-      <div className="flex h-14 overflow-hidden rounded-xl" role="img" aria-label="Palette proportions">
+      <div className="flex h-14 overflow-hidden rounded-[2px]" role="img" aria-label="Palette proportions">
         {palette.colors.map((color, index) => (
           <motion.span
             key={color.hex}
@@ -117,7 +117,7 @@ function PaletteDetails({ palette }: { palette: Palette }) {
         ))}
       </div>
 
-      <ul className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {palette.colors.map((color) => (
           <li key={color.hex}>
             <SwatchChip color={color} />
@@ -159,9 +159,9 @@ function SwatchChip({ color }: { color: PaletteColor }) {
     <button
       type="button"
       onClick={() => void copy()}
-      className="group flex w-full items-center gap-3 rounded-xl border border-line bg-paper p-2 text-left transition-colors hover:border-ink/40"
+      className="group flex w-full items-center gap-3 rounded-[2px] border border-line bg-paper p-2 text-left transition-colors hover:border-ink/40"
     >
-      <span aria-hidden className="size-10 shrink-0 rounded-lg border border-ink/10" style={{ backgroundColor: color.hex }} />
+      <span aria-hidden className="size-10 shrink-0 rounded-[2px] border border-ink/10" style={{ backgroundColor: color.hex }} />
       <span className="min-w-0 flex-1">
         {/* The accessible name is the visible text plus "Copy" (so voice control matches it). */}
         <span className="sr-only">Copy</span>{" "}

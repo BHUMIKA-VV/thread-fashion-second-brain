@@ -52,3 +52,9 @@ export function tagLabel(tag: string): string {
 function unique<T>(values: T[]): T[] {
   return [...new Set(values)];
 }
+
+/** A gallery URL with these filters applied (e.g. a colour family or a type). */
+export function galleryLink(change: Partial<GalleryFilters>): string {
+  const search = filtersToSearch({ ...EMPTY_FILTERS, ...change });
+  return search ? `/gallery?${search}` : "/gallery";
+}
