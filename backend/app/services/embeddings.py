@@ -139,9 +139,23 @@ class EmbeddingService:
         embedder = registry.get_embedder_nowait()
         if not self._is_current(query_item, embedder):
             self.index(query_item, embedder)
-        self._backfill(embedder, exclude=query_item.id)
+        self._backfill(embedder, exclude=item_id)
 
-        query_vector = query_item.embedding.vector  # type: ignore[union-attr]
+        # Read the vector afresh (by id, not through `query_item`): another request may have
+        # deleted the item while it or the backfill was being indexed.
+        query_vector = self.db.scalar(
+            select(Embedding.vector)
+            .join(Item, Item.id == Embedding.item_id)
+            .where(
+                Item.id == item_id,
+                Item.user_id == self.owner_id,
+                Embedding.model_name == embedder.model_name,
+            )
+        )
+        if query_vector is None:
+            if self.items.get(item_id) is None:
+                raise ItemDeleted()
+            raise EmbeddingFailed("This image could not be indexed for similarity search.")
         distance = Embedding.vector.cosine_distance(query_vector)
         # pgvector >= 0.8: keep scanning the HNSW index when the owner filter removes
         # candidates, so a small library still gets `limit` results. relaxed_order may return
@@ -152,7 +166,7 @@ class EmbeddingService:
             .join(Embedding, Embedding.item_id == Item.id)
             .where(
                 Item.user_id == self.owner_id,
-                Item.id != query_item.id,
+                Item.id != item_id,
                 Embedding.model_name == embedder.model_name,
             )
             .order_by(distance)
@@ -170,7 +184,7 @@ class EmbeddingService:
             self.db.scalar(
                 select(func.count())
                 .select_from(Item)
-                .where(Item.user_id == self.owner_id, Item.id != query_item.id)
+                .where(Item.user_id == self.owner_id, Item.id != item_id)
             )
             or 0
         )
@@ -181,7 +195,7 @@ class EmbeddingService:
                 .join(Embedding, Embedding.item_id == Item.id)
                 .where(
                     Item.user_id == self.owner_id,
-                    Item.id != query_item.id,
+                    Item.id != item_id,
                     Embedding.model_name == embedder.model_name,
                 )
             )

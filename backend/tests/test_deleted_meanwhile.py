@@ -50,7 +50,7 @@ def committed(
     migrated_db_url: str, tmp_path: Path
 ) -> Iterator[tuple[TestClient, Connection, RacingStorage]]:
     engine = create_engine(migrated_db_url)
-    sessions = sessionmaker(bind=engine, expire_on_commit=True)
+    sessions = sessionmaker(bind=engine, expire_on_commit=False)  # as in production
     other = engine.connect().execution_options(isolation_level="AUTOCOMMIT")
     storage = RacingStorage(tmp_path / "storage")
     with sessions() as setup:
@@ -180,3 +180,27 @@ def test_a_missing_item_becomes_item_deleted(db: Session) -> None:
     with pytest.raises(ItemDeleted), unless_deleted(db, missing):
         db.add(Embedding(item_id=missing, model_name="m", vector=[0.0] * 512))
         db.flush()
+
+
+@pytest.mark.parametrize("mode", ["visual", "fabric"])
+def test_similar_for_a_piece_deleted_during_the_backfill_is_404(
+    committed: tuple[TestClient, Connection, RacingStorage], mode: str
+) -> None:
+    client, other, storage = committed
+    # Both pieces need indexing (as when they were uploaded while the model was loading): the
+    # request indexes the query piece, then backfills the neighbour, during which another
+    # request deletes the query piece.
+    query = unindexed_item(client, other)
+    query_id, query_key = query["id"], query["key"]
+    neighbour = unindexed_item(client, other)
+
+    def delete_query_piece() -> None:  # another request deletes the piece being compared
+        delete_row(other, query_id)()
+        storage.delete(query_key)
+
+    storage.target, storage.on_read = neighbour["key"], delete_query_piece
+    response = client.get(f"/items/{query_id}/similar", params={"mode": mode})
+
+    assert storage.on_read is None  # the race really happened during the request
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "not_found"
