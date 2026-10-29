@@ -23,6 +23,7 @@ from app.ml.tagging import LabelScore, Tagger
 from app.models import Item, Tag
 from app.models.enums import TagSource, UserTagAction
 from app.services.status import set_stage
+from app.services.vanished import unless_deleted
 
 logger = logging.getLogger(__name__)
 
@@ -116,8 +117,9 @@ class TagService:
             t.model_name == tagger.version for t in item.tags if t.source == TagSource.AI.value
         )
         if not current:
-            self.apply_ai_tags(item, tagger, np.asarray(embedding.vector, dtype=np.float32))
-            self.db.commit()
+            with unless_deleted(self.db, item.id):  # raises ItemDeleted if deleted meanwhile
+                self.apply_ai_tags(item, tagger, np.asarray(embedding.vector, dtype=np.float32))
+                self.db.commit()
         return "completed"
 
     def scores(self, item: Item) -> dict[str, list[LabelScore]] | None:

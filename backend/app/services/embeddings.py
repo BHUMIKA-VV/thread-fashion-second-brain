@@ -20,7 +20,6 @@ from PIL import Image
 from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
-from sqlalchemy.orm.exc import StaleDataError
 
 from app.ml import registry
 from app.ml.embedder import Embedder
@@ -28,6 +27,7 @@ from app.models import Embedding, Item
 from app.repositories.items import ItemRepository
 from app.services.status import set_stage
 from app.services.tags import TagService
+from app.services.vanished import ItemDeleted, unless_deleted
 from app.storage import Storage
 
 logger = logging.getLogger(__name__)
@@ -62,7 +62,9 @@ class EmbeddingService:
     # --- indexing ------------------------------------------------------------------------
 
     def index(self, item: Item, embedder: Embedder, image_bytes: bytes | None = None) -> None:
-        """Embed `item` and upsert its vector. Commits. Raises EmbeddingFailed."""
+        """Embed `item` and upsert its vector. Commits. Raises EmbeddingFailed, or ItemDeleted
+        if the item was deleted while this ran."""
+        item_id = item.id  # usable after a rollback expires `item`
         try:
             data = image_bytes if image_bytes is not None else self.storage.read(item.original_key)
             with Image.open(io.BytesIO(data)) as image:
@@ -70,38 +72,36 @@ class EmbeddingService:
             if vector.shape != (embedder.dimension,):
                 raise ValueError(f"unexpected vector shape {vector.shape}")
         except Exception as exc:
-            logger.exception("Embedding failed for item %s", item.id)
+            logger.exception("Embedding failed for item %s", item_id)
             set_stage(item, "embedding", "failed")
             set_stage(item, "tags", "failed")  # tags are derived from the embedding
-            try:
+            # If the item was deleted meanwhile (its file is gone too), this raises ItemDeleted.
+            with unless_deleted(self.db, item_id):
                 self.db.commit()
-            except StaleDataError:
-                # The item was deleted concurrently (e.g. while a search was backfilling it);
-                # there is nothing left to mark.
-                self.db.rollback()
             raise EmbeddingFailed("This image could not be indexed for similarity search.") from exc
 
-        values = {"item_id": item.id, "model_name": embedder.model_name, "vector": vector.tolist()}
-        self.db.execute(
-            insert(Embedding)
-            .values(**values)
-            .on_conflict_do_update(
-                index_elements=[Embedding.item_id],
-                set_={
-                    "model_name": values["model_name"],
-                    "vector": values["vector"],
-                    "created_at": func.clock_timestamp(),
-                },
+        values = {"item_id": item_id, "model_name": embedder.model_name, "vector": vector.tolist()}
+        with unless_deleted(self.db, item_id):
+            self.db.execute(
+                insert(Embedding)
+                .values(**values)
+                .on_conflict_do_update(
+                    index_elements=[Embedding.item_id],
+                    set_={
+                        "model_name": values["model_name"],
+                        "vector": values["vector"],
+                        "created_at": func.clock_timestamp(),
+                    },
+                )
             )
-        )
-        set_stage(item, "embedding", "completed")
-        # Zero-shot tags come straight from the new vector (no second image read).
-        tagger = registry.get_tagger_if_ready()
-        if tagger is not None and tagger.model_name == embedder.model_name:
-            TagService(self.db).apply_ai_tags(item, tagger, vector)
-        else:
-            set_stage(item, "tags", "pending")
-        self.db.commit()
+            set_stage(item, "embedding", "completed")
+            # Zero-shot tags come straight from the new vector (no second image read).
+            tagger = registry.get_tagger_if_ready()
+            if tagger is not None and tagger.model_name == embedder.model_name:
+                TagService(self.db).apply_ai_tags(item, tagger, vector)
+            else:
+                set_stage(item, "tags", "pending")
+            self.db.commit()
         self.db.expire(item, ["embedding"])
 
     def mark_waiting_for_model(self, item: Item) -> None:
@@ -120,7 +120,8 @@ class EmbeddingService:
         if embedder is None:
             self.mark_waiting_for_model(item)
             return
-        with contextlib.suppress(EmbeddingFailed):  # the failure is recorded on the item
+        # A failure is recorded on the item; a deleted item needs nothing more.
+        with contextlib.suppress(EmbeddingFailed, ItemDeleted):
             self.index(item, embedder, image_bytes)
 
     def _is_current(self, item: Item, embedder: Embedder) -> bool:
@@ -206,5 +207,5 @@ class EmbeddingService:
         for item in missing:
             try:
                 self.index(item, embedder)
-            except EmbeddingFailed:
+            except (EmbeddingFailed, ItemDeleted):  # failure recorded / item deleted meanwhile
                 continue

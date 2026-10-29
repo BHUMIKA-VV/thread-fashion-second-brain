@@ -5,6 +5,7 @@ import logging
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.orm.exc import ObjectDeletedError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.ml.registry import EmbedderLoading, EmbedderUnavailable
@@ -53,6 +54,15 @@ def register_error_handlers(app: FastAPI) -> None:
     async def not_found(_: Request, exc: NotFoundError) -> JSONResponse:
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND, content=error_body("not_found", str(exc))
+        )
+
+    @app.exception_handler(ObjectDeletedError)
+    async def deleted_meanwhile(_: Request, exc: ObjectDeletedError) -> JSONResponse:
+        # A row this request had loaded was deleted by another request before it was re-read.
+        logger.info("Row deleted during the request: %s", exc)
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=error_body("not_found", "Item not found."),
         )
 
     @app.exception_handler(ConflictError)
