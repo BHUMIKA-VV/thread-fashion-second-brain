@@ -159,12 +159,13 @@ function SwatchChip({ color }: { color: PaletteColor }) {
     <button
       type="button"
       onClick={() => void copy()}
-      aria-label={`Copy ${color.hex} (${color.name})`}
       className="group flex w-full items-center gap-3 rounded-xl border border-line bg-paper p-2 text-left transition-colors hover:border-ink/40"
     >
       <span aria-hidden className="size-10 shrink-0 rounded-lg border border-ink/10" style={{ backgroundColor: color.hex }} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm capitalize">{color.name}</span>
+        {/* The accessible name is the visible text plus "Copy" (so voice control matches it). */}
+        <span className="sr-only">Copy</span>{" "}
+        <span className="block truncate text-sm capitalize">{color.name}</span>{" "}
         <span className="flex items-center gap-1.5 font-mono text-xs text-ink-muted">
           {color.hex.toUpperCase()} · {color.percentage}%
         </span>

@@ -15,7 +15,7 @@
   --sage: #7d8466;
   --indigo: #3e4a6b;
   --success: #4f6b45;
-  --warning: #a8742a;
+  --warning: #86591b; /* >= 5.2:1 on paper, raised paper and warning tints (WCAG AA) */
   --danger: #a3412f;
 }
 

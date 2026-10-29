@@ -100,6 +100,11 @@ describe("SystemStatus", () => {
 
     expect(await screen.findByText("Degraded")).toBeInTheDocument();
     expect(screen.getByText("Unavailable")).toBeInTheDocument();
+    // What depends on the database cannot be checked, and the page says how to fix it.
+    expect(screen.getAllByText("Unknown")).toHaveLength(2);
+    expect(screen.queryByText("Checking…")).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("PostgreSQL is not reachable");
+    expect(screen.getByRole("alert")).toHaveTextContent("docker compose up -d --wait");
   });
 
   it("explains when the API cannot be reached", async () => {

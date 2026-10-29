@@ -216,7 +216,6 @@ function SimilarCard({ result, index }: { result: SimilarItem; index: number }) 
       <Link
         href={`/items/${item.id}`}
         className="group block overflow-hidden rounded-xl border border-line bg-paper-raised shadow-soft"
-        aria-label={`${item.type} — ${score.long}`}
       >
         <div className="aspect-[3/4] overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element -- private image served by the API */}
@@ -229,8 +228,10 @@ function SimilarCard({ result, index }: { result: SimilarItem; index: number }) 
         </div>
         {item.palette && <PaletteStrip colors={item.palette.colors} />}
         <div className="flex items-center justify-between gap-2 px-3 py-2.5 text-xs">
-          <span className="uppercase tracking-[0.18em] text-ink-muted">{item.type}</span>
+          {/* The link's name is this visible text, then the longer description. */}
+          <span className="uppercase tracking-[0.18em] text-ink-muted">{item.type}</span>{" "}
           <span className="font-mono">{score.short}</span>
+          <span className="sr-only">, {score.long}</span>
         </div>
       </Link>
       {reasons.length > 0 && (

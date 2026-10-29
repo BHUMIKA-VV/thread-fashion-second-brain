@@ -32,6 +32,7 @@ export function Dashboard() {
     return (
       <div role="alert" className="rounded-2xl border border-danger/20 bg-danger/5 p-8 text-center">
         <p className="font-display text-xl">The dashboard could not be loaded.</p>
+        <p className="mt-2 text-sm text-ink-muted">{query.error.message}</p>
         <button type="button" className="mt-4 text-sm underline" onClick={() => void query.refetch()}>
           Try again
         </button>
@@ -64,22 +65,24 @@ export function Dashboard() {
 
 function Counts({ summary }: { summary: LibrarySummary }) {
   return (
-    <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <ul aria-label="Library counts" className="grid grid-cols-2 gap-4 sm:grid-cols-4">
       <Stat label="Pieces" value={summary.total} href="/gallery" />
       {ITEM_TYPES.filter((t) => summary.by_type[t]).map((type) => (
         <Stat key={type} label={TYPE_NAMES[type]} value={summary.by_type[type] ?? 0} href={galleryLink({ type })} />
       ))}
       <Stat label="Collections" value={summary.collections} href="/collections" />
-    </dl>
+    </ul>
   );
 }
 
 function Stat({ label, value, href }: { label: string; value: number; href: string }) {
   return (
-    <Link href={href} className="rounded-2xl border border-line bg-paper-raised p-4 hover:border-ink/40">
-      <dt className="text-xs uppercase tracking-[0.18em] text-ink-muted">{label}</dt>
-      <dd className="mt-1 font-display text-3xl">{value}</dd>
-    </Link>
+    <li>
+      <Link href={href} className="block rounded-2xl border border-line bg-paper-raised p-4 hover:border-ink/40">
+        <span className="block text-xs uppercase tracking-[0.18em] text-ink-muted">{label}</span>
+        <span className="mt-1 block font-display text-3xl">{value}</span>
+      </Link>
+    </li>
   );
 }
 

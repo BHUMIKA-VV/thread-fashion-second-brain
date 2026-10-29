@@ -42,7 +42,7 @@ describe("SimilarPieces", () => {
     expect(screen.getByLabelText("Loading similar pieces")).toBeInTheDocument();
     const links = await screen.findAllByRole("link");
     expect(links.map((l) => l.getAttribute("href"))).toEqual([`/items/${near.id}`, `/items/${far.id}`]);
-    expect(links[0]).toHaveAccessibleName("outfit — similarity 0.93");
+    expect(links[0]).toHaveAccessibleName("outfit 0.93, similarity 0.93");
     expect(screen.getByText("0.70")).toBeInTheDocument();
     expect(screen.getByText(/Compared with 2 of your pieces/)).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(`/api/items/${QUERY_ID}/similar?mode=visual&limit=12`, undefined);
@@ -93,7 +93,7 @@ describe("SimilarPieces", () => {
     );
     expect(screen.getByText("Both dominated by red")).toBeInTheDocument();
     expect(screen.getByText(/ranked by colour only/)).toBeInTheDocument();
-    expect(screen.getByRole("link")).toHaveAccessibleName("fabric — colour distance 6.4");
+    expect(screen.getByRole("link")).toHaveAccessibleName("fabric ΔE 6.4, colour distance 6.4");
     expect(fetchMock).toHaveBeenLastCalledWith(`/api/items/${QUERY_ID}/similar?mode=palette&limit=12`, undefined);
   });
 

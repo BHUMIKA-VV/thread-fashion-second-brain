@@ -222,3 +222,22 @@ describe("Dashboard", () => {
     expect(await screen.findByText("Your library is empty")).toBeInTheDocument();
   });
 });
+
+describe("Dashboard errors", () => {
+  it("says why it could not load and recovers on retry", async () => {
+    let attempts = 0;
+    routeFetch({
+      "GET /api/items/summary": () =>
+        attempts++ === 0 // the test client does not retry, so only the first request fails
+          ? new Response("Internal Server Error", { status: 500 })
+          : Response.json({ total: 0, by_type: {}, by_status: {}, color_families: [], tags: [], collections: 0, recent: [] }),
+    });
+    renderWithQuery(<Dashboard />);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("The dashboard could not be loaded.");
+    expect(alert).toHaveTextContent("The Thread API is not reachable.");
+    fireEvent.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Your library is empty")).toBeInTheDocument();
+  });
+});

@@ -51,6 +51,8 @@ export function SystemStatus() {
   const db = data?.database;
   const dbTone: StatusTone = !db ? "neutral" : db.status === "ok" ? "success" : "danger";
   const dbLabel = !db ? (error ? "Unknown" : "Checking…") : db.status === "ok" ? "Connected" : "Unavailable";
+  // Without a database connection, pgvector and migrations cannot be checked at all.
+  const unknown = Boolean(error) || db?.status === "unavailable";
 
   return (
     <section
@@ -68,10 +70,9 @@ export function SystemStatus() {
           variant="secondary"
           onClick={() => void refetch()}
           disabled={isFetching}
-          aria-label="Check system status now"
         >
           <RefreshCw aria-hidden className={isFetching ? "size-4 animate-spin" : "size-4"} />
-          Refresh
+          Refresh<span className="sr-only"> system status</span>
         </Button>
       </div>
 
@@ -90,7 +91,7 @@ export function SystemStatus() {
         </Row>
         <Row icon={<Database className="size-4" aria-hidden />} label="pgvector extension">
           {db?.pgvector_available == null ? (
-            <StatusBadge tone="neutral" label={error ? "Unknown" : "Checking…"} />
+            <StatusBadge tone="neutral" label={unknown ? "Unknown" : "Checking…"} />
           ) : (
             <StatusBadge
               tone={db.pgvector_available ? "success" : "danger"}
@@ -114,7 +115,7 @@ export function SystemStatus() {
         </Row>
         <Row icon={<Layers className="size-4" aria-hidden />} label="Database migrations">
           {db?.schema_up_to_date == null ? (
-            <StatusBadge tone="neutral" label={error ? "Unknown" : "Checking…"} />
+            <StatusBadge tone="neutral" label={unknown ? "Unknown" : "Checking…"} />
           ) : (
             <>
               <StatusBadge
@@ -129,6 +130,14 @@ export function SystemStatus() {
           )}
         </Row>
       </div>
+
+      {db?.status === "unavailable" && (
+        <p role="alert" className="mt-4 rounded-xl bg-danger/5 px-4 py-3 text-sm text-danger">
+          PostgreSQL is not reachable. Start it with{" "}
+          <code className="font-mono">docker compose up -d --wait</code> from the repository root, then press
+          Refresh.
+        </p>
+      )}
 
       {data?.embedding_model.detail && (
         <p className="mt-4 rounded-xl bg-warning/5 px-4 py-3 text-sm text-warning">

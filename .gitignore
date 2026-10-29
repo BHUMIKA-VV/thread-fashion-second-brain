@@ -13,8 +13,9 @@ __pycache__/
 # Node / Next.js (frontend/.gitignore covers the rest)
 node_modules/
 
-# Local data and model caches
-storage/
+# Local data and model caches. The leading slash matters: a bare "storage/" also matched
+# backend/app/storage/ (source code), which was then never committed.
+/storage/
 .cache/
 
 # Editors / OS
@@ -22,3 +23,10 @@ storage/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Sample photos are yours to supply (see database/sample_data/README.md); never commit them.
+database/sample_data/*
+!database/sample_data/README.md
+
+# Throwaway fresh-setup check (Milestone 8); deleted after use.
+.cleanroom/

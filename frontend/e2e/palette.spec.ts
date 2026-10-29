@@ -24,8 +24,8 @@ test("an uploaded image shows its real extracted palette", async ({ page, reques
 
   try {
     const section = page.getByRole("region", { name: "Colour palette" });
-    await expect(section.getByRole("button", { name: "Copy #263b5e (neel indigo)" })).toBeVisible();
-    await expect(section.getByRole("button", { name: "Copy #e3a018 (haldi yellow)" })).toBeVisible();
+    await expect(section.getByRole("button", { name: /^Copy neel indigo\s*#263B5E/ })).toBeVisible();
+    await expect(section.getByRole("button", { name: /^Copy haldi yellow\s*#E3A018/ })).toBeVisible();
     await expect(section.getByText("Harmony (heuristic):")).toBeVisible();
 
     // What is on screen matches what the API stored.

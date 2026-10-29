@@ -5,6 +5,7 @@ import logging
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm.exc import ObjectDeletedError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -138,6 +139,21 @@ def register_error_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=IMAGE_ERROR_STATUS.get(exc.code, 422),
             content=error_body(exc.code, str(exc)),
+        )
+
+    @app.exception_handler(OperationalError)
+    async def database_unavailable(request: Request, exc: OperationalError) -> JSONResponse:
+        # Connection refused, server gone, timeouts: not a bug in the request, so say what is
+        # wrong instead of a generic 500. The driver message (host, port) stays in the log.
+        logger.error(
+            "Database unavailable on %s %s: %s", request.method, request.url.path, type(exc.orig)
+        )
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=error_body(
+                "database_unavailable",
+                "The database is not reachable right now. Check the System page.",
+            ),
         )
 
     @app.exception_handler(Exception)

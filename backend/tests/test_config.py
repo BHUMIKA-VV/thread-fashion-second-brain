@@ -1,4 +1,5 @@
 import pytest
+from sqlalchemy import make_url
 
 from app.core.config import Settings, get_settings
 from app.db.session import get_engine
@@ -32,6 +33,7 @@ def test_engine_uses_psycopg_driver_from_real_configuration() -> None:
     try:
         engine = get_engine()
         assert engine.dialect.driver == "psycopg"
-        assert engine.url.database == "thread"
+        # The configured database, whatever it is called (default setups use "thread").
+        assert engine.url.database == make_url(get_settings().database_url).database
     finally:
         get_engine.cache_clear()

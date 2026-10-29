@@ -18,10 +18,21 @@ import { formatBytes } from "@/lib/upload-rules";
 import { deleteItem, getItem, updateItem } from "@/services/items";
 import { ITEM_TYPES, type Item, type ItemType } from "@/types/api";
 
+export const ITEM_PROCESSING_POLL_MS = 4_000;
+
 const dateFormat = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" });
 
 export function ItemDetail({ id }: { id: string }) {
-  const query = useQuery({ queryKey: ["items", "detail", id], queryFn: () => getItem(id) });
+  const query = useQuery({
+    queryKey: ["items", "detail", id],
+    queryFn: () => getItem(id),
+    // While analysis is still running (e.g. the model was loading at upload time), keep the
+    // status badge honest by checking again until it settles.
+    refetchInterval: (q) =>
+      q.state.data && ["queued", "processing"].includes(q.state.data.processing_status)
+        ? ITEM_PROCESSING_POLL_MS
+        : false,
+  });
 
   if (query.isPending) {
     return <div className="h-[60vh] animate-pulse rounded-2xl bg-ink/[0.06]" aria-busy="true" aria-label="Loading item" />;

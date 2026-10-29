@@ -26,7 +26,7 @@ describe("PaletteView", () => {
   it("shows the extracted swatches, hex values and shares", () => {
     renderWithQuery(<PaletteView item={withPalette()} />);
 
-    expect(screen.getByRole("button", { name: "Copy #e3a018 (haldi yellow)" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Copy haldi yellow\s*#E3A018/ })).toBeInTheDocument();
     expect(screen.getByText("#E3A018 · 70%")).toBeInTheDocument();
     expect(screen.getByText("#263B5E · 30%")).toBeInTheDocument();
     expect(screen.getByText(/Harmony \(heuristic\)/)).toBeInTheDocument();
@@ -48,7 +48,7 @@ describe("PaletteView", () => {
     vi.stubGlobal("navigator", { clipboard: { writeText } });
     renderWithQuery(<PaletteView item={withPalette()} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Copy #263b5e (neel indigo)" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Copy neel indigo\s*#263B5E/ }));
 
     expect(await screen.findByText("Copied")).toBeInTheDocument();
     expect(writeText).toHaveBeenCalledWith("#263b5e");
@@ -60,7 +60,7 @@ describe("PaletteView", () => {
     document.execCommand = execCommand;
     renderWithQuery(<PaletteView item={withPalette()} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Copy #e3a018 (haldi yellow)" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Copy haldi yellow\s*#E3A018/ }));
 
     expect(await screen.findByText("Copied")).toBeInTheDocument();
     expect(execCommand).toHaveBeenCalledWith("copy");
@@ -71,7 +71,7 @@ describe("PaletteView", () => {
     document.execCommand = vi.fn().mockReturnValue(false);
     renderWithQuery(<PaletteView item={withPalette()} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Copy #e3a018 (haldi yellow)" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Copy haldi yellow\s*#E3A018/ }));
 
     expect(await screen.findByText("Copy failed")).toBeInTheDocument();
   });

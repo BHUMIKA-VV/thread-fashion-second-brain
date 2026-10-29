@@ -87,3 +87,27 @@ def test_openapi_schema_lists_health(client: TestClient) -> None:
 
     assert response.status_code == 200
     assert "/health" in response.json()["paths"]
+
+
+def test_data_requests_say_the_database_is_unavailable(client: TestClient) -> None:
+    """A real engine pointed at a port with nothing listening: requests that need the
+    database answer 503 database_unavailable, without driver details."""
+    engine = create_engine(
+        "postgresql+psycopg://thread:not-the-password@127.0.0.1:1/thread",
+        connect_args={"connect_timeout": 1},
+    )
+
+    def override() -> Iterator[Session]:
+        with Session(engine) as session:
+            yield session
+
+    app.dependency_overrides[get_db] = override
+    try:
+        for path in ("/items", "/collections", "/items/summary"):
+            response = client.get(path)
+            assert response.status_code == 503, path
+            assert response.json()["error"]["code"] == "database_unavailable"
+            assert "not-the-password" not in response.text
+            assert "127.0.0.1" not in response.text
+    finally:
+        engine.dispose()

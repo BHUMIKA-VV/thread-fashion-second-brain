@@ -4,60 +4,99 @@ A personal visual library for fashion: upload outfits, garments and fabric swatc
 extracts their palette, tags style and textile craft (including Indian traditions such as ikat,
 bandhani and chikankari) and finds similar pieces in your own library.
 
-> **Status: Milestone 7b (Deep analysis) complete.** You can upload images (drag and drop, file
-> picker or phone camera), browse them in a gallery, edit and delete them. Every upload gets a
-> real colour palette (hex/RGB, human and Indian colour names, percentages, heuristic harmony, PNG
-> card), an OpenCLIP image embedding and **zero-shot fashion tags** (garment, silhouette, pattern,
-> fabric guess, aesthetic, occasion, Indian crafts) that you can correct. Each item page shows
-> **similar pieces from your own library** in three modes. The gallery has **text search and tag,
-> colour-family and type filters** kept in the URL, pieces can be gathered into **ordered,
-> annotated collections**, and a **dashboard** summarises the library. **Deep analysis** is an
-> optional, user-confirmed Claude vision description of one piece; it is off without an API key.
-> Tag and deep-analysis accuracy have not been measured (see Limitations). This README documents
-> only what exists today.
+> **Status: MVP complete (Milestone 8).** Everything below exists and is tested; this README
+> documents only what exists today. Tag and deep-analysis accuracy have not been measured (see
+> [Known limitations](#known-limitations)). For an interview-level walkthrough of the
+> architecture and algorithms, see [docs/architecture.md](docs/architecture.md).
 
-## Architecture (current)
+## Features
+
+- **Upload** from desktop (drag and drop, file picker) or phone (camera), with live progress;
+  files are validated by their bytes, not their names, and duplicates point at the saved copy.
+- **Honest processing status** per piece: awaiting analysis, analysing, partly analysed,
+  analysed or failed. A failed stage never discards the stages that worked.
+- **Colour palette** measured in CIELAB: hex/RGB, human and Indian colour names, percentages,
+  colour families, a heuristic harmony label and a downloadable PNG card.
+- **Fashion tags** from OpenCLIP zero-shot classification (garment, silhouette, pattern, fabric
+  guess, aesthetic, occasion, Indian crafts such as ikat and bandhani). Your additions and
+  removals are stored separately and survive re-analysis.
+- **Similar pieces from your own library** in three modes: visually similar, same palette with a
+  different silhouette, and same fabric in a different colour, each with the reason it matched.
+- **Gallery search and filters** (text, tags, colour families, type, sort) kept in the URL.
+- **Collections**: ordered, annotated mood boards; deleting one never deletes pieces.
+- **Dashboard** of real counts that link into filtered gallery views.
+- **Deep analysis** (optional): a user-confirmed Claude vision description of one piece; off
+  without an API key.
+- **System page** with live API, database, pgvector, model and migration status.
+- **Sample data**: 20 generated textile swatches, or your own photos, via a rerun-safe script.
+
+## Architecture
 
 ```mermaid
 flowchart LR
-  B[Browser] -->|"pages: /dashboard, /gallery, /collections, …"| N[Next.js 16 App Router :3100]
+  B[Browser] -->|"pages"| N["Next.js 16 App Router :3100"]
   B -->|"/api/*"| N
-  N -->|"rewrite /api/:path* → :8010/:path*"| F[FastAPI :8010]
-  F -->|"psycopg 3 / SQLAlchemy 2"| P[(PostgreSQL 16 + pgvector<br/>Docker :5434)]
+  N -->|"rewrite /api/:path* to :8010"| F[FastAPI :8010]
+  F -->|"SQLAlchemy 2 / psycopg 3"| P[("PostgreSQL 16 + pgvector<br/>Docker :5434")]
+  F -->|"originals, thumbnails"| S[("storage/ on disk")]
+  F -->|"in-process, CPU"| M["OpenCLIP ViT-B/32<br/>local weights"]
+  F -.->|"optional: one image,<br/>after you confirm"| A["Anthropic API"]
 ```
 
 The browser only talks to the Next.js origin. `/api/*` is proxied to FastAPI, so there is no CORS
-configuration and, later, private images can stay behind the API.
+configuration and private images stay behind the API's ownership checks. The image model runs
+inside the API process; nothing leaves the machine except an explicitly confirmed deep analysis.
+Details, request flows and algorithms: [docs/architecture.md](docs/architecture.md).
 
 ## Repository layout
 
 ```
-backend/            FastAPI app (Python 3.11)
-  app/api/          routes, dependencies (current user), structured error handlers
-  app/color/        LAB maths, palette extraction, naming, harmony, PNG card (+ data/ name lists)
-  app/ml/           pinned model spec, OpenCLIP embedder, lazily loaded registry, tag vocabulary
-                    (vocabulary.py) and zero-shot tagger with its text-vector cache (tagging.py)
-  scripts/          fetch_model.py (explicit, one-off weights download)
-  app/core/         settings (THREAD_ env prefix) and logging
-  app/db/           declarative base, engine/session, Alembic helpers
-  app/models/       SQLAlchemy 2 models (users, items, palettes, tags, embeddings, collections)
-  app/repositories/ owner-scoped data access
-  app/schemas/      Pydantic request/response models
-  app/services/     image validation, upload/delete use-cases, palette extraction for items
-  app/storage/      storage interface (base.py) and local filesystem backend (local.py)
-  alembic.ini       Alembic config (no credentials; URL comes from THREAD_DATABASE_URL)
-  tests/            pytest suite
-frontend/           Next.js App Router + TypeScript (strict) + Tailwind 4
-  src/app/          routes: / (landing), /upload, /gallery, /items/[id], /settings (system status)
-  src/components/   design-system primitives (Button, StatusBadge, header)
-  src/features/     feature modules (landing hero, system status)
+backend/              FastAPI app (Python 3.11)
+  app/api/            routes, dependencies (current user), structured error handlers
+  app/color/          LAB maths, palette extraction, naming, harmony, comparison, PNG card
+  app/core/           settings (THREAD_ env prefix) and logging
+  app/db/             declarative base, engine/session, Alembic helpers
+  app/ml/             pinned model spec, OpenCLIP embedder, model registry, tag vocabulary and
+                      zero-shot tagger, deep analyzer (Claude client, schema, local fake)
+  app/models/         SQLAlchemy 2 models
+  app/repositories/   owner-scoped data access, gallery search
+  app/schemas/        Pydantic request/response models
+  app/services/       upload/delete, palettes, embeddings and similarity, tags, similarity
+                      modes, library summary, deep analysis, deletion-race guard
+  app/storage/        storage interface and local filesystem backend
+  scripts/            fetch_model.py (one-off weights download), seed_samples.py (sample data)
+  tests/              pytest suite
+frontend/             Next.js App Router + TypeScript (strict) + Tailwind 4
+  src/app/            routes: / /dashboard /upload /gallery /items/[id] /collections
+                      /collections/[id] /settings, plus not-found and error pages
+  src/components/     design-system primitives (Button, StatusBadge, header)
+  src/features/       one folder per feature (gallery, upload, items, palette, tags, similar,
+                      collections, dashboard, deep-analysis, health, landing)
   src/lib, services, types   API client, typed API calls, API types
-  e2e/              Playwright tests
-database/init/      first-run shell script for the Postgres container (creates thread_test)
+  e2e/                Playwright tests (journeys, accessibility, security headers)
+database/init/        first-run script for the Postgres container (creates thread_test)
 database/migrations/  Alembic env.py and versioned migrations
-docker-compose.yml  PostgreSQL 16 with pgvector
-.env.example        all configuration, placeholders only
+database/sample_data/ your own sample photos (git-ignored; see its README)
+docs/architecture.md  architecture, request flows, algorithms and trade-offs
+docker-compose.yml    PostgreSQL 16 with pgvector
+.env.example          all configuration, placeholders only
 ```
+
+## Technology choices
+
+| Area | Choice | Why |
+|---|---|---|
+| Frontend | Next.js 16 (App Router), React 19, TypeScript strict, Tailwind 4 | One origin for pages and the API proxy; typed end to end; utility CSS keeps the editorial design consistent |
+| Data fetching | TanStack Query | Caching, retries and polling (processing status, deep analysis) without hand-written effects |
+| Motion | `motion` | Small, restrained animations that respect reduced-motion settings |
+| API | FastAPI + Pydantic | Typed request/response models, validation and OpenAPI docs for free |
+| Database | PostgreSQL 16 + pgvector | Relational data and vector search in one place; HNSW index for cosine similarity |
+| ORM / migrations | SQLAlchemy 2 + Alembic | Explicit, typed queries; migrations tested on fresh and existing databases |
+| Colour | Pillow, NumPy, scikit-learn | K-means in CIELAB (perceptual), CIEDE2000 distances, no external service |
+| Vision model | OpenCLIP ViT-B/32 (laion2b_s34b_b79k), CPU | One local model gives both embeddings and zero-shot tags; no GPU, no API key, pinned by checksum |
+| Optional LLM | Anthropic SDK, Claude Opus 5.5 | Richer descriptions only on request, behind confirmation and guards |
+| Tooling | uv, Ruff, Vitest, Playwright + axe | Reproducible Python installs; fast lint/format; unit, end-to-end and accessibility tests |
+| Local infra | Docker Compose | One command for a pgvector-enabled Postgres |
 
 ## Prerequisites
 
@@ -119,6 +158,19 @@ npm run dev
 
 Open <http://127.0.0.1:3100>. The **System** page shows live API, PostgreSQL and pgvector status.
 
+**5. Optional: sample data** (in any terminal; the API can keep running)
+
+```bash
+cd backend
+.venv/Scripts/python -m scripts.seed_samples --synthetic   # 20 generated swatches
+.venv/Scripts/python -m scripts.seed_samples --status      # how many are in the library
+.venv/Scripts/python -m scripts.seed_samples --remove      # remove only the samples
+```
+
+The swatches are generated locally and labelled as such; to use your own photos, see
+[database/sample_data/README.md](database/sample_data/README.md). The script is safe to rerun,
+never overwrites or removes your own pieces, and refuses to run in production.
+
 ## Configuration
 
 | Variable | Used by | Purpose |
@@ -163,7 +215,7 @@ erDiagram
 | `items` | Storage keys (never filesystem paths), SHA-256 `content_hash` unique per user (duplicate detection), `processing_status` (queued / processing / completed / partially_completed / failed), user-safe `processing_error`, per-stage `stage_status` JSONB, `attempts`. |
 | `palettes` | `colors` JSONB array of `{hex, name, percentage, lab}`; `color_families text[]` with a GIN index for fast colour filters; heuristic `harmony`. |
 | `tags` | AI predictions and user corrections are **separate rows** (`source` = `ai` / `user`, `user_action` = `add` / `remove`). Re-analysis rewrites only AI rows, so corrections survive. `confidence` is a raw model score in [0, 1], not a calibrated probability. A CHECK constraint keeps the two kinds of row consistent. |
-| `embeddings` | `vector(512)` (OpenCLIP ViT-B/32) with an HNSW index using `vector_cosine_ops`. The dimension is frozen in the migration; the worker will verify the model's real output size before writing. |
+| `embeddings` | `vector(512)` (OpenCLIP ViT-B/32) with an HNSW index using `vector_cosine_ops`. The dimension is frozen in the migration; the embedder checks the model's real output size when it loads, and each vector's shape before it is written. |
 | `collections` | Names unique per user, case-insensitively (`lower(name)` unique index). |
 | `collection_items` | Stores `user_id` so two **composite foreign keys** — `(collection_id, user_id)` and `(item_id, user_id)` — make it impossible, at the database level, to put one user's item in another user's collection. |
 
@@ -263,7 +315,7 @@ The upload page also rejects files over 15 MB before sending them.
 ## Colour palettes
 
 Every upload gets a palette right after it is safely stored (a quick in-process step, typically
-well under a second; it will become a stage of the background worker in a later milestone). If
+well under a second; there is no background worker). If
 extraction fails the upload still succeeds, the item records `stage_status.palette = "failed"`
 with a readable `processing_error`, and **no palette is shown** — colours are never guessed.
 
@@ -283,8 +335,8 @@ Items include `palette` (`colors[]` with `hex`, `rgb`, `name`, `family`, `percen
    swatches) a cheap backdrop test runs: if ≥ 85% of the border ring is one colour (CIEDE2000 < 8
    from its median), pixels clearly different from it (ΔE ≥ 12) are the subject. The mask is only
    used when the subject covers 5–95% of the image; otherwise the whole image is used. The API
-   reports this as `source: "masked"` or `"original"`. (Model-based background removal is planned
-   for a later milestone.)
+   reports this as `source: "masked"` or `"original"`. (Model-based background removal, such as
+   rembg, is not implemented; see Known limitations.)
 3. **Convert sRGB → CIELAB** (D65). In LAB, equal distances look roughly equally different, so
    clusters group colours the way people see them. Up to 20 000 pixels are sampled with a fixed seed.
 4. **K-means** (scikit-learn, k = `THREAD_PALETTE_SIZE`, default 6, fixed `random_state`), capped
@@ -337,7 +389,7 @@ Each image gets a 512-dimensional embedding from **OpenCLIP ViT-B/32** (`laion2b
 | Weights | `laion/CLIP-ViT-B-32-laion2B-s34B-b79K` → `open_clip_model.safetensors`, revision `1a25a446712ba5ee05982a381eed697ef9b435cf`, 605,143,316 bytes, SHA-256 `ac4f8c4b…56e6` (MIT licence) |
 | Stored at | `<repo>/.cache/models/ViT-B-32-laion2b_s34b_b79k/` (git-ignored; `THREAD_MODEL_CACHE_DIR`) |
 | Identifier | `open_clip/ViT-B-32/laion2b_s34b_b79k@1a25a44/pp1` — stored with every vector |
-| Runtime | CPU only (PyPI's Windows PyTorch wheel); 4 torch threads; ≈0.12 s per image |
+| Runtime | CPU only (PyPI's Windows PyTorch wheel); 4 torch threads; ≈0.12 s for a small image, ≈0.4 s for a 12 MP photo (including decoding) |
 
 `python -m scripts.fetch_model` downloads exactly that file from the pinned revision, verifies the
 SHA-256, and points every Hugging Face cache for that process into `.cache/models` — nothing goes
@@ -365,7 +417,7 @@ re-indexes older ones, so incompatible vectors are never mixed.
 - The model loads **lazily, once per API process**, in a background thread at start-up if the
   weights exist (≈15–20 s, mostly importing PyTorch; ≈55 s the very first time from a cold disk).
   Start-up never waits for it, and nothing depends on it.
-- **Uploads never wait for the model.** If it is loaded, the upload is indexed (+≈0.12 s). If it
+- **Uploads never wait for the model.** If it is loaded, the upload is indexed (+≈0.1–0.4 s, depending on image size). If it
   is still loading, `stage_status.embedding` is `pending`; without weights it is `unavailable`.
   Either way the upload and its palette succeed.
 - `GET /items/{id}/similar?limit=1..50` (default 12) **never waits for the model either**. While it
@@ -643,6 +695,74 @@ use a fake analyzer or a mock HTTP transport, never a real key). A photo cannot 
 content, authenticity or origin, and the prompt forbids claiming them; the page labels every
 result as an AI description that may be wrong. Deep-analysis text is not part of gallery search.
 
+## Resource needs and performance
+
+Measured on the development machine (Windows 11, CPU only), October 2026.
+
+| What | Size / cost |
+|---|---|
+| Python wheels (first install) | ~140 MB download; PyTorch installs to ~450 MB |
+| Image model weights (`fetch_model`, once) | ~577 MiB |
+| Anthropic SDK | ~2.5 MB download, 7.6 MB installed |
+| API memory | ~0.2 GB without the model; ~1.1 GB with it loaded (peak ~1.7 GB while loading) |
+| Model load at start-up | 20-50 s in a background thread; uploads never wait for it |
+| One 12 MP photo, analysed on upload | ~1.2 s: validation and thumbnail ~0.4 s, palette ~0.3 s, embedding ~0.4 s, tags ~0.02 s |
+| Queries with 1,000 pieces | gallery page ~15 ms; searches and filters 20-65 ms; dashboard ~45 ms; similarity ~40 ms (HNSW index) |
+| JavaScript per page (first visit, compressed) | ~190-240 KB |
+
+Analysis runs inside the upload request (there is no background worker), so a slow machine
+makes uploads slower rather than queued.
+
+## Security
+
+- **Page headers** (Next.js): a Content Security Policy (same-origin only; no framing, plugins or
+  third-party scripts), `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`,
+  `X-Frame-Options: DENY`, a cross-origin opener policy, a permissions policy that allows only the
+  camera (for phone uploads), and no `X-Powered-By`. Inline scripts are allowed because Next.js
+  needs them without per-request nonces, which would make every page dynamic; this is a
+  documented trade-off. The Playwright quality test checks the headers and that no page logs a
+  CSP violation.
+- **Uploads** are validated by content (format, size, dimensions, decompression bombs) and
+  re-encoded; storage keys are generated by the server and checked against path traversal.
+- **Images** are served only through the API, for their owner, with `nosniff`, a sandboxing CSP
+  and private caching.
+- **Ownership** is enforced in every query and, for collections and deep analyses, by composite
+  foreign keys in the database itself. Other users' pieces answer 404.
+- **Secrets** live only in `.env` (git-ignored); `.env.example` holds placeholders. The Anthropic
+  key is never logged or returned.
+- **Not authentication**: the app acts as one local development user and refuses to run that way
+  in production (see [Ownership](#ownership-and-the-development-user)).
+- **Dependencies**: `npm audit` and `pip-audit` (on the installed packages) reported no known
+  vulnerabilities on 29 October 2026.
+
+## Privacy and storage
+
+- Everything stays on your machine: the database runs in Docker (volume `thread-db-data`), image
+  files are in `storage/` (outside the web root, git-ignored) and the model runs locally.
+- The only network calls are optional: `fetch_model` downloads the model weights once, and a deep
+  analysis you confirm sends one resized, metadata-free image plus its palette names and visible
+  tags to Anthropic (never notes or source URLs). No analytics or telemetry.
+- Deleting a piece deletes its files, palette, tags, embedding, deep analysis and collection
+  memberships. Deleting a collection never deletes pieces.
+- Back up by copying `storage/` and dumping the database, for example
+  `docker compose exec db pg_dump -U thread thread > thread-backup.sql`.
+
+## Known limitations
+
+- **Accuracy is unmeasured** for tags and deep analysis: there is no labelled evaluation set.
+  Fabric, craft and authenticity cannot be established from a photo; the UI labels guesses.
+- **Colour** depends on lighting, white balance and compression; harmony labels are heuristic.
+  There is no model-based background removal: photos use a simple plain-backdrop mask.
+- **One local user, no authentication**; not ready to be exposed beyond localhost.
+- **No background worker**: analysis runs inside requests; deep analysis runs in an API thread
+  and is reported as interrupted if the server restarts mid-run.
+- **CPU only**: fine for a personal library; large imports would be slow.
+- **Search** uses `ILIKE` and existing indexes, not full-text search; fine at personal scale.
+- **Sample swatches are generated**, not fashion photographs.
+- **Deep analysis** cannot go through a corporate proxy (system proxies are ignored on purpose).
+- **CSP allows inline scripts** (see Security).
+- Developed and tested on **Windows 11**; macOS/Linux commands are given but were not run.
+
 ## Health check
 
 `GET /health` (or `/api/health` through the frontend) returns:
@@ -677,6 +797,12 @@ npm run test:e2e               # Playwright; needs Docker Postgres running. Reus
 npm run build
 ```
 
+The Playwright suite includes the **definition-of-done journey** (upload through the real file
+picker, processing indicator, palette, AI tags, edits, similar pieces, search and filters, a
+collection) on desktop and mobile, and a **quality** test that checks every screen for security
+headers, CSP violations, automated WCAG 2.2 AA issues (axe) and keyboard focus. The e2e API runs
+deep analysis with the local fake analyzer, so end-to-end tests never call Claude.
+
 Run Ruff on migrations too: `.venv/Scripts/ruff check . ../database/migrations`.
 
 Database tests (`-m db`) never touch the development database. They connect to `thread_test` only
@@ -702,6 +828,15 @@ They are skipped with a clear reason if Postgres is not reachable.
 - **Similar pieces says the image model is not installed**: run
   `.venv/Scripts/python -m scripts.fetch_model` in `backend/`, then restart the API. Everything
   else works without it.
+- **`uv python install 3.11` fails with "Missing expected target directory for Python minor
+  version link"** although Python 3.11 is already installed by uv: carry on; `uv venv --python
+  3.11 .venv` still finds it (seen in the Milestone 8 fresh-setup check on Windows).
+- **Pages say "The database is not reachable right now"**: PostgreSQL is down or unreachable.
+  Run `docker compose up -d --wait` from the repository root; the System page shows when it is back.
+- **Pages say "The Thread API is not reachable"**: start the API (Setup step 3).
+- **Deep analysis says it is off**: set `THREAD_ANTHROPIC_API_KEY` in `.env` and restart the API.
+- **The deep-analysis e2e test says the provider must be "fake"**: an API you started yourself is
+  running on :8010 and Playwright reused it. Stop it so Playwright starts its own.
 - **The API serves stale code after restarts on Windows** (e.g. a new route returns 404 only
   sometimes): an orphaned `uvicorn --reload` worker from a killed server can keep the listening
   socket. Find `python.exe` processes running `multiprocessing.spawn` whose parent no longer
@@ -711,6 +846,7 @@ They are skipped with a clear reason if Postgres is not reachable.
 
 ## Roadmap
 
-Milestone 8: end-to-end quality and full documentation. Later: a background worker (which would
-also let deep analysis survive restarts), sharing, bulk gallery actions, trend summaries and
-sample data.
+The MVP (Milestones 1-8) is complete. Possible next steps, none started: a background worker
+(analysis off the request path, deep analysis that survives restarts), authentication and
+multiple users, measured tag accuracy on a labelled set, full-text search, bulk gallery actions,
+sharing and trend summaries.
