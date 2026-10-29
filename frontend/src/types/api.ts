@@ -135,6 +135,60 @@ export type ItemList = {
   total: number;
   limit: number;
   offset: number;
+  /** With a text query: why each item on this page matched, keyed by item id. */
+  reasons: Record<string, string[]>;
+};
+
+export const COLOR_FAMILIES = [
+  "red",
+  "orange",
+  "yellow",
+  "green",
+  "teal",
+  "blue",
+  "purple",
+  "pink",
+  "brown",
+  "beige",
+  "white",
+  "grey",
+  "black",
+] as const;
+export type ColorFamily = (typeof COLOR_FAMILIES)[number];
+
+export type SortOrder = "newest" | "oldest" | "relevance";
+
+export type LibrarySummary = {
+  total: number;
+  by_type: Partial<Record<ItemType, number>>;
+  by_status: Partial<Record<ProcessingStatus, number>>;
+  color_families: { family: ColorFamily; items: number }[];
+  tags: { category: string; tag: string; items: number }[];
+  collections: number;
+  recent: Item[];
+};
+
+export type CollectionSummary = {
+  id: string;
+  name: string;
+  description: string | null;
+  item_count: number;
+  /** API-relative thumbnail URLs of the first four items. */
+  cover_thumbnails: string[];
+  contains_item: boolean | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CollectionEntry = { item: Item; note: string | null; position: number; added_at: string };
+
+export type CollectionDetail = {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  items: CollectionEntry[];
 };
 
 export type ItemUpdate = {

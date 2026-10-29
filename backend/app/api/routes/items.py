@@ -12,17 +12,23 @@ from app.db.session import get_db
 from app.ml import model_spec, registry
 from app.models.enums import ItemType
 from app.repositories.errors import NotFoundError
+from app.repositories.search import ItemSearch, SearchParams, Sort, parse_tag
 from app.schemas.items import (
+    ColorFamily,
+    FamilyCount,
     ItemList,
     ItemRead,
     ItemUpdate,
+    LibrarySummaryRead,
     SimilarItemRead,
     SimilarMode,
     SimilarResponse,
+    TagCount,
 )
 from app.services.embeddings import EmbeddingService
 from app.services.images import ImageValidationError
 from app.services.items import ItemService
+from app.services.library import library_summary
 from app.services.palettes import PaletteService
 from app.services.similarity_modes import ModeOutcome, ModeResult, SimilarityModes
 from app.storage import Storage
@@ -110,17 +116,53 @@ async def upload_item(
 @router.get("", response_model=ItemList)
 def list_items(
     service: Service,
+    q: Annotated[str | None, Query(max_length=100, description="Text search")] = None,
+    tag: Annotated[
+        list[str],
+        Query(max_length=10, description="Visible tag, 'category:tag' or 'tag'; all must match"),
+    ] = [],  # noqa: B006 - FastAPI copies query defaults
+    color: Annotated[
+        list[ColorFamily], Query(max_length=13, description="Colour family; all must match")
+    ] = [],  # noqa: B006
     type: Annotated[ItemType | None, Query()] = None,  # noqa: A002
+    sort: Annotated[Sort, Query(description="relevance needs q")] = "newest",
     limit: Annotated[int, Query(ge=1, le=100)] = 48,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> ItemList:
-    item_type = type.value if type else None
-    rows = service.items.list(item_type=item_type, limit=limit, offset=offset)
-    return ItemList(
-        items=[ItemRead.model_validate(row) for row in rows],
-        total=service.items.count(item_type=item_type),
+    """Your items, filtered. Text search covers visible tags (the same rules as the tags view:
+    AI tags you have not removed plus tags you added), colour names and families, type, notes
+    and source URL. With `q`, `reasons` explains each match on this page."""
+    params = SearchParams(
+        q=q.strip() if q and q.strip() else None,
+        tags=[parse_tag(t) for t in tag if t.strip()],
+        colors=[c.value for c in color],
+        item_type=type.value if type else None,
+        sort=sort,
         limit=limit,
         offset=offset,
+    )
+    page = ItemSearch(service.db, service.owner_id).search(params)
+    return ItemList(
+        items=[ItemRead.model_validate(row) for row in page.items],
+        total=page.total,
+        limit=limit,
+        offset=offset,
+        reasons={str(k): v for k, v in page.reasons.items()},
+    )
+
+
+@router.get("/summary", response_model=LibrarySummaryRead)
+def get_library_summary(service: Service) -> LibrarySummaryRead:
+    """Counts for the dashboard and the gallery's filter suggestions (real data only)."""
+    summary = library_summary(service.db, service.owner_id)
+    return LibrarySummaryRead(
+        total=summary.total,
+        by_type=summary.by_type,
+        by_status=summary.by_status,
+        color_families=[FamilyCount(family=f, items=n) for f, n in summary.color_families],
+        tags=[TagCount(category=c, tag=t, items=n) for c, t, n in summary.tags],
+        collections=summary.collections,
+        recent=[ItemRead.model_validate(i) for i in summary.recent],
     )
 
 

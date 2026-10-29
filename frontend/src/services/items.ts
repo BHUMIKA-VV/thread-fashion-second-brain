@@ -1,7 +1,10 @@
 import { API_BASE, apiErrorFromText, apiFetch } from "@/lib/api-client";
 import type {
+  ColorFamily,
   Item,
   ItemList,
+  LibrarySummary,
+  SortOrder,
   ItemTags,
   ItemType,
   ItemUpdate,
@@ -12,12 +15,34 @@ import type {
   Vocabulary,
 } from "@/types/api";
 
-export type ListItemsParams = { type?: ItemType; limit?: number; offset?: number };
+export type ListItemsParams = {
+  q?: string;
+  tags?: string[];
+  colors?: ColorFamily[];
+  type?: ItemType;
+  sort?: SortOrder;
+  limit?: number;
+  offset?: number;
+};
 
-export function listItems({ type, limit = 48, offset = 0 }: ListItemsParams = {}): Promise<ItemList> {
-  const query = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+export function itemsQueryString({ q, tags = [], colors = [], type, sort, limit = 48, offset = 0 }: ListItemsParams = {}): string {
+  const query = new URLSearchParams();
+  if (q) query.set("q", q);
+  tags.forEach((tag) => query.append("tag", tag));
+  colors.forEach((color) => query.append("color", color));
   if (type) query.set("type", type);
-  return apiFetch<ItemList>(`/items?${query}`);
+  if (sort && sort !== "newest") query.set("sort", sort);
+  query.set("limit", String(limit));
+  query.set("offset", String(offset));
+  return query.toString();
+}
+
+export function listItems(params: ListItemsParams = {}): Promise<ItemList> {
+  return apiFetch<ItemList>(`/items?${itemsQueryString(params)}`);
+}
+
+export function getLibrarySummary(): Promise<LibrarySummary> {
+  return apiFetch<LibrarySummary>("/items/summary");
 }
 
 export function getItem(id: string): Promise<Item> {

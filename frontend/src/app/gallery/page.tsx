@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { ButtonLink } from "@/components/ui/button";
 import { Gallery } from "@/features/gallery/gallery";
@@ -16,7 +17,11 @@ export default function GalleryPage() {
         <ButtonLink href="/upload">Upload</ButtonLink>
       </div>
       <div className="mt-10">
-        <Gallery />
+        {/* The gallery reads its filters from the URL (useSearchParams), so Next requires a
+            Suspense boundary for the prerendered page shell. */}
+        <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-ink/[0.06]" aria-label="Loading gallery" />}>
+          <Gallery />
+        </Suspense>
       </div>
     </div>
   );

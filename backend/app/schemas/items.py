@@ -1,9 +1,11 @@
 from datetime import datetime
+from enum import Enum
 from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, UrlConstraints, computed_field
 
+from app.color.naming import FAMILIES
 from app.models.enums import Harmony, ItemType, PaletteSource, ProcessingStatus
 
 # http(s) only: rejects javascript:, data:, file: and friends.
@@ -105,6 +107,34 @@ class ItemList(BaseModel):
     total: int
     limit: int
     offset: int
+    reasons: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="With a text query: why each item on this page matched (keyed by item id)",
+    )
+
+
+ColorFamily = Enum("ColorFamily", {f: f for f in FAMILIES}, type=str)  # type: ignore[misc]
+
+
+class FamilyCount(BaseModel):
+    family: str
+    items: int
+
+
+class TagCount(BaseModel):
+    category: str
+    tag: str
+    items: int
+
+
+class LibrarySummaryRead(BaseModel):
+    total: int
+    by_type: dict[str, int]
+    by_status: dict[str, int]
+    color_families: list[FamilyCount] = Field(description="Most common first")
+    tags: list[TagCount] = Field(description="Most common visible tags first")
+    collections: int
+    recent: list[ItemRead]
 
 
 class ItemUpdate(BaseModel):

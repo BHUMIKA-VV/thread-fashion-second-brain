@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { ProcessingBadge } from "@/components/processing-badge";
+import { AddToCollection } from "@/features/collections/add-to-collection";
 import { PaletteView } from "@/features/palette/palette-view";
 import { SimilarPieces } from "@/features/similar/similar-pieces";
 import { TagsPanel } from "@/features/tags/tags-panel";
@@ -82,6 +83,7 @@ function ItemView({ item }: { item: Item }) {
 
           <PaletteView item={item} />
           <TagsPanel item={item} />
+          <AddToCollection itemId={item.id} />
           <EditForm item={item} />
           <DeleteControl item={item} />
         </div>

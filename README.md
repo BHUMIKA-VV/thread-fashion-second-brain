@@ -4,20 +4,22 @@ A personal visual library for fashion: upload outfits, garments and fabric swatc
 extracts their palette, tags style and textile craft (including Indian traditions such as ikat,
 bandhani and chikankari) and finds similar pieces in your own library.
 
-> **Status: Milestone 6 (Fashion tags and similarity modes) complete.** You can upload images
-> (drag and drop, file picker or phone camera), browse them in a gallery, edit and delete them.
-> Every upload gets a real colour palette (hex/RGB, human and Indian colour names, percentages,
-> heuristic harmony, PNG card), an OpenCLIP image embedding and **zero-shot fashion tags**
-> (garment, silhouette, pattern, fabric guess, aesthetic, occasion, Indian crafts) that you can
-> correct. Each item page shows **similar pieces from your own library** in three modes: visual,
-> same palette with a different silhouette, and same fabric in a different colour. Tag accuracy
-> has not been measured (see Limitations). This README documents only what exists today.
+> **Status: Milestone 7 (Search, filters, collections and dashboard) complete.** You can upload
+> images (drag and drop, file picker or phone camera), browse them in a gallery, edit and delete
+> them. Every upload gets a real colour palette (hex/RGB, human and Indian colour names,
+> percentages, heuristic harmony, PNG card), an OpenCLIP image embedding and **zero-shot fashion
+> tags** (garment, silhouette, pattern, fabric guess, aesthetic, occasion, Indian crafts) that you
+> can correct. Each item page shows **similar pieces from your own library** in three modes. The
+> gallery has **text search and tag, colour-family and type filters** kept in the URL, pieces can
+> be gathered into **ordered, annotated collections**, and a **dashboard** summarises the library.
+> Tag accuracy has not been measured (see Limitations). This README documents only what exists
+> today.
 
 ## Architecture (current)
 
 ```mermaid
 flowchart LR
-  B[Browser] -->|"/ , /settings"| N[Next.js 16 App Router :3100]
+  B[Browser] -->|"pages: /dashboard, /gallery, /collections, …"| N[Next.js 16 App Router :3100]
   B -->|"/api/*"| N
   N -->|"rewrite /api/:path* → :8010/:path*"| F[FastAPI :8010]
   F -->|"psycopg 3 / SQLAlchemy 2"| P[(PostgreSQL 16 + pgvector<br/>Docker :5434)]
@@ -485,6 +487,66 @@ particular, fabric composition cannot be determined reliably from a photo (hence
 knows some Indian craft names only weakly, and tags describe the photo as a whole. Correct tags
 freely — corrections are never overwritten — and use "Show all scores" to see how close calls were.
 
+## Search, filters and collections
+
+### Gallery search and filters
+
+`GET /items` takes, all optional and combinable (AND):
+
+| Parameter | Meaning |
+| --- | --- |
+| `q` (≤100 chars) | Case-insensitive text match against visible tags, colour names, colour families, type, notes and source URL. `%`, `_` and `\` are matched literally. |
+| `tag` (repeatable, ≤10) | `category:tag` or bare `tag`; normalised like tag corrections. Every tag must be visible on the piece. |
+| `color` (repeatable, ≤13) | A colour family (`red`, `blue`, …). Every family must be in the palette; unknown families are 422. |
+| `type` | `outfit`, `garment`, `fabric` or `other`. |
+| `sort` | `newest` (default), `oldest`, or `relevance` (only meaningful with `q`). |
+| `limit` / `offset` | Pagination; `total` counts all matches. |
+
+**Visible tags** are exactly the Milestone 6 rule: AI tags you have not removed, plus tags you
+added. Searching and filtering use a SQL version of that rule (`visible_tags()` in
+`app/repositories/search.py`), and a test checks it against the Python version on random
+combinations of AI, removed and added tags. A tag you removed never matches; a tag you added does.
+
+With `q`, each result carries **reasons** ("Tag: craft · ikat", "Colour: sindoor red", "Notes
+mention it") shown under the card. Relevance is a simple weighted score (exact tag 8, partial tag
+4, colour or type 3, notes or URL 1), not a learned ranking. Matching uses `ILIKE` on existing
+indexes; colour families use the GIN index on `palettes.color_families`. There is no full-text
+index yet, which is fine for a personal library and would need revisiting for very large ones.
+
+In the UI the filter state lives in the URL (`/gallery?q=ikat&color=red&type=fabric`), so filtered
+views survive reloads, the back button and sharing a link with yourself. The search box is
+debounced (300 ms); invalid values in a hand-edited URL are ignored.
+
+### Collections
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/collections[?item_id=]` | Your collections with counts, up to four cover thumbnails and, with `item_id`, whether each contains that piece |
+| `POST` | `/collections` | Create (`name` 1–120 chars, optional `description`) |
+| `GET` / `PATCH` / `DELETE` | `/collections/{id}` | Read with ordered pieces, rename/describe, delete |
+| `POST` | `/collections/{id}/items` | Add a piece (`item_id`, optional `note`); adding twice is a no-op |
+| `PATCH` | `/collections/{id}/items/{item_id}` | Set its `note` and/or `position` |
+| `DELETE` | `/collections/{id}/items/{item_id}` | Remove the piece from the collection |
+
+- Names are unique per user, case-insensitively (409 otherwise); another user may use the same name.
+- Notes belong to the piece *in that collection*; the piece's own notes are untouched.
+- Positions are always `0..n-1`: moving clamps to the ends and renumbers, removal closes the gap.
+- Reordering uses **Move earlier / Move later** buttons (keyboard and screen-reader friendly);
+  there is no drag and drop.
+- Deleting a collection asks first and **never deletes pieces**; deleting a piece removes it from
+  every collection.
+- Ownership is enforced twice: the API returns 404 for other users' collections and pieces, and
+  composite foreign keys stop a membership linking one user's collection to another's piece.
+
+On an item page, **Add to collection** lists your collections with checkboxes and can create a new
+one with the piece already in it.
+
+### Dashboard
+
+`/dashboard` (and `GET /items/summary`) shows only real counts from your library: pieces by type,
+colour families, most-used visible tags, collections and recent uploads. Each count links to the
+matching filtered gallery view. A new library shows an empty state rather than placeholder numbers.
+
 ## Health check
 
 `GET /health` (or `/api/health` through the frontend) returns:
@@ -553,5 +615,6 @@ They are skipped with a clear reason if Postgres is not reachable.
 
 ## Roadmap
 
-Milestones 7–8: gallery search and filters (by tag and colour), collections, Claude-based deep
-analysis, end-to-end quality and full documentation. Later: a background worker, sample data.
+Milestone 7b: Claude-based deep analysis (to be planned and approved separately).
+Milestone 8: end-to-end quality and full documentation. Later: a background worker, sharing, bulk
+gallery actions, trend summaries and sample data.

@@ -4,13 +4,22 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { ImagePlus } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo } from "react";
 
 import { ProcessingBadge } from "@/components/processing-badge";
-import { PaletteStrip } from "@/features/palette/palette-strip";
 import { Button, ButtonLink } from "@/components/ui/button";
+import { GalleryFilterBar } from "@/features/gallery/filter-bar";
+import { PaletteStrip } from "@/features/palette/palette-strip";
 import { apiUrl } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
+import {
+  EMPTY_FILTERS,
+  filtersToSearch,
+  hasActiveFilters,
+  parseFilters,
+  type GalleryFilters,
+} from "@/lib/gallery-filters";
 import { listItems } from "@/services/items";
 import { ITEM_TYPES, type Item, type ItemType } from "@/types/api";
 
@@ -24,11 +33,33 @@ export const TYPE_NAMES: Record<ItemType, string> = {
   other: "Other",
 };
 
+/** The gallery. Reads its filters from the URL, so it must sit inside <Suspense>. */
 export function Gallery() {
-  const [type, setType] = useState<ItemType | undefined>();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const filters = useMemo(() => parseFilters(searchParams), [searchParams]);
+
+  const setFilters = useCallback(
+    (next: GalleryFilters) => {
+      const search = filtersToSearch(next);
+      router.replace(search ? `${pathname}?${search}` : pathname, { scroll: false });
+    },
+    [pathname, router],
+  );
+
   const query = useInfiniteQuery({
-    queryKey: ["items", { type }],
-    queryFn: ({ pageParam }) => listItems({ type, limit: PAGE_SIZE, offset: pageParam }),
+    queryKey: ["items", "list", filtersToSearch(filters)],
+    queryFn: ({ pageParam }) =>
+      listItems({
+        q: filters.q.trim() || undefined,
+        tags: filters.tags,
+        colors: filters.colors,
+        type: filters.type,
+        sort: filters.sort,
+        limit: PAGE_SIZE,
+        offset: pageParam,
+      }),
     initialPageParam: 0,
     getNextPageParam: (last) => {
       const next = last.offset + last.items.length;
@@ -37,17 +68,25 @@ export function Gallery() {
   });
 
   const items = query.data?.pages.flatMap((page) => page.items) ?? [];
+  const reasons = Object.assign({}, ...(query.data?.pages.map((page) => page.reasons ?? {}) ?? []));
   const total = query.data?.pages[0]?.total;
+  const filtered = hasActiveFilters(filters);
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <GalleryFilterBar filters={filters} onChange={setFilters} />
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
         <div role="group" aria-label="Filter by type" className="flex flex-wrap gap-2">
-          <FilterChip active={type === undefined} onClick={() => setType(undefined)}>
+          <FilterChip active={filters.type === undefined} onClick={() => setFilters({ ...filters, type: undefined })}>
             All
           </FilterChip>
           {ITEM_TYPES.map((value) => (
-            <FilterChip key={value} active={type === value} onClick={() => setType(value)}>
+            <FilterChip
+              key={value}
+              active={filters.type === value}
+              onClick={() => setFilters({ ...filters, type: filters.type === value ? undefined : value })}
+            >
               {TYPE_NAMES[value]}
             </FilterChip>
           ))}
@@ -55,6 +94,7 @@ export function Gallery() {
         {total !== undefined && (
           <p className="text-sm text-ink-muted" aria-live="polite">
             {total} {total === 1 ? "piece" : "pieces"}
+            {filtered ? " match" : ""}
           </p>
         )}
       </div>
@@ -71,12 +111,24 @@ export function Gallery() {
             </Button>
           </div>
         ) : items.length === 0 ? (
-          <EmptyState filtered={type !== undefined} />
+          filtered ? (
+            <div className="flex flex-col items-center rounded-2xl border border-dashed border-ink/20 px-6 py-16 text-center">
+              <p className="font-display text-2xl">No pieces match these filters</p>
+              <p className="mt-2 max-w-sm text-sm text-ink-muted">
+                Remove a filter above, or clear them all to see your whole library.
+              </p>
+              <Button className="mt-6" variant="secondary" onClick={() => setFilters(EMPTY_FILTERS)}>
+                Clear all filters
+              </Button>
+            </div>
+          ) : (
+            <EmptyState filtered={false} />
+          )
         ) : (
           <>
             <ul className="columns-2 gap-4 sm:columns-3 lg:columns-4" aria-label="Your library">
               {items.map((item, index) => (
-                <GalleryCard key={item.id} item={item} index={index} />
+                <GalleryCard key={item.id} item={item} index={index} reasons={reasons[item.id]} />
               ))}
             </ul>
             {query.hasNextPage && (
@@ -123,7 +175,7 @@ function FilterChip({
   );
 }
 
-function GalleryCard({ item, index }: { item: Item; index: number }) {
+function GalleryCard({ item, index, reasons }: { item: Item; index: number; reasons?: string[] }) {
   return (
     <motion.li
       initial={{ opacity: 0, y: 12 }}
@@ -150,6 +202,11 @@ function GalleryCard({ item, index }: { item: Item; index: number }) {
           <ProcessingBadge status={item.processing_status} />
         </div>
       </Link>
+      {reasons && reasons.length > 0 && (
+        <p className="mt-1.5 px-1 text-[11px] text-ink-muted" aria-label="Why this matched">
+          {reasons.join(" · ")}
+        </p>
+      )}
     </motion.li>
   );
 }

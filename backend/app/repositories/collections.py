@@ -1,10 +1,14 @@
+# Postponed annotations: the class defines a `list` method, which would otherwise shadow the
+# built-in in annotations such as `list[CollectionItem]`.
+from __future__ import annotations
+
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models import Collection, CollectionItem, Item
 from app.repositories.errors import ConflictError, NotFoundError
@@ -114,6 +118,115 @@ class CollectionRepository:
             raise NotFoundError("Item is not in this collection.")
         self.db.delete(link)
         self.db.flush()
+        self._renumber(collection_id)
+
+    def links(self, collection_id: UUID) -> list[CollectionItem]:
+        """Memberships in display order, with their items loaded."""
+        self.get_or_raise(collection_id)
+        return list(
+            self.db.scalars(
+                select(CollectionItem)
+                .where(
+                    CollectionItem.collection_id == collection_id,
+                    CollectionItem.user_id == self.owner_id,
+                )
+                .options(selectinload(CollectionItem.item).selectinload(Item.palette))
+                .order_by(CollectionItem.position, CollectionItem.created_at)
+            ).all()
+        )
+
+    def _link_or_raise(self, collection_id: UUID, item_id: UUID) -> CollectionItem:
+        self.get_or_raise(collection_id)
+        link = self.db.get(CollectionItem, (collection_id, item_id))
+        if link is None or link.user_id != self.owner_id:
+            raise NotFoundError("Item is not in this collection.")
+        return link
+
+    def set_note(self, collection_id: UUID, item_id: UUID, note: str | None) -> CollectionItem:
+        link = self._link_or_raise(collection_id, item_id)
+        link.note = note
+        self.db.flush()
+        return link
+
+    def move(self, collection_id: UUID, item_id: UUID, position: int) -> None:
+        """Move an item to `position` (0-based, clamped) and renumber 0..n-1 without gaps.
+        Runs in the caller's transaction, so concurrent moves cannot interleave halfway."""
+        self._link_or_raise(collection_id, item_id)
+        # Lock this collection's rows so two moves are applied one after the other.
+        ordered = list(
+            self.db.scalars(
+                select(CollectionItem)
+                .where(CollectionItem.collection_id == collection_id)
+                .order_by(CollectionItem.position, CollectionItem.created_at)
+                .with_for_update()
+            ).all()
+        )
+        moving = next(link for link in ordered if link.item_id == item_id)
+        ordered.remove(moving)
+        ordered.insert(max(0, min(position, len(ordered))), moving)
+        for index, link in enumerate(ordered):
+            link.position = index
+        self.db.flush()
+
+    def _renumber(self, collection_id: UUID) -> None:
+        ordered = self.db.scalars(
+            select(CollectionItem)
+            .where(CollectionItem.collection_id == collection_id)
+            .order_by(CollectionItem.position, CollectionItem.created_at)
+        ).all()
+        for index, link in enumerate(ordered):
+            link.position = index
+        self.db.flush()
+
+    def summaries(
+        self, contains_item: UUID | None = None
+    ) -> list[tuple[Collection, int, list[Item], bool]]:
+        """(collection, item count, first 4 items for the cover, contains `contains_item`)."""
+        collections = self.list()
+        if not collections:
+            return []
+        ids = [c.id for c in collections]
+        counts = dict(
+            self.db.execute(
+                select(CollectionItem.collection_id, func.count())
+                .where(CollectionItem.collection_id.in_(ids))
+                .group_by(CollectionItem.collection_id)
+            ).all()
+        )
+        ranked = (
+            select(
+                CollectionItem.collection_id,
+                CollectionItem.item_id,
+                func.row_number()
+                .over(
+                    partition_by=CollectionItem.collection_id,
+                    order_by=(CollectionItem.position, CollectionItem.created_at),
+                )
+                .label("rank"),
+            )
+            .where(CollectionItem.collection_id.in_(ids))
+            .subquery()
+        )
+        cover_rows = self.db.execute(
+            select(ranked.c.collection_id, Item)
+            .join(Item, Item.id == ranked.c.item_id)
+            .where(ranked.c.rank <= 4)
+            .order_by(ranked.c.collection_id, ranked.c.rank)
+        ).all()
+        covers: dict[UUID, list[Item]] = {cid: [] for cid in ids}
+        for collection_id, item in cover_rows:
+            covers[collection_id].append(item)
+        members: set[UUID] = set()
+        if contains_item is not None:
+            members = set(
+                self.db.scalars(
+                    select(CollectionItem.collection_id).where(
+                        CollectionItem.item_id == contains_item,
+                        CollectionItem.user_id == self.owner_id,
+                    )
+                ).all()
+            )
+        return [(c, counts.get(c.id, 0), covers[c.id], c.id in members) for c in collections]
 
     def list_items(self, collection_id: UUID) -> Sequence[Item]:
         self.get_or_raise(collection_id)
