@@ -12,11 +12,19 @@ from app.db.session import get_db
 from app.ml import model_spec, registry
 from app.models.enums import ItemType
 from app.repositories.errors import NotFoundError
-from app.schemas.items import ItemList, ItemRead, ItemUpdate, SimilarItemRead, SimilarResponse
+from app.schemas.items import (
+    ItemList,
+    ItemRead,
+    ItemUpdate,
+    SimilarItemRead,
+    SimilarMode,
+    SimilarResponse,
+)
 from app.services.embeddings import EmbeddingService
 from app.services.images import ImageValidationError
 from app.services.items import ItemService
 from app.services.palettes import PaletteService
+from app.services.similarity_modes import ModeOutcome, ModeResult, SimilarityModes
 from app.storage import Storage
 
 router = APIRouter(prefix="/items", tags=["items"])
@@ -196,34 +204,72 @@ def index_item_embedding(item_id: UUID, service: Service) -> ItemRead:
     "/{item_id}/similar",
     response_model=SimilarResponse,
     responses={
-        422: {"description": "The query image could not be embedded (code embedding_failed)"},
+        422: {
+            "description": "The query image could not be embedded (code embedding_failed), "
+            "or palette mode on an item without a palette (code palette_missing)"
+        },
         503: MODEL_503,
     },
 )
 def similar_items(
     item_id: UUID,
     service: Service,
+    mode: Annotated[SimilarMode, Query()] = "visual",
     limit: Annotated[int, Query(ge=1, le=50)] = 12,
 ) -> SimilarResponse:
-    """Your most visually similar items (cosine similarity of OpenCLIP image embeddings).
+    """Your most similar items, from your own library only.
 
-    Indexes the query item and any of your not-yet-indexed items first, so the first call after
-    many uploads can take a few seconds. Never waits for the model to load: while it loads
-    this returns 503 model_loading with Retry-After, and the client retries.
+    - visual: cosine similarity of OpenCLIP image embeddings.
+    - palette: same palette, different silhouette (share-weighted CIEDE2000 palette distance;
+      items sharing the silhouette/garment tag are excluded when both have one). No model needed.
+    - fabric: same fabric, different colour (visual neighbours that share a fabric, pattern or
+      craft tag; different dominant colour families first).
+
+    Visual and fabric modes index pending items first and never wait for the model to load:
+    while it loads they return 503 model_loading with Retry-After, and the client retries.
     """
-    result = EmbeddingService(service.db, service.storage, service.owner_id).find_similar(
-        item_id, limit=limit
-    )
+    modes = SimilarityModes(service.db, service.storage, service.owner_id)
+    if mode == "visual":
+        visual = EmbeddingService(service.db, service.storage, service.owner_id).find_similar(
+            item_id, limit=limit
+        )
+        outcome = ModeOutcome(
+            [ModeResult(r.item, r.similarity, None, []) for r in visual.results],
+            visual.compared,
+            visual.not_indexed,
+        )
+    elif mode == "palette":
+        outcome = modes.palette(item_id, limit=limit)
+    else:
+        outcome = modes.fabric(item_id, limit=limit)
     return SimilarResponse(
         item_id=item_id,
+        mode=mode,
         model=model_spec.MODEL_NAME,
         results=[
-            SimilarItemRead(item=ItemRead.model_validate(r.item), similarity=r.similarity)
-            for r in result.results
+            SimilarItemRead(
+                item=ItemRead.model_validate(r.item),
+                similarity=r.similarity,
+                palette_distance=r.palette_distance,
+                reasons=r.reasons,
+            )
+            for r in outcome.results
         ],
-        compared=result.compared,
-        not_indexed=result.not_indexed,
+        compared=outcome.compared,
+        not_indexed=outcome.not_indexed,
+        notice=outcome.notice,
     )
+
+
+@router.post("/{item_id}/reanalyze", response_model=ItemRead)
+def reanalyze_item(item_id: UUID, service: Service) -> ItemRead:
+    """Re-run palette extraction, the image embedding and AI tags from the stored image.
+
+    Idempotent: palette and embedding rows are upserted and AI tags are replaced; your tag
+    corrections are never touched. Never waits for the image model: if it is still loading,
+    embedding and tags are marked pending and filled in later.
+    """
+    return ItemRead.model_validate(service.reanalyze(item_id))
 
 
 @router.get(

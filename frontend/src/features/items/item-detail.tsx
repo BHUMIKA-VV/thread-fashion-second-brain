@@ -9,6 +9,7 @@ import { useState, type FormEvent } from "react";
 import { ProcessingBadge } from "@/components/processing-badge";
 import { PaletteView } from "@/features/palette/palette-view";
 import { SimilarPieces } from "@/features/similar/similar-pieces";
+import { TagsPanel } from "@/features/tags/tags-panel";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { ApiError, apiUrl } from "@/lib/api-client";
 import { formatBytes } from "@/lib/upload-rules";
@@ -80,6 +81,7 @@ function ItemView({ item }: { item: Item }) {
           </div>
 
           <PaletteView item={item} />
+          <TagsPanel item={item} />
           <EditForm item={item} />
           <DeleteControl item={item} />
         </div>

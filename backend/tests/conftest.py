@@ -31,7 +31,7 @@ from app.main import app  # noqa: E402
 from app.ml import registry  # noqa: E402
 from app.models import Item, User  # noqa: E402
 from app.storage import LocalStorage  # noqa: E402
-from tests.fakes import FakeEmbedder  # noqa: E402
+from tests.fakes import FakeEmbedder, fake_tagger  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -43,6 +43,7 @@ def fake_embedder(request: pytest.FixtureRequest) -> Iterator[FakeEmbedder | Non
     else:
         fake = FakeEmbedder()
         registry._embedder = fake  # loaded and ready, as after a warm-up
+        registry._tagger = fake_tagger()
         registry._state = "ready"
         yield fake
     registry.reset_for_tests()

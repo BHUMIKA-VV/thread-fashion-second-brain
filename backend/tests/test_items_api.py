@@ -57,6 +57,7 @@ def test_upload_creates_record_and_files(
         "thumbnail": "completed",
         "palette": "completed",
         "embedding": "completed",
+        "tags": "completed",
     }
     assert body["palette"]["colors"] and body["palette_card_url"] == f"/items/{item.id}/palette.png"
 

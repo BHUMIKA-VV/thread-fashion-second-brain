@@ -4,18 +4,41 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
+import { useId, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { PaletteStrip } from "@/features/palette/palette-strip";
 import { ApiError, apiUrl } from "@/lib/api-client";
+import { cn } from "@/lib/cn";
 import { getSimilar, indexItem } from "@/services/items";
-import type { SimilarItem } from "@/types/api";
+import type { SimilarItem, SimilarMode } from "@/types/api";
+
+const MODES: { mode: SimilarMode; label: string; description: string }[] = [
+  {
+    mode: "visual",
+    label: "Visually similar",
+    description: "Ranked by visual similarity of the whole image.",
+  },
+  {
+    mode: "palette",
+    label: "Same palette, different silhouette",
+    description:
+      "Ranked by colour distance; pieces with the same silhouette or garment tag are left out when both are tagged.",
+  },
+  {
+    mode: "fabric",
+    label: "Same fabric, different colour",
+    description:
+      "Visually close pieces that share a fabric, pattern or craft tag, different dominant colours first.",
+  },
+];
 
 export function SimilarPieces({ itemId }: { itemId: string }) {
   const queryClient = useQueryClient();
+  const [mode, setMode] = useState<SimilarMode>("visual");
   const query = useQuery({
-    queryKey: ["items", "similar", itemId],
-    queryFn: () => getSimilar(itemId),
+    queryKey: ["items", "similar", itemId, mode],
+    queryFn: () => getSimilar(itemId, mode),
     retry: false,
     staleTime: 30_000,
     // While the API reports the image model as loading, ask again every few seconds.
@@ -26,6 +49,8 @@ export function SimilarPieces({ itemId }: { itemId: string }) {
     mutationFn: () => indexItem(itemId),
     onSettled: () => void queryClient.invalidateQueries({ queryKey: ["items"] }),
   });
+  const current = MODES.find((m) => m.mode === mode)!;
+  const tabsId = useId();
 
   return (
     <section aria-labelledby="similar-title" className="mt-16">
@@ -34,13 +59,40 @@ export function SimilarPieces({ itemId }: { itemId: string }) {
           <h2 id="similar-title" className="font-display text-2xl">
             Similar pieces
           </h2>
-          <p className="mt-1 text-sm text-ink-muted">
-            From your own library, ranked by visual similarity of the whole image.
-          </p>
+          <p className="mt-1 text-sm text-ink-muted">From your own library. {current.description}</p>
         </div>
       </div>
 
-      <div className="mt-6" aria-live="polite" aria-busy={query.isPending}>
+      <div role="tablist" aria-label="Similarity mode" className="mt-4 flex flex-wrap gap-2">
+        {MODES.map((m) => (
+          <button
+            key={m.mode}
+            type="button"
+            role="tab"
+            id={`${tabsId}-${m.mode}`}
+            aria-selected={mode === m.mode}
+            aria-controls={`${tabsId}-panel`}
+            onClick={() => setMode(m.mode)}
+            className={cn(
+              "rounded-full border px-4 py-1.5 text-sm transition-colors",
+              mode === m.mode
+                ? "border-ink bg-ink text-paper"
+                : "border-line bg-paper-raised text-ink-muted hover:border-ink/40 hover:text-ink",
+            )}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+
+      <div
+        id={`${tabsId}-panel`}
+        role="tabpanel"
+        aria-labelledby={`${tabsId}-${mode}`}
+        className="mt-6"
+        aria-live="polite"
+        aria-busy={query.isPending}
+      >
         {query.isPending ? (
           <Loading />
         ) : modelLoading ? (
@@ -54,12 +106,16 @@ export function SimilarPieces({ itemId }: { itemId: string }) {
           />
         ) : query.data.results.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-ink/20 px-6 py-10 text-center text-sm text-ink-muted">
-            {query.data.not_indexed > 0
-              ? "None of your other pieces could be compared yet."
-              : "Nothing to compare with yet — save more pieces to see visual matches."}
+            {query.data.notice ??
+              (query.data.not_indexed > 0
+                ? "None of your other pieces could be compared yet."
+                : "Nothing to compare with yet — save more pieces to see matches.")}
           </p>
         ) : (
           <>
+            {query.data.notice && (
+              <p className="mb-4 rounded-xl bg-ink/[0.04] px-4 py-3 text-sm text-ink-muted">{query.data.notice}</p>
+            )}
             <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {query.data.results.map((result, index) => (
                 <SimilarCard key={result.item.id} result={result} index={index} />
@@ -67,9 +123,11 @@ export function SimilarPieces({ itemId }: { itemId: string }) {
             </ul>
             <p className="mt-4 text-xs text-ink-muted">
               Compared with {query.data.compared} of your pieces
-              {query.data.not_indexed > 0 ? ` (${query.data.not_indexed} could not be compared)` : ""}.
-              Scores are cosine similarity of image embeddings — useful for ranking, not a percentage
-              match.
+              {query.data.not_indexed > 0 ? ` (${query.data.not_indexed} could not be compared)` : ""}.{" "}
+              {mode === "palette"
+                ? "Colour distance is CIEDE2000 between the two palettes: lower means closer colours."
+                : "Scores are cosine similarity of image embeddings — useful for ranking, not a percentage match."}{" "}
+              Reasons describe the tags and colours used, which are model guesses or your edits.
             </p>
           </>
         )}
@@ -110,7 +168,7 @@ function SimilarError({
 }) {
   const code = error instanceof ApiError ? error.code : null;
   const message =
-    code === "model_unavailable"
+    code === "model_unavailable" || code === "palette_missing"
       ? error.message
       : code === "embedding_failed"
         ? "This image could not be indexed for similarity search."
@@ -138,8 +196,17 @@ function SimilarError({
   );
 }
 
+function scoreLabel({ similarity, palette_distance }: SimilarItem): { short: string; long: string } {
+  if (palette_distance != null) {
+    return { short: `ΔE ${palette_distance.toFixed(1)}`, long: `colour distance ${palette_distance.toFixed(1)}` };
+  }
+  const value = (similarity ?? 0).toFixed(2);
+  return { short: value, long: `similarity ${value}` };
+}
+
 function SimilarCard({ result, index }: { result: SimilarItem; index: number }) {
-  const { item, similarity } = result;
+  const { item, reasons } = result;
+  const score = scoreLabel(result);
   return (
     <motion.li
       initial={{ opacity: 0, y: 10 }}
@@ -149,7 +216,7 @@ function SimilarCard({ result, index }: { result: SimilarItem; index: number }) 
       <Link
         href={`/items/${item.id}`}
         className="group block overflow-hidden rounded-xl border border-line bg-paper-raised shadow-soft"
-        aria-label={`${item.type} — similarity ${similarity.toFixed(2)}`}
+        aria-label={`${item.type} — ${score.long}`}
       >
         <div className="aspect-[3/4] overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element -- private image served by the API */}
@@ -163,9 +230,16 @@ function SimilarCard({ result, index }: { result: SimilarItem; index: number }) 
         {item.palette && <PaletteStrip colors={item.palette.colors} />}
         <div className="flex items-center justify-between gap-2 px-3 py-2.5 text-xs">
           <span className="uppercase tracking-[0.18em] text-ink-muted">{item.type}</span>
-          <span className="font-mono">{similarity.toFixed(2)}</span>
+          <span className="font-mono">{score.short}</span>
         </div>
       </Link>
+      {reasons.length > 0 && (
+        <ul className="mt-2 space-y-0.5 px-1 text-[11px] leading-snug text-ink-muted" aria-label="Why this matched">
+          {reasons.map((reason) => (
+            <li key={reason}>{reason}</li>
+          ))}
+        </ul>
+      )}
     </motion.li>
   );
 }

@@ -27,6 +27,7 @@ from app.ml.embedder import Embedder
 from app.models import Embedding, Item
 from app.repositories.items import ItemRepository
 from app.services.status import set_stage
+from app.services.tags import TagService
 from app.storage import Storage
 
 logger = logging.getLogger(__name__)
@@ -71,6 +72,7 @@ class EmbeddingService:
         except Exception as exc:
             logger.exception("Embedding failed for item %s", item.id)
             set_stage(item, "embedding", "failed")
+            set_stage(item, "tags", "failed")  # tags are derived from the embedding
             try:
                 self.db.commit()
             except StaleDataError:
@@ -93,19 +95,30 @@ class EmbeddingService:
             )
         )
         set_stage(item, "embedding", "completed")
+        # Zero-shot tags come straight from the new vector (no second image read).
+        tagger = registry.get_tagger_if_ready()
+        if tagger is not None and tagger.model_name == embedder.model_name:
+            TagService(self.db).apply_ai_tags(item, tagger, vector)
+        else:
+            set_stage(item, "tags", "pending")
         self.db.commit()
         self.db.expire(item, ["embedding"])
+
+    def mark_waiting_for_model(self, item: Item) -> None:
+        """No loaded model: embedding and tags are "pending" (weights installed, model not loaded
+        yet; filled in later without re-uploading) or "unavailable" (no usable model)."""
+        model = registry.status()
+        loadable = model["weights_present"] and model["state"] not in ("disabled", "failed")
+        outcome = "pending" if loadable else "unavailable"
+        set_stage(item, "embedding", outcome)
+        set_stage(item, "tags", outcome)
+        self.db.commit()
 
     def index_after_upload(self, item: Item, image_bytes: bytes) -> None:
         """Best effort, never blocks on a model load, never raises."""
         embedder = registry.get_embedder_if_ready()
         if embedder is None:
-            model = registry.status()
-            # "pending": weights are installed, the model just isn't loaded yet; the item is
-            # indexed by the next similarity request. "unavailable": no usable model.
-            loadable = model["weights_present"] and model["state"] not in ("disabled", "failed")
-            set_stage(item, "embedding", "pending" if loadable else "unavailable")
-            self.db.commit()
+            self.mark_waiting_for_model(item)
             return
         with contextlib.suppress(EmbeddingFailed):  # the failure is recorded on the item
             self.index(item, embedder, image_bytes)

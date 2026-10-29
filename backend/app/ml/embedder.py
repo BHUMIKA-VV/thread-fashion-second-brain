@@ -34,9 +34,13 @@ class EmbeddingError(RuntimeError):
 class Embedder(Protocol):
     model_name: str
     dimension: int
+    logit_scale: float  # CLIP's learned temperature for image-text similarity
 
     def embed(self, image: Image.Image) -> Vector:
         """Unit-length float32 vector of length `dimension`."""
+
+    def encode_texts(self, texts: list[str]) -> NDArray[np.float32]:
+        """Unit-length text vectors (one row per text) in the same space as `embed`."""
 
 
 def to_rgb_on_white(image: Image.Image) -> Image.Image:
@@ -75,6 +79,9 @@ class OpenClipEmbedder:
         self._torch = torch
         self._model = model
         self._preprocess = preprocess
+        # The tokenizer's BPE vocabulary ships inside the open_clip package: no download.
+        self._tokenizer = open_clip.get_tokenizer(model_spec.ARCHITECTURE)
+        self.logit_scale = float(model.logit_scale.detach().exp())
         self._lock = threading.Lock()  # torch modules are not guaranteed thread-safe
 
         produced = self._encode(Image.new("RGB", (224, 224), (128, 128, 128))).shape[0]
@@ -96,3 +103,9 @@ class OpenClipEmbedder:
         except Exception as exc:
             raise EmbeddingError("The image could not be embedded.") from exc
         return l2_normalise(raw)
+
+    def encode_texts(self, texts: list[str]) -> NDArray[np.float32]:
+        tokens = self._tokenizer(list(texts))
+        with self._lock, self._torch.inference_mode():
+            features = self._model.encode_text(tokens).float().numpy()
+        return features / np.linalg.norm(features, axis=1, keepdims=True)

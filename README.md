@@ -4,12 +4,14 @@ A personal visual library for fashion: upload outfits, garments and fabric swatc
 extracts their palette, tags style and textile craft (including Indian traditions such as ikat,
 bandhani and chikankari) and finds similar pieces in your own library.
 
-> **Status: Milestone 5 (Visual similarity) complete.** You can upload images (drag and drop,
-> file picker or phone camera), browse them in a gallery, edit and delete them. Every upload gets
-> a real colour palette (hex/RGB, human and Indian colour names, percentages, heuristic harmony,
-> PNG card) and an OpenCLIP image embedding, and each item page shows **similar pieces from your
-> own library**, ranked by pgvector cosine similarity. Automatic fashion tags arrive in a later
-> milestone; nothing is shown or invented before then. This README documents only what exists today.
+> **Status: Milestone 6 (Fashion tags and similarity modes) complete.** You can upload images
+> (drag and drop, file picker or phone camera), browse them in a gallery, edit and delete them.
+> Every upload gets a real colour palette (hex/RGB, human and Indian colour names, percentages,
+> heuristic harmony, PNG card), an OpenCLIP image embedding and **zero-shot fashion tags**
+> (garment, silhouette, pattern, fabric guess, aesthetic, occasion, Indian crafts) that you can
+> correct. Each item page shows **similar pieces from your own library** in three modes: visual,
+> same palette with a different silhouette, and same fabric in a different colour. Tag accuracy
+> has not been measured (see Limitations). This README documents only what exists today.
 
 ## Architecture (current)
 
@@ -30,7 +32,8 @@ configuration and, later, private images can stay behind the API.
 backend/            FastAPI app (Python 3.11)
   app/api/          routes, dependencies (current user), structured error handlers
   app/color/        LAB maths, palette extraction, naming, harmony, PNG card (+ data/ name lists)
-  app/ml/           pinned model spec, OpenCLIP embedder, lazily loaded process-wide registry
+  app/ml/           pinned model spec, OpenCLIP embedder, lazily loaded registry, tag vocabulary
+                    (vocabulary.py) and zero-shot tagger with its text-vector cache (tagging.py)
   scripts/          fetch_model.py (explicit, one-off weights download)
   app/core/         settings (THREAD_ env prefix) and logging
   app/db/           declarative base, engine/session, Alembic helpers
@@ -393,6 +396,95 @@ differently can score lower. Scores are **relative** (good for ranking within yo
 not calibrated probabilities; in our checks even unrelated images scored around 0.6–0.7. The
 model was trained on web images and may handle some regional garments and textiles less well.
 
+## Fashion tags (zero-shot)
+
+AI tags come from the same OpenCLIP checkpoint's **text encoder** — no extra model or download
+(the tokenizer's BPE vocabulary ships inside the `open_clip` package).
+
+### The vocabulary
+
+`backend/app/ml/vocabulary.py` is the single source of truth: seven categories matching the
+database's `ck_tags_category` constraint, each with labels, descriptive phrases and thresholds.
+
+| Category | Stored per image | Notes |
+|---|---|---|
+| garment | 1 | kurta, saree, lehenga, salwar suit, blazer, shirt, trousers, dress, skirt, jacket, dupatta, accessory; skipped for fabric swatches |
+| silhouette | 1 | oversized, fitted, relaxed, straight, a-line, flared, draped, structured, layered; skipped for fabric and accessories |
+| pattern | up to 2 | solid, floral, striped, plaid, houndstooth, geometric, paisley, embroidery, polka dot, abstract |
+| fabric | 1 | cotton, silk, linen, denim, wool, chiffon, georgette, velvet, leather, knit — **always shown as a guess** |
+| aesthetic / occasion | up to 2 each | minimalist, boho, streetwear, traditional, contemporary, classic / festive, bridal, casual, formal, occasionwear |
+| craft | up to 2 | ikat, bandhani, chikankari, kanjeevaram, banarasi brocade, kalamkari, ajrakh, chanderi, paithani, block print, phulkari, zardozi |
+
+Garment, silhouette and craft also contain a **"none of these"** option (e.g. "plain fabric with
+no traditional craft"). It competes in scoring but is never stored, so the model can decline
+instead of being forced to pick a craft for a plain shirt.
+
+### How tags are computed
+
+1. Each label's phrases are put into three prompt templates (version `pt1`, e.g. "a photo of
+   {}.") and encoded once; a label's text vector is the normalised mean of its prompts.
+2. Text vectors are **cached on disk** in `.cache/models/text/ViT-B-32/text-<key>.npz`. The key
+   hashes the **model identifier + prompt-template version + vocabulary hash**, and the same
+   metadata is stored inside the file and re-checked on load, so a model, prompt or vocabulary
+   change can never reuse incompatible vectors. Building the cache takes ~20 s once; loading it
+   takes about a second.
+3. The item's **stored image embedding** (no image re-read) is compared with every label of a
+   category: `softmax(100 × cosine)` within the category gives relative scores.
+4. **Conservative display rules:** the top label is stored only if it clears the category's
+   minimum score **and** beats the runner-up by a margin; multi-label categories may add further
+   labels above the minimum. If "none of these" wins, nothing is stored. The thresholds were set
+   by reasoning, not fitted to data — no labelled dataset exists for this project.
+5. The same method suggests an item type (`suggested_type`), shown as a suggestion only.
+
+Scores are labelled **relative and uncalibrated** everywhere; they are not probabilities.
+"Show all scores" on the item page lists every label's score, the thresholds, and which labels
+passed (`GET /items/{id}/tag-scores`).
+
+### Your corrections are kept separately
+
+AI tags and your edits are different rows in `tags` (`source` = `ai` / `user`). Shown tags are
+**AI tags + your additions − your removals**. Re-analysis (`POST /items/{id}/reanalyze`) deletes
+and rewrites **only AI rows**, so corrections always survive; it is idempotent (no duplicate
+rows). Every AI row is stamped with the tagger version
+(`<model>/pt1/v<vocabulary hash>`); when the model, prompts or vocabulary change, outdated AI tags
+are replaced the next time the item is viewed or re-analysed.
+
+You may add tags from the vocabulary or **custom tags** within a category (shown as "custom"):
+1–40 characters of letters, numbers, spaces and `' & / -`, normalised to lowercase, no
+duplicates, at most 40 added tags per item, and only on your own items.
+
+| Method & path | Purpose |
+|---|---|
+| `GET /items/{id}/tags` | Shown tags, AI tags you removed, status, version, suggested type. Tags (and, if needed, indexes) the item if the model is ready |
+| `PATCH /items/{id}/tags` | `{"add": [{category, tag}], "remove": [...]}`; removing an AI tag hides it, adding it back restores it. `422 invalid_tag` on bad input |
+| `GET /items/{id}/tag-scores` | Every label's score; `409 not_indexed`, `503 model_loading` / `model_unavailable` |
+| `GET /tags/vocabulary` | Suggestions for adding tags |
+| `POST /items/{id}/reanalyze` | Palette, embedding and AI tags again; never waits for the model |
+
+### Similarity modes
+
+`GET /items/{id}/similar?mode=visual|palette|fabric` — every result lists its **reasons**.
+
+- **visual** — unchanged (cosine similarity of image embeddings).
+- **palette — same palette, different silhouette.** Ranks your items by
+  `palette_distance`: each colour is matched to the nearest colour of the other palette by
+  CIEDE2000, weighted by its share, averaged over both directions (lower = closer). Items sharing
+  the query's silhouette or garment tag are excluded — **only when both items have that tag**;
+  otherwise they stay in, marked "shape unknown". Needs no image model, so it works while the
+  model loads or without it. `422 palette_missing` if the item has no palette.
+- **fabric — same fabric, different colour.** Takes the 100 nearest visual neighbours, keeps
+  those sharing at least one fabric, pattern or craft tag with the query, and lists pieces with a
+  **different dominant colour family first**. If the item has no such tag, the response says so
+  instead of guessing.
+
+### Limitations of tags
+
+Accuracy **has not been measured**: there is no labelled evaluation set, and the automated tests
+check mechanics (scoring, thresholds, caching, corrections, ownership), not correctness. In
+particular, fabric composition cannot be determined reliably from a photo (hence "guess"), CLIP
+knows some Indian craft names only weakly, and tags describe the photo as a whole. Correct tags
+freely — corrections are never overwritten — and use "Show all scores" to see how close calls were.
+
 ## Health check
 
 `GET /health` (or `/api/health` through the frontend) returns:
@@ -461,6 +553,5 @@ They are skipped with a clear reason if Postgres is not reachable.
 
 ## Roadmap
 
-Milestones 6–8: palette extraction, OpenCLIP
-embeddings and tags, pgvector similarity, gallery and collections, end-to-end quality and full
-documentation.
+Milestones 7–8: gallery search and filters (by tag and colour), collections, Claude-based deep
+analysis, end-to-end quality and full documentation. Later: a background worker, sample data.

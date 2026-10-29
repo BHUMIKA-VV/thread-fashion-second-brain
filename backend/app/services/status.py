@@ -1,13 +1,13 @@
 """Derive an item's overall processing_status from the analysis stages that exist today.
 
-Stages: palette and embedding (tags will join in a later milestone). Each stage outcome is
-"completed", "failed", "unavailable" (no model installed) or "pending" (waiting for the model).
+Stages: palette, embedding and tags. Each stage outcome is "completed", "failed",
+"unavailable" (no model installed) or "pending" (waiting for the model).
 """
 
 from app.models import Item
 from app.models.enums import ProcessingStatus
 
-ANALYSIS_STAGES = ("palette", "embedding")
+ANALYSIS_STAGES = ("palette", "embedding", "tags")
 
 
 def derive_status(stage_status: dict[str, str]) -> ProcessingStatus:

@@ -12,6 +12,8 @@ from app.repositories.errors import ConflictError, NotFoundError
 from app.services.embeddings import EmbeddingFailed
 from app.services.images import ImageValidationError
 from app.services.palettes import PaletteExtractionError
+from app.services.similarity_modes import PaletteMissing
+from app.services.tags import ItemNotIndexed, TagValidationError
 
 IMAGE_ERROR_STATUS = {
     "too_large": status.HTTP_413_CONTENT_TOO_LARGE,
@@ -65,6 +67,26 @@ def register_error_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=error_body("palette_failed", str(exc)),
+        )
+
+    @app.exception_handler(TagValidationError)
+    async def invalid_tag(_: Request, exc: TagValidationError) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            content=error_body("invalid_tag", str(exc)),
+        )
+
+    @app.exception_handler(ItemNotIndexed)
+    async def not_indexed(_: Request, exc: ItemNotIndexed) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT, content=error_body("not_indexed", str(exc))
+        )
+
+    @app.exception_handler(PaletteMissing)
+    async def palette_missing(_: Request, exc: PaletteMissing) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            content=error_body("palette_missing", str(exc)),
         )
 
     @app.exception_handler(EmbedderLoading)

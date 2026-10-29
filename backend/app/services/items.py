@@ -18,11 +18,12 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
+from app.ml import registry
 from app.models import Item
 from app.models.enums import ItemType
 from app.repositories.errors import ConflictError, NotFoundError
 from app.repositories.items import ItemRepository
-from app.services.embeddings import EmbeddingService
+from app.services.embeddings import EmbeddingFailed, EmbeddingService
 from app.services.images import ImageLimits, process_upload
 from app.services.palettes import PaletteExtractionError, PaletteService
 from app.storage import Storage, item_key
@@ -107,6 +108,22 @@ class ItemService:
         except Exception:
             logger.exception("Unexpected error while indexing item %s", item.id)
             self.db.rollback()
+        return item
+
+    def reanalyze(self, item_id: UUID) -> Item:
+        """Palette, embedding and AI tags again, from the stored original. Never raises for
+        analysis failures (they are recorded per stage) and never waits for the image model."""
+        item = self.items.get_or_raise(item_id)
+        with contextlib.suppress(PaletteExtractionError):
+            PaletteService(self.db, self.storage, self.settings, self.owner_id).extract(item)
+        embeddings = EmbeddingService(self.db, self.storage, self.owner_id)
+        embedder = registry.get_embedder_if_ready()
+        if embedder is None:
+            embeddings.mark_waiting_for_model(item)
+        else:
+            with contextlib.suppress(EmbeddingFailed):
+                embeddings.index(item, embedder)
+        self.db.refresh(item)
         return item
 
     def delete(self, item_id: UUID) -> None:

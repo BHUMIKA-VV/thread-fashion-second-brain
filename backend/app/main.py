@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.errors import register_error_handlers
-from app.api.routes import health, items
+from app.api.routes import health, items, tags
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.db.session import get_session_factory
@@ -56,6 +56,7 @@ def create_app() -> FastAPI:
     register_error_handlers(app)
     app.include_router(health.router)
     app.include_router(items.router)
+    app.include_router(tags.router)
     return app
 
 

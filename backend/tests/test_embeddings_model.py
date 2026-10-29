@@ -15,9 +15,22 @@ if not model_spec.weights_path(get_settings().model_cache_root).is_file():
 
 
 @pytest.fixture(scope="module")
-def model():  # noqa: ANN201
+def loaded():  # noqa: ANN201
+    """The real embedder and tagger, loaded once per module (the per-test fixture resets the
+    registry, so tests use these references rather than the registry's slots)."""
     registry.reset_for_tests()
-    return registry.get_embedder()
+    embedder = registry.get_embedder()
+    return embedder, registry.get_tagger_if_ready()
+
+
+@pytest.fixture
+def model(loaded):  # noqa: ANN001, ANN201
+    return loaded[0]
+
+
+@pytest.fixture
+def tagger(loaded):  # noqa: ANN001, ANN201
+    return loaded[1]
 
 
 def garment(colour: tuple[int, int, int], size: tuple[int, int] = (600, 800)) -> Image.Image:
@@ -52,3 +65,37 @@ def test_real_model_ranks_a_close_variant_above_a_different_image(model) -> None
     noise = model.embed(Image.effect_noise((600, 800), 90).convert("RGB"))
 
     assert float(red @ red_variant) > float(red @ blue) > float(red @ noise)
+
+
+# --- zero-shot tagging with the real text encoder ---------------------------------------------
+
+
+def stripes() -> Image.Image:
+    from PIL import ImageDraw
+
+    image = Image.new("RGB", (600, 800), (245, 240, 230))
+    draw = ImageDraw.Draw(image)
+    for x in range(0, 600, 60):
+        draw.rectangle((x, 0, x + 29, 799), fill=(38, 59, 94))
+    return image
+
+
+def test_real_tagger_is_cached_versioned_and_deterministic(model, tagger) -> None:  # noqa: ANN001
+    from app.ml.tagging import cache_key, text_cache_dir
+
+    assert tagger is not None and tagger.model_name == model.model_name
+    cache = (
+        text_cache_dir(get_settings().model_cache_root) / f"text-{cache_key(model.model_name)}.npz"
+    )
+    assert cache.is_file()
+    vector = model.embed(stripes())
+    first, second = tagger.predict(vector), tagger.predict(vector.copy())
+    assert first == second
+    assert all(0 <= p.score <= 1 for p in first)
+
+
+def test_real_tagger_sanity_on_an_obvious_pattern(model, tagger) -> None:  # noqa: ANN001
+    """Smoke test only (one synthetic image), not an accuracy measurement."""
+    assert tagger is not None
+    pattern_scores = tagger.scores(model.embed(stripes()))["pattern"]
+    assert pattern_scores[0].tag == "striped"

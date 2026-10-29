@@ -33,18 +33,79 @@ export type Palette = {
 /** pending = waiting for the image model to load; unavailable = model not installed/off. */
 export type StageOutcome = "completed" | "failed" | "pending" | "unavailable";
 
+export type SimilarMode = "visual" | "palette" | "fabric";
+
 export type SimilarItem = {
   item: Item;
-  /** Cosine similarity of image embeddings: good for ranking, not a probability. */
-  similarity: number;
+  /** Cosine similarity of image embeddings: good for ranking, not a probability. Null in palette mode. */
+  similarity: number | null;
+  /** Palette mode: share-weighted CIEDE2000 distance (lower = closer colours). */
+  palette_distance: number | null;
+  reasons: string[];
 };
 
 export type SimilarResponse = {
   item_id: string;
+  mode: SimilarMode;
   model: string;
   results: SimilarItem[];
   compared: number;
   not_indexed: number;
+  notice: string | null;
+};
+
+export const TAG_CATEGORIES = [
+  "garment",
+  "silhouette",
+  "pattern",
+  "fabric",
+  "aesthetic",
+  "occasion",
+  "craft",
+] as const;
+export type TagCategory = (typeof TAG_CATEGORIES)[number];
+
+export type ItemTag = {
+  category: TagCategory;
+  tag: string;
+  source: "ai" | "user";
+  /** AI model score: softmax within the category. Relative and uncalibrated, not a probability. */
+  score: number | null;
+  custom: boolean;
+  outdated: boolean;
+  is_guess: boolean;
+};
+
+export type ItemTags = {
+  item_id: string;
+  status: "completed" | "pending" | "unavailable" | "failed";
+  version: string | null;
+  suggested_type: ItemType | null;
+  tags: ItemTag[];
+  removed: ItemTag[];
+};
+
+export type TagEdit = { category: TagCategory; tag: string };
+
+export type LabelScore = { tag: string; score: number; none: boolean; passes: boolean };
+
+export type TagScores = {
+  item_id: string;
+  version: string;
+  note: string;
+  categories: {
+    category: TagCategory;
+    is_guess: boolean;
+    min_score: number;
+    min_margin: number;
+    max_tags: number;
+    labels: LabelScore[];
+  }[];
+};
+
+export type Vocabulary = {
+  version: string;
+  categories: { category: TagCategory; is_guess: boolean; max_tags: number; tags: string[] }[];
 };
 
 export type Item = {
@@ -61,7 +122,7 @@ export type Item = {
   file_size: number;
   created_at: string;
   updated_at: string;
-  stage_status: Partial<Record<"thumbnail" | "palette" | "embedding", StageOutcome>>;
+  stage_status: Partial<Record<"thumbnail" | "palette" | "embedding" | "tags", StageOutcome>>;
   palette: Palette | null;
   /** Relative to the API root; prefix with API_BASE. */
   image_url: string;

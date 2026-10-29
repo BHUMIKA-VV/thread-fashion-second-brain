@@ -14,6 +14,7 @@ from typing import Literal
 from app.core.config import get_settings
 from app.ml import model_spec
 from app.ml.embedder import Embedder
+from app.ml.tagging import Tagger, text_cache_dir
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ _lock = threading.Lock()
 _loader_lock = threading.Lock()
 _loader_started = False
 _embedder: Embedder | None = None
+_tagger: Tagger | None = None  # set together with _embedder: ready means both
 _state: State = "not_loaded"
 _reason: str | None = None
 _load_seconds: float | None = None
@@ -65,6 +67,11 @@ def status() -> dict[str, object]:
     }
 
 
+def get_tagger_if_ready() -> Tagger | None:
+    """The zero-shot tagger once the model (and its text vectors) are loaded; never waits."""
+    return _tagger if get_settings().embeddings_enabled else None
+
+
 def get_embedder_if_ready() -> Embedder | None:
     """The embedder only if already loaded; never waits and never starts a load."""
     return _embedder if get_settings().embeddings_enabled else None
@@ -72,7 +79,7 @@ def get_embedder_if_ready() -> Embedder | None:
 
 def get_embedder() -> Embedder:
     """The shared embedder, loading it on first use. Raises EmbedderUnavailable."""
-    global _embedder, _state, _reason, _load_seconds
+    global _embedder, _tagger, _state, _reason, _load_seconds
     settings = get_settings()
     if not settings.embeddings_enabled:
         raise EmbedderUnavailable("Image similarity is turned off (THREAD_EMBEDDINGS_ENABLED).")
@@ -90,7 +97,15 @@ def get_embedder() -> Embedder:
         try:
             from app.ml.embedder import OpenClipEmbedder
 
-            _embedder = OpenClipEmbedder(weights)
+            embedder = OpenClipEmbedder(weights)
+            # Text vectors for the tag vocabulary: from the on-disk cache, or encoded once.
+            tagger = Tagger.load_or_build(
+                text_cache_dir(settings.model_cache_root),
+                embedder.model_name,
+                embedder.encode_texts,
+                embedder.logit_scale,
+            )
+            _embedder, _tagger = embedder, tagger
         except Exception as exc:
             logger.exception("Loading the image model failed")
             _state, _reason = "failed", "The image model could not be loaded."
@@ -150,7 +165,7 @@ def warm_up_in_background() -> None:
 
 
 def reset_for_tests() -> None:
-    global _embedder, _state, _reason, _load_seconds, _loader_started
+    global _embedder, _tagger, _state, _reason, _load_seconds, _loader_started
     with _lock, _loader_lock:
-        _embedder, _state, _reason, _load_seconds = None, "not_loaded", None, None
+        _embedder, _tagger, _state, _reason, _load_seconds = None, None, "not_loaded", None, None
         _loader_started = False

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, UrlConstraints, computed_field
@@ -70,20 +70,34 @@ class ItemRead(BaseModel):
         return f"/items/{self.id}/palette.png" if self.palette else None
 
 
+SimilarMode = Literal["visual", "palette", "fabric"]
+
+
 class SimilarItemRead(BaseModel):
     item: ItemRead
-    similarity: float = Field(
+    similarity: float | None = Field(
         description="Cosine similarity of the image embeddings (higher = more alike). "
-        "Useful for ranking; not a calibrated probability."
+        "Useful for ranking; not a calibrated probability. Null in palette mode."
+    )
+    palette_distance: float | None = Field(
+        default=None,
+        description="Palette mode: share-weighted CIEDE2000 distance (lower = closer colours)",
+    )
+    reasons: list[str] = Field(
+        default_factory=list, description="Why this matched, in plain language"
     )
 
 
 class SimilarResponse(BaseModel):
     item_id: UUID
+    mode: SimilarMode
     model: str = Field(description="Embedding model + preprocessing version that was compared")
     results: list[SimilarItemRead]
     compared: int = Field(description="Your other items that were compared")
     not_indexed: int = Field(description="Your other items that could not be compared")
+    notice: str | None = Field(
+        default=None, description="Why results are limited, e.g. missing tags on this item"
+    )
 
 
 class ItemList(BaseModel):

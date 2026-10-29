@@ -1,5 +1,16 @@
 import { API_BASE, apiErrorFromText, apiFetch } from "@/lib/api-client";
-import type { Item, ItemList, ItemType, ItemUpdate, SimilarResponse } from "@/types/api";
+import type {
+  Item,
+  ItemList,
+  ItemTags,
+  ItemType,
+  ItemUpdate,
+  SimilarMode,
+  SimilarResponse,
+  TagEdit,
+  TagScores,
+  Vocabulary,
+} from "@/types/api";
 
 export type ListItemsParams = { type?: ItemType; limit?: number; offset?: number };
 
@@ -27,9 +38,40 @@ export function extractPalette(id: string, colors?: number): Promise<Item> {
   return apiFetch<Item>(`/items/${encodeURIComponent(id)}/palette${query}`, { method: "POST" });
 }
 
-/** Owner-scoped visual neighbours. Rejects with code "model_unavailable" (503) or "embedding_failed" (422). */
-export function getSimilar(id: string, limit = 12): Promise<SimilarResponse> {
-  return apiFetch<SimilarResponse>(`/items/${encodeURIComponent(id)}/similar?limit=${limit}`);
+/**
+ * Owner-scoped neighbours. Rejects with code "model_loading" / "model_unavailable" (503),
+ * "embedding_failed" or "palette_missing" (422).
+ */
+export function getSimilar(id: string, mode: SimilarMode = "visual", limit = 12): Promise<SimilarResponse> {
+  return apiFetch<SimilarResponse>(
+    `/items/${encodeURIComponent(id)}/similar?mode=${mode}&limit=${limit}`,
+  );
+}
+
+export function getItemTags(id: string): Promise<ItemTags> {
+  return apiFetch<ItemTags>(`/items/${encodeURIComponent(id)}/tags`);
+}
+
+/** Your corrections: stored separately from AI tags, so re-analysis never overwrites them. */
+export function editItemTags(id: string, edits: { add?: TagEdit[]; remove?: TagEdit[] }): Promise<ItemTags> {
+  return apiFetch<ItemTags>(`/items/${encodeURIComponent(id)}/tags`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ add: edits.add ?? [], remove: edits.remove ?? [] }),
+  });
+}
+
+export function getTagScores(id: string): Promise<TagScores> {
+  return apiFetch<TagScores>(`/items/${encodeURIComponent(id)}/tag-scores`);
+}
+
+export function getVocabulary(): Promise<Vocabulary> {
+  return apiFetch<Vocabulary>("/tags/vocabulary");
+}
+
+/** Re-run palette, embedding and AI tags. Never waits for the image model. */
+export function reanalyzeItem(id: string): Promise<Item> {
+  return apiFetch<Item>(`/items/${encodeURIComponent(id)}/reanalyze`, { method: "POST" });
 }
 
 /** (Re-)index this item's image embedding. */
