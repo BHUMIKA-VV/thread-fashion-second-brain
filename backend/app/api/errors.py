@@ -10,6 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.ml.registry import EmbedderLoading, EmbedderUnavailable
 from app.repositories.errors import ConflictError, NotFoundError
+from app.services.deep_analysis import DeepAnalysisRefused, DeepAnalysisUnavailable
 from app.services.embeddings import EmbeddingFailed
 from app.services.images import ImageValidationError
 from app.services.palettes import PaletteExtractionError
@@ -64,6 +65,17 @@ def register_error_handlers(app: FastAPI) -> None:
             status_code=status.HTTP_404_NOT_FOUND,
             content=error_body("not_found", "Item not found."),
         )
+
+    @app.exception_handler(DeepAnalysisUnavailable)
+    async def deep_analysis_unavailable(_: Request, exc: DeepAnalysisUnavailable) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=error_body("deep_analysis_unavailable", str(exc)),
+        )
+
+    @app.exception_handler(DeepAnalysisRefused)
+    async def deep_analysis_refused(_: Request, exc: DeepAnalysisRefused) -> JSONResponse:
+        return JSONResponse(status_code=exc.status_code, content=error_body(exc.code, exc.message))
 
     @app.exception_handler(ConflictError)
     async def conflict(_: Request, exc: ConflictError) -> JSONResponse:

@@ -228,3 +228,46 @@ export type HealthResponse = {
   database: DatabaseHealth;
   embedding_model: EmbeddingModelHealth;
 };
+
+// --- Deep analysis (Milestone 7b) ---------------------------------------------------------
+
+export type Confidence = "low" | "medium" | "high";
+
+export type DeepAnalysisResult = {
+  summary: string;
+  is_fashion_image: boolean;
+  garment: string | null;
+  silhouette: string | null;
+  pattern: string | null;
+  fabric: { guess: string; confidence: Confidence; reasoning: string } | null;
+  crafts: { name: string; confidence: Confidence; evidence: string }[];
+  styling_ideas: string[];
+  occasions: string[];
+  caveats: string[];
+};
+
+export type DeepAnalysisStatus = {
+  available: boolean;
+  reason: "not_configured" | "disabled_in_production" | null;
+  provider: "claude" | "fake" | null;
+  model: string | null;
+  effort: string | null;
+  daily_limit: number;
+  runs_today: number;
+  sent: string[];
+  not_sent: string[];
+};
+
+export type DeepAnalysis = {
+  item_id: string;
+  status: "not_run" | "running" | "completed" | "failed";
+  requested_model: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+  error: { code: string; message: string; retry_after_seconds: number | null } | null;
+  result: DeepAnalysisResult | null;
+  result_model: string | null;
+  result_at: string | null;
+  prompt_version: string | null;
+  usage: { input_tokens: number | null; output_tokens: number | null } | null;
+};

@@ -10,7 +10,17 @@ from app.db.base import Base
 
 pytestmark = pytest.mark.db
 
-APP_TABLES = {"users", "items", "palettes", "tags", "embeddings", "collections", "collection_items"}
+APP_TABLES = {
+    "users",
+    "items",
+    "palettes",
+    "tags",
+    "embeddings",
+    "collections",
+    "collection_items",
+    "deep_analyses",
+    "deep_analysis_usage",
+}
 
 
 def table_names(url: str) -> set[str]:
@@ -112,12 +122,71 @@ def test_milestone_3_database_with_data_upgrades_to_head_and_back(empty_db_url: 
     migrations.upgrade(empty_db_url)  # -> head
     with engine.begin() as conn:
         revision = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-        assert revision == PALETTE_SOURCE_REVISION == migrations.head_revision()
+        assert revision == migrations.head_revision()  # includes PALETTE_SOURCE_REVISION
         conn.execute(text("UPDATE palettes SET source = 'masked'"))  # now allowed
         assert conn.execute(text("SELECT count(*) FROM items")).scalar_one() == 1  # data kept
 
     migrations.downgrade(empty_db_url, MILESTONE_3_REVISION)
     with engine.begin() as conn:
         assert conn.execute(text("SELECT source FROM palettes")).scalar_one() == "original"
+    migrations.upgrade(empty_db_url)
+    engine.dispose()
+
+
+def test_milestone_7_database_with_data_upgrades_to_deep_analysis_and_back(
+    empty_db_url: str,
+) -> None:
+    """Milestone 7b adds two tables only: existing rows are untouched both ways, analyses are
+    owner-bound and go with their item, and downgrading removes just the new tables."""
+    migrations.upgrade(empty_db_url, PALETTE_SOURCE_REVISION)
+    engine = create_engine(empty_db_url)
+    insert_item = text(
+        "INSERT INTO items (user_id, original_key, content_hash, mime_type, width, height,"
+        " file_size, ai_description) VALUES (:u, :k, :h, 'image/jpeg', 10, 10, 10, 'kept')"
+        " RETURNING id"
+    )
+    with engine.begin() as conn:
+        owner, other = (
+            conn.execute(
+                text("INSERT INTO users (display_name) VALUES (:n) RETURNING id"), {"n": n}
+            ).scalar_one()
+            for n in ("owner", "other")
+        )
+        item_id = conn.execute(
+            insert_item, {"u": owner, "k": "a/original.jpg", "h": "a" * 64}
+        ).scalar_one()
+        doomed = conn.execute(
+            insert_item, {"u": owner, "k": "b/original.jpg", "h": "b" * 64}
+        ).scalar_one()
+
+    migrations.upgrade(empty_db_url)  # -> head
+    analysis = text(
+        "INSERT INTO deep_analyses (item_id, user_id, run_id, status, requested_model,"
+        " started_at) VALUES (:i, :u, gen_random_uuid(), :s, 'claude-opus-5-5', now())"
+    )
+    with engine.begin() as conn:
+        assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
+            migrations.head_revision()
+        )
+        assert conn.execute(text("SELECT count(*) FROM items")).scalar_one() == 2
+        with pytest.raises(Exception, match="fk_deep_analyses_item_owner"), conn.begin_nested():
+            conn.execute(analysis, {"i": doomed, "u": other, "s": "running"})  # not their item
+        conn.execute(analysis, {"i": item_id, "u": owner, "s": "completed"})
+        conn.execute(analysis, {"i": doomed, "u": owner, "s": "running"})
+        conn.execute(
+            text(
+                "INSERT INTO deep_analysis_usage (user_id, day, runs) VALUES (:u, current_date, 2)"
+            ),
+            {"u": owner},
+        )
+        with pytest.raises(Exception, match="ck_deep_analyses_status"), conn.begin_nested():
+            conn.execute(text("UPDATE deep_analyses SET status = 'queued'"))
+        conn.execute(text("DELETE FROM items WHERE id = :i"), {"i": doomed})
+        assert conn.execute(text("SELECT count(*) FROM deep_analyses")).scalar_one() == 1
+
+    migrations.downgrade(empty_db_url, PALETTE_SOURCE_REVISION)
+    assert not {"deep_analyses", "deep_analysis_usage"} & table_names(empty_db_url)
+    with engine.begin() as conn:
+        assert conn.execute(text("SELECT ai_description FROM items")).scalar_one() == "kept"
     migrations.upgrade(empty_db_url)
     engine.dispose()

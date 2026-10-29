@@ -34,6 +34,10 @@ export default defineConfig({
       command: `${python} -m uvicorn app.main:app --host 127.0.0.1 --port 8010`,
       cwd: "../backend",
       url: "http://127.0.0.1:8010/health",
+      // Deep analysis uses the local fake analyzer: e2e runs never call Claude, even if a
+      // real key is in .env (the environment wins over .env). An API you started yourself
+      // and that Playwright reuses keeps its own settings; e2e/deep-analysis.spec.ts says so.
+      env: { ...process.env, THREAD_DEEP_ANALYSIS_PROVIDER: "fake" } as Record<string, string>,
       reuseExistingServer: true,
       // A cold start imports scikit-learn and friends; on Windows that alone measured ~30 s.
       timeout: 180_000,

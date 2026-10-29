@@ -16,6 +16,10 @@ from typing import Any
 # This test process never loads the real image model at startup (set before the app imports;
 # affects only this process, not the user's environment).
 os.environ["THREAD_EMBEDDING_WARMUP"] = "false"
+# Tests never see a real Anthropic key, even if one is in the repo .env (the environment
+# wins over .env), and never pick the local fake provider by accident.
+os.environ["THREAD_ANTHROPIC_API_KEY"] = ""
+os.environ["THREAD_DEEP_ANALYSIS_PROVIDER"] = "claude"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient
@@ -47,6 +51,16 @@ def fake_embedder(request: pytest.FixtureRequest) -> Iterator[FakeEmbedder | Non
         registry._state = "ready"
         yield fake
     registry.reset_for_tests()
+
+
+@pytest.fixture(autouse=True)
+def no_deep_analyzer() -> Iterator[None]:
+    """No test gets a deep analyzer (real or fake) unless it installs one itself."""
+    from app.api.routes.deep_analysis import get_deep_analyzer
+
+    app.dependency_overrides[get_deep_analyzer] = lambda: None
+    yield
+    app.dependency_overrides.pop(get_deep_analyzer, None)
 
 
 @pytest.fixture

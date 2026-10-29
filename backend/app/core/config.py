@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Literal
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -61,6 +61,33 @@ class Settings(BaseSettings):
 
     # Read by the Next.js proxy; declared here so the shared .env is self-documenting.
     api_url: str = "http://127.0.0.1:8010"
+
+    # Deep analysis (optional, user-triggered; sends one image to Anthropic per run).
+    # Only these THREAD_ settings are used: machine-wide ANTHROPIC_* variables, CLI login
+    # profiles and system proxies are ignored (see app/ml/deep_analyzer.py). Without a key no
+    # client is built and nothing is sent.
+    anthropic_api_key: SecretStr | None = None
+    anthropic_base_url: str = "https://api.anthropic.com"
+    deep_analysis_model: str = "claude-opus-5-5"
+    deep_analysis_effort: Literal["low", "medium", "high", "xhigh", "max"] = "medium"
+    # A guard against runaway use, not a spending limit: counted per user per UTC day.
+    deep_analysis_daily_limit: int = Field(default=25, ge=0)
+    deep_analysis_timeout_seconds: float = Field(default=120.0, gt=0, le=600)
+    # "fake" is a local stand-in for development and end-to-end tests (never in production):
+    # it returns a canned description and sends nothing anywhere.
+    deep_analysis_provider: Literal["claude", "fake"] = "claude"
+
+    @field_validator("anthropic_api_key", mode="before")
+    @classmethod
+    def _blank_key_is_no_key(cls, value: object) -> object:
+        return None if isinstance(value, str) and not value.strip() else value
+
+    @field_validator("anthropic_base_url")
+    @classmethod
+    def _https_base_url(cls, value: str) -> str:
+        if not value.startswith("https://") or len(value) <= len("https://"):
+            raise ValueError("THREAD_ANTHROPIC_BASE_URL must be an https:// URL")
+        return value.rstrip("/")
 
     @property
     def storage_root(self) -> Path:

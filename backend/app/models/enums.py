@@ -43,6 +43,12 @@ class UserTagAction(StrEnum):
     REMOVE = "remove"  # user rejected an AI tag; survives re-analysis
 
 
+class DeepAnalysisStatus(StrEnum):
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class Harmony(StrEnum):
     MONOCHROMATIC = "monochromatic"
     ANALOGOUS = "analogous"

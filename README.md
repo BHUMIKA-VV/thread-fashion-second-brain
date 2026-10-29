@@ -4,16 +4,17 @@ A personal visual library for fashion: upload outfits, garments and fabric swatc
 extracts their palette, tags style and textile craft (including Indian traditions such as ikat,
 bandhani and chikankari) and finds similar pieces in your own library.
 
-> **Status: Milestone 7 (Search, filters, collections and dashboard) complete.** You can upload
-> images (drag and drop, file picker or phone camera), browse them in a gallery, edit and delete
-> them. Every upload gets a real colour palette (hex/RGB, human and Indian colour names,
-> percentages, heuristic harmony, PNG card), an OpenCLIP image embedding and **zero-shot fashion
-> tags** (garment, silhouette, pattern, fabric guess, aesthetic, occasion, Indian crafts) that you
-> can correct. Each item page shows **similar pieces from your own library** in three modes. The
-> gallery has **text search and tag, colour-family and type filters** kept in the URL, pieces can
-> be gathered into **ordered, annotated collections**, and a **dashboard** summarises the library.
-> Tag accuracy has not been measured (see Limitations). This README documents only what exists
-> today.
+> **Status: Milestone 7b (Deep analysis) complete.** You can upload images (drag and drop, file
+> picker or phone camera), browse them in a gallery, edit and delete them. Every upload gets a
+> real colour palette (hex/RGB, human and Indian colour names, percentages, heuristic harmony, PNG
+> card), an OpenCLIP image embedding and **zero-shot fashion tags** (garment, silhouette, pattern,
+> fabric guess, aesthetic, occasion, Indian crafts) that you can correct. Each item page shows
+> **similar pieces from your own library** in three modes. The gallery has **text search and tag,
+> colour-family and type filters** kept in the URL, pieces can be gathered into **ordered,
+> annotated collections**, and a **dashboard** summarises the library. **Deep analysis** is an
+> optional, user-confirmed Claude vision description of one piece; it is off without an API key.
+> Tag and deep-analysis accuracy have not been measured (see Limitations). This README documents
+> only what exists today.
 
 ## Architecture (current)
 
@@ -133,6 +134,11 @@ Open <http://127.0.0.1:3100>. The **System** page shows live API, PostgreSQL and
 | `THREAD_MODEL_CACHE_DIR` | backend | where the image-model weights live (default `.cache/models`) |
 | `THREAD_EMBEDDINGS_ENABLED`, `THREAD_EMBEDDING_WARMUP` | backend | turn similarity off; load the model at start-up in the background (both default `true`) |
 | `THREAD_API_URL` | frontend (server side) | where the `/api` proxy forwards; default `http://127.0.0.1:8010` |
+| `THREAD_ANTHROPIC_API_KEY` | backend | optional; turns on deep analysis. Empty = off (no client, no requests) |
+| `THREAD_ANTHROPIC_BASE_URL` | backend | https only; default `https://api.anthropic.com` |
+| `THREAD_DEEP_ANALYSIS_MODEL`, `THREAD_DEEP_ANALYSIS_EFFORT` | backend | default `claude-opus-5-5`, `medium`; used exactly as set |
+| `THREAD_DEEP_ANALYSIS_DAILY_LIMIT`, `THREAD_DEEP_ANALYSIS_TIMEOUT_SECONDS` | backend | default 25 runs per user per UTC day (0 = none), 120 s per attempt |
+| `THREAD_DEEP_ANALYSIS_PROVIDER` | backend | `claude` (default) or `fake`, a local stand-in for development and e2e tests (refused in production) |
 
 Backend settings are read **only** with the `THREAD_` prefix. Machine-wide variables from other
 projects (for example a global `DATABASE_URL`) are ignored; a regression test enforces this.
@@ -547,6 +553,96 @@ one with the piece already in it.
 colour families, most-used visible tags, collections and recent uploads. Each count links to the
 matching filtered gallery view. A new library shows an empty state rather than placeholder numbers.
 
+## Deep analysis (optional, Claude vision)
+
+A **Deep analyze** button on the item page asks Claude to describe one piece: garment,
+silhouette, pattern, a fabric *guess* with a confidence and the visual reason for it, possible
+crafts with the evidence seen, styling ideas, occasions and caveats. Palettes, tags, similarity,
+search and collections never depend on it.
+
+### Turning it on
+
+Set `THREAD_ANTHROPIC_API_KEY` in the root `.env`, run `alembic upgrade head` (Milestone 7b adds
+two tables) and restart the API. Without a key the panel explains how to turn it on, the API
+answers 503 `deep_analysis_unavailable`, and no Anthropic client is ever constructed.
+
+Only the `THREAD_` settings are used. The client is given the key and base URL explicitly, so
+machine-wide `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_BASE_URL` and CLI login
+profiles are never consulted; headers from `ANTHROPIC_CUSTOM_HEADERS` are removed; the HTTP
+transport ignores system proxy and certificate variables (`HTTPS_PROXY`, `SSL_CERT_FILE`, ...) and
+does not follow redirects; and the SDK's own request logging stays at WARNING whatever
+`ANTHROPIC_LOG` says. Tests send real requests through the SDK to a mock transport, with those
+variables set, to prove it. The key is a `SecretStr` and is never logged or returned. (A
+consequence: deep analysis cannot go through a corporate proxy today.)
+
+SDK: `anthropic==2.3.0`, which sends API version `2026-10-21`. The model ID `claude-opus-5-5` was
+checked against Anthropic's model documentation; it is used exactly as configured, never swapped.
+
+### What is sent, and only after you confirm
+
+Every run shows a confirmation first, listing what will be sent (served by
+`GET /deep-analysis/status`, so the text matches the code):
+
+- the piece's image, resized to at most **2576 px** on the long edge (Claude Opus 5.5's
+  high-resolution limit), converted to sRGB and re-encoded as JPEG with **all metadata removed**
+  (EXIF, GPS location, camera details, colour profile);
+- its palette colour names and **currently visible** tags, labelled in the prompt as automatic
+  and possibly wrong.
+
+Never sent: notes, the source URL, or anything about other pieces or collections. The API also
+refuses a run unless the request body says `{"confirm": true}`.
+
+### Cost and guards
+
+At Claude Opus 5.5 prices ($4 / $20 per million input / output tokens) one run is an estimated
+**$0.05-0.10**: up to ~4.8k image tokens plus ~1.2k for instructions and hints, and ~1.5-3k output
+tokens including the model's thinking. These are estimates; the actual token counts of each
+completed run are stored and returned (`usage`). Guards:
+
+- a confirmation before **every** run;
+- one active run per piece (409 `already_running`) and at most **two** in flight (429 `busy`);
+- **25 runs per user per UTC day** (429 `daily_limit_reached`). This is a guard against runaway
+  use, **not a spending limit**: Anthropic bills what is used, the SDK's retries can repeat a
+  request, and the count does not go back down when you delete a piece. The local fake analyzer
+  is not counted.
+
+There is **no automatic fallback** to another model: if Claude declines, the run fails with
+"Claude declined to analyse this image."
+
+### How a run works
+
+`POST /items/{id}/deep-analyze` claims the run in one short transaction (under a PostgreSQL
+advisory lock, so the guards cannot race) and answers **202** at once. The call to Claude happens
+after the response, in a background thread with its own database session; no transaction is held
+open while waiting. The page polls `GET /items/{id}/deep-analysis` every 2 s.
+
+- The answer is constrained to a JSON schema (structured outputs) and validated again, with its
+  length limits, before anything is stored. `stop_reason` is checked first, so a refusal or a
+  cut-off answer is reported as such rather than as bad output.
+- Failures are stored as a short, safe message: key rejected, rate limited (with the retry
+  delay), Claude unavailable, timeout, network, declined, cut off, invalid output, unreadable
+  image. Provider details go to the log, never to the page.
+- A failed re-run **keeps the last successful result**. Results live in their own table
+  (`deep_analyses`); on success the summary is also copied to `items.ai_description`. Nothing else
+  about the piece is touched: not its palette, tags, embedding or processing status.
+- An outcome is written only if it is still the piece's current run, so a slow, superseded run
+  can never overwrite a newer one. Deleting the piece mid-run discards the outcome quietly.
+- With no worker yet, a run lost to a server restart is reported as "interrupted" once it is more
+  than 10 minutes old, and can be retried.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/deep-analysis/status` | configured?, provider, model, effort, today's runs and limit, what is sent |
+| `GET` | `/items/{id}/deep-analysis` | latest attempt (`not_run` / `running` / `completed` / `failed`) and last result |
+| `POST` | `/items/{id}/deep-analyze` | start a run; body `{"confirm": true}`; 202 |
+
+### Limitations
+
+Accuracy **has not been measured**, and no real Claude call is made by the automated tests (they
+use a fake analyzer or a mock HTTP transport, never a real key). A photo cannot establish fibre
+content, authenticity or origin, and the prompt forbids claiming them; the page labels every
+result as an AI description that may be wrong. Deep-analysis text is not part of gallery search.
+
 ## Health check
 
 `GET /health` (or `/api/health` through the frontend) returns:
@@ -615,6 +711,6 @@ They are skipped with a clear reason if Postgres is not reachable.
 
 ## Roadmap
 
-Milestone 7b: Claude-based deep analysis (to be planned and approved separately).
-Milestone 8: end-to-end quality and full documentation. Later: a background worker, sharing, bulk
-gallery actions, trend summaries and sample data.
+Milestone 8: end-to-end quality and full documentation. Later: a background worker (which would
+also let deep analysis survive restarts), sharing, bulk gallery actions, trend summaries and
+sample data.

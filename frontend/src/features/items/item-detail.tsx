@@ -8,6 +8,7 @@ import { useState, type FormEvent } from "react";
 
 import { ProcessingBadge } from "@/components/processing-badge";
 import { AddToCollection } from "@/features/collections/add-to-collection";
+import { DeepAnalysisPanel } from "@/features/deep-analysis/deep-analysis-panel";
 import { PaletteView } from "@/features/palette/palette-view";
 import { SimilarPieces } from "@/features/similar/similar-pieces";
 import { TagsPanel } from "@/features/tags/tags-panel";
@@ -83,6 +84,7 @@ function ItemView({ item }: { item: Item }) {
 
           <PaletteView item={item} />
           <TagsPanel item={item} />
+          <DeepAnalysisPanel itemId={item.id} />
           <AddToCollection itemId={item.id} />
           <EditForm item={item} />
           <DeleteControl item={item} />
