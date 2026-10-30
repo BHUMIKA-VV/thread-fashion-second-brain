@@ -15,6 +15,7 @@ from app.api.routes import (
     dev,
     health,
     items,
+    outfits,
     publishing,
     showcase,
     tags,
@@ -100,6 +101,7 @@ def create_app() -> FastAPI:
     app.include_router(items.router)
     app.include_router(tags.router)
     app.include_router(collections.router)
+    app.include_router(outfits.router)
     app.include_router(deep_analysis.router)
     if settings.app_env != "production" and settings.mail_provider == "log":
         app.include_router(dev.router)

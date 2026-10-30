@@ -127,6 +127,7 @@ test("navigation reaches every section from the header and footer", async ({ pag
   for (const [label, path] of [
     ["Archive", "/gallery"],
     ["Collections", "/collections"],
+    ["Studio", "/outfit-studio"],
     ["Upload", "/upload"],
   ] as const) {
     await nav.getByRole("link", { name: label }).click();

@@ -45,6 +45,11 @@ erDiagram
   users ||--o{ collections : owns
   collections ||--o{ collection_items : "ordered, annotated"
   items ||--o{ collection_items : "member of"
+  users ||--o{ outfits : owns
+  outfits ||--o{ outfit_items : "ordered pieces"
+  items ||--o{ outfit_items : "appears in"
+  collections ||--o{ collection_outfits : contains
+  outfits ||--o{ collection_outfits : "appears in"
   items ||--o| deep_analyses : "latest attempt + last result"
   users ||--o{ deep_analysis_usage : "runs per UTC day"
 ```

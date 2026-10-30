@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import CurrentUserId
+from app.api.routes.outfits import outfit_summaries
 from app.db.session import get_db
 from app.models import Collection
 from app.repositories.collections import CollectionRepository
@@ -20,6 +21,8 @@ from app.schemas.collections import (
     CollectionUpdate,
 )
 from app.schemas.items import ItemRead
+from app.schemas.outfits import CollectionOutfitAdd
+from app.services.outfits import OutfitService
 
 router = APIRouter(prefix="/collections", tags=["collections"])
 CONFLICT = {409: {"description": "You already have a collection with this name (code conflict)"}}
@@ -35,6 +38,7 @@ Repo = Annotated[CollectionRepository, Depends(get_repo)]
 
 
 def _detail(repo: CollectionRepository, collection: Collection) -> CollectionDetail:
+    outfits = OutfitService(repo.db, repo.owner_id)
     return CollectionDetail(
         id=collection.id,
         name=collection.name,
@@ -42,6 +46,7 @@ def _detail(repo: CollectionRepository, collection: Collection) -> CollectionDet
         is_public=collection.is_public,
         created_at=collection.created_at,
         updated_at=collection.updated_at,
+        outfits=outfit_summaries(outfits, outfits.repo.in_collection(collection.id)),
         items=[
             CollectionEntry(
                 item=ItemRead.model_validate(link.item),
@@ -131,6 +136,24 @@ def update_collection_item(
         repo.set_note(collection_id, item_id, changes["note"] or None)
     if changes.get("position") is not None:
         repo.move(collection_id, item_id, changes["position"])
+    repo.db.commit()
+    return _detail(repo, repo.get_or_raise(collection_id))
+
+
+@router.post("/{collection_id}/outfits", response_model=CollectionDetail)
+def add_collection_outfit(
+    collection_id: UUID, body: CollectionOutfitAdd, repo: Repo
+) -> CollectionDetail:
+    """Add one of your outfits. Adding one that is already there changes nothing."""
+    OutfitService(repo.db, repo.owner_id).repo.add_to_collection(collection_id, body.outfit_id)
+    repo.db.commit()
+    return _detail(repo, repo.get_or_raise(collection_id))
+
+
+@router.delete("/{collection_id}/outfits/{outfit_id}", response_model=CollectionDetail)
+def remove_collection_outfit(collection_id: UUID, outfit_id: UUID, repo: Repo) -> CollectionDetail:
+    """Takes the outfit out of this collection; the outfit itself is kept."""
+    OutfitService(repo.db, repo.owner_id).repo.remove_from_collection(collection_id, outfit_id)
     repo.db.commit()
     return _detail(repo, repo.get_or_raise(collection_id))
 

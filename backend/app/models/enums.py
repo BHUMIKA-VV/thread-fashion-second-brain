@@ -63,6 +63,27 @@ class PaletteSource(StrEnum):
     MASKED = "masked"  # plain backdrop detected from the border and excluded
 
 
+class OutfitLayout(StrEnum):
+    FEATURE = "feature"  # one large piece beside the rest
+    GRID = "grid"  # equal tiles
+    COLUMN = "column"  # one above the other
+
+
+class OutfitPieceRole(StrEnum):
+    PIECE = "piece"
+    ACCESSORY = "accessory"
+    INSPIRATION = "inspiration"
+
+
+class OutfitSeason(StrEnum):
+    SPRING = "spring"
+    SUMMER = "summer"
+    MONSOON = "monsoon"
+    AUTUMN = "autumn"
+    WINTER = "winter"
+    ALL_SEASON = "all_season"
+
+
 class TokenPurpose(StrEnum):
     VERIFY_EMAIL = "verify_email"
     RESET_PASSWORD = "reset_password"  # noqa: S105 (a token purpose, not a password)

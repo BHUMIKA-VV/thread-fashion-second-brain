@@ -24,6 +24,8 @@ bandhani and chikankari) and finds similar pieces in your own library.
   different silhouette, and same fabric in a different colour, each with the reason it matched.
 - **Gallery search and filters** (text, tags, colour families, type, sort) kept in the URL.
 - **Collections**: ordered, annotated mood boards; deleting one never deletes pieces.
+- **Outfit Studio**: compose up to 12 pieces in a structured layout, see how their measured
+  colours relate, and export a PNG card.
 - **Dashboard** of real counts that link into filtered gallery views.
 - **Deep analysis** (optional): a user-confirmed Claude vision description of one piece; off
   without an API key.
@@ -68,7 +70,7 @@ backend/              FastAPI app (Python 3.11)
   tests/              pytest suite
 frontend/             Next.js App Router + TypeScript (strict) + Tailwind 4
   src/app/            routes: / /dashboard /upload /gallery /items/[id] /collections
-                      /collections/[id] /settings, plus not-found and error pages
+                      /collections/[id] /outfit-studio /outfit-studio/[id] /settings, plus not-found and error pages
   src/components/     design-system primitives (Button, StatusBadge, header)
   src/features/       one folder per feature (gallery, upload, items, palette, tags, similar,
                       collections, dashboard, deep-analysis, health, landing)
@@ -207,6 +209,11 @@ erDiagram
   items ||--o| embeddings : "has (1:1)"
   collections ||--o{ collection_items : contains
   items ||--o{ collection_items : "appears in"
+  users ||--o{ outfits : owns
+  outfits ||--o{ outfit_items : "ordered pieces"
+  items ||--o{ outfit_items : "appears in"
+  collections ||--o{ collection_outfits : contains
+  outfits ||--o{ collection_outfits : "appears in"
 ```
 
 | Table | Key points |
@@ -706,6 +713,46 @@ one with the piece already in it.
 `/dashboard` (and `GET /items/summary`) shows only real counts from your library: pieces by type,
 colour families, most-used visible tags, collections and recent uploads. Each count links to the
 matching filtered gallery view. A new library shows an empty state rather than placeholder numbers.
+
+## Outfit Studio
+
+`/outfit-studio` lists your outfits; `/outfit-studio/[id]` is the studio: your archive (paged and
+searchable), the composition, and its details. Outfits are private: they have no showcase route,
+and publishing a collection publishes none of the outfits in it.
+
+- **Layouts**: Feature, Grid or Column. The positions are calculated by `lib/outfit-layout.ts`, for
+  the page and the export alike. There is no free-form canvas.
+- **Pieces**: up to 12 per outfit and 200 outfits per account. Accessories and inspiration images
+  are roles on your existing pieces, not new item types. Deleting a piece removes it from its
+  outfits and keeps the outfits.
+- **Reordering**: drag a photograph, or use the move, replace and remove buttons in the list below
+  it, which work by keyboard and screen reader and announce each change. Changes are shown at once
+  and sent in order.
+- **Atomic**: `PUT /outfits/{id}/items` replaces the whole list under a row lock inside a
+  savepoint. Any invalid piece, duplicate or a list over the limit leaves the outfit as it was.
+- **Ownership**: every query filters by owner, someone else's outfit or piece answers 404, and
+  composite foreign keys make mixing accounts impossible in the database too.
+
+**Colour relationships** are calculated from the stored palettes in `app/color/outfit.py`. They
+describe how colours sit together and are not a judgement of the outfit; pieces without a palette
+are left out and counted. Only swatches of at least 5% count, and colours within CIEDE2000 10 merge.
+
+| Relationship | Rule |
+| --- | --- |
+| Dominant | Average share across the pieces with a palette, at most 6 |
+| Shared | Found in two or more pieces |
+| Complementary | Chroma of at least 12, hues 150 to 210 degrees apart, on different pieces |
+| Contrasting | CIELAB lightness at least 40 apart, on different pieces |
+
+**PNG export** runs in your browser, 1080 px wide and without a watermark. Photographs are loaded,
+drawn and released one at a time and the height is capped; phones, devices reporting 4 GB of memory
+or less and files over 6 MB use the stored thumbnail. A photograph that fails leaves a labelled
+blank tile and the page says how many failed.
+
+API: `GET`/`POST /outfits`; `GET`/`PATCH`/`DELETE /outfits/{id}`; `PUT /outfits/{id}/items`;
+`POST /outfits/{id}/duplicate`; `POST /collections/{id}/outfits`;
+`DELETE /collections/{id}/outfits/{outfit_id}`. Limits answer `outfit_limit` (409) and
+`outfit_too_large` (422); a repeated piece answers `duplicate_piece` (422).
 
 ## Deep analysis (optional, Claude vision)
 

@@ -51,12 +51,12 @@ export function cardFilename(id: string): string {
   return `thread-swatch-${id.slice(0, 6).toLowerCase()}.png`;
 }
 
-function cssFont(variable: string, fallback: string): string {
+export function cssFont(variable: string, fallback: string): string {
   const value = getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
   return value || fallback;
 }
 
-async function loadImage(src: string): Promise<HTMLImageElement> {
+export async function loadImage(src: string): Promise<HTMLImageElement> {
   const image = new Image();
   image.decoding = "async";
   image.src = src;

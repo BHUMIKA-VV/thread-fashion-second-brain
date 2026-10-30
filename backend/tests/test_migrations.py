@@ -22,6 +22,9 @@ APP_TABLES = {
     "deep_analysis_usage",
     "sessions",
     "auth_tokens",
+    "outfits",
+    "outfit_items",
+    "collection_outfits",
 }
 
 
@@ -292,5 +295,87 @@ def test_accounts_database_with_data_upgrades_to_showcase_and_back(empty_db_url:
     with engine.begin() as conn:
         assert conn.execute(text("SELECT count(*) FROM items")).scalar_one() == 1
         assert conn.execute(text("SELECT name FROM collections")).scalar_one() == "Kept"
+    migrations.upgrade(empty_db_url)
+    engine.dispose()
+
+
+SHOWCASE_REVISION = "f2c9a7e5b1d4"
+
+
+def test_showcase_database_with_data_upgrades_to_outfits_and_back(empty_db_url: str) -> None:
+    """Milestone 10a adds three tables only: existing rows are untouched both ways, links can't
+    mix owners, a deleted piece leaves its outfit, and downgrading removes just the new tables."""
+    migrations.upgrade(empty_db_url, SHOWCASE_REVISION)
+    engine = create_engine(empty_db_url)
+    insert_item = text(
+        "INSERT INTO items (user_id, original_key, content_hash, mime_type, width, height,"
+        " file_size, notes) VALUES (:u, :k, :h, 'image/jpeg', 10, 10, 10, 'kept') RETURNING id"
+    )
+    with engine.begin() as conn:
+        owner, other = (
+            conn.execute(
+                text("INSERT INTO users (display_name) VALUES (:n) RETURNING id"), {"n": n}
+            ).scalar_one()
+            for n in ("owner", "other")
+        )
+        item = conn.execute(
+            insert_item, {"u": owner, "k": "a/original.jpg", "h": "a" * 64}
+        ).scalar_one()
+        doomed = conn.execute(
+            insert_item, {"u": owner, "k": "b/original.jpg", "h": "b" * 64}
+        ).scalar_one()
+        collection = conn.execute(
+            text("INSERT INTO collections (user_id, name) VALUES (:u, 'Kept') RETURNING id"),
+            {"u": owner},
+        ).scalar_one()
+        conn.execute(
+            text(
+                "INSERT INTO collection_items (collection_id, item_id, user_id) VALUES (:c, :i, :u)"
+            ),
+            {"c": collection, "i": item, "u": owner},
+        )
+
+    migrations.upgrade(empty_db_url)  # -> head
+    link = text(
+        "INSERT INTO outfit_items (outfit_id, item_id, user_id, position) VALUES (:o, :i, :u, :p)"
+    )
+    with engine.begin() as conn:
+        assert conn.execute(text("SELECT count(*) FROM items")).scalar_one() == 2
+        assert conn.execute(text("SELECT count(*) FROM collection_items")).scalar_one() == 1
+        outfit = conn.execute(
+            text("INSERT INTO outfits (user_id, name) VALUES (:u, 'Look') RETURNING id"),
+            {"u": owner},
+        ).scalar_one()
+        conn.execute(link, {"o": outfit, "i": item, "u": owner, "p": 0})
+        conn.execute(link, {"o": outfit, "i": doomed, "u": owner, "p": 1})
+        conn.execute(
+            text(
+                "INSERT INTO collection_outfits (collection_id, outfit_id, user_id)"
+                " VALUES (:c, :o, :u)"
+            ),
+            {"c": collection, "o": outfit, "u": owner},
+        )
+        with pytest.raises(Exception, match="fk_outfit_items_outfit_owner"), conn.begin_nested():
+            theirs = conn.execute(
+                insert_item, {"u": other, "k": "c/original.jpg", "h": "c" * 64}
+            ).scalar_one()
+            conn.execute(link, {"o": outfit, "i": theirs, "u": other, "p": 5})
+        with (
+            pytest.raises(Exception, match="uq_outfit_items_outfit_id_position"),
+            conn.begin_nested(),
+        ):
+            conn.execute(text("UPDATE outfit_items SET position = 0"))
+        with pytest.raises(Exception, match="ck_outfits_layout"), conn.begin_nested():
+            conn.execute(text("UPDATE outfits SET layout = 'freeform'"))
+        conn.execute(text("DELETE FROM items WHERE id = :i"), {"i": doomed})
+        assert conn.execute(text("SELECT count(*) FROM outfit_items")).scalar_one() == 1
+        assert conn.execute(text("SELECT count(*) FROM outfits")).scalar_one() == 1
+
+    migrations.downgrade(empty_db_url, SHOWCASE_REVISION)
+    assert not {"outfits", "outfit_items", "collection_outfits"} & table_names(empty_db_url)
+    with engine.begin() as conn:
+        assert conn.execute(text("SELECT notes FROM items")).scalar_one() == "kept"
+        assert conn.execute(text("SELECT name FROM collections")).scalar_one() == "Kept"
+        assert conn.execute(text("SELECT count(*) FROM collection_items")).scalar_one() == 1
     migrations.upgrade(empty_db_url)
     engine.dispose()

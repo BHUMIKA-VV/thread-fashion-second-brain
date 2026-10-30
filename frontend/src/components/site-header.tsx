@@ -18,6 +18,7 @@ export const NAV = [
   { href: "/gallery", label: "Archive" },
   { href: "/colour-lab", label: "Colour Lab" },
   { href: "/collections", label: "Collections" },
+  { href: "/outfit-studio", label: "Studio" },
   { href: "/upload", label: "Upload" },
 ] as const;
 
@@ -58,7 +59,7 @@ function NavLinks({ pathname }: { pathname: string | null }) {
   const signedOut = useSession().data === null;
   const links = signedOut ? PUBLIC_NAV : NAV;
   return (
-    <ul className="flex items-center gap-5 sm:gap-8">
+    <ul className="flex flex-wrap items-center gap-x-5 gap-y-1 sm:gap-x-8">
       {links.map((item) => {
         const active = isActive(item.href, pathname);
         return (

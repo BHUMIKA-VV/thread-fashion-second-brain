@@ -38,6 +38,7 @@ function detail(items = [ITEM_A, ITEM_B], overrides: Partial<CollectionDetail> =
     is_public: false,
     created_at: "2026-10-01T00:00:00Z",
     updated_at: "2026-10-01T00:00:00Z",
+    outfits: [],
     items: items.map((item, position) => ({ item, note: position === 0 ? "for the sangeet" : null, position, added_at: "2026-10-01T00:00:00Z" })),
     ...overrides,
   };

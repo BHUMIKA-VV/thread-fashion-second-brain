@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.schemas.items import ItemRead
+from app.schemas.outfits import OutfitSummary
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
 Description = Annotated[str, StringConstraints(strip_whitespace=True, max_length=2000)]
@@ -72,3 +73,4 @@ class CollectionDetail(BaseModel):
     created_at: datetime
     updated_at: datetime
     items: list[CollectionEntry]
+    outfits: list[OutfitSummary]

@@ -193,6 +193,71 @@ export type CollectionDetail = {
   created_at: string;
   updated_at: string;
   items: CollectionEntry[];
+  outfits: OutfitSummary[];
+};
+
+export type OutfitLayout = "feature" | "grid" | "column";
+export type OutfitPieceRole = "piece" | "accessory" | "inspiration";
+export type OutfitSeason = "spring" | "summer" | "monsoon" | "autumn" | "winter" | "all_season";
+
+export type OutfitColour = {
+  hex: string;
+  name: string;
+  share: number;
+  item_ids: string[];
+};
+
+export type OutfitColours = {
+  dominant: OutfitColour[];
+  shared: OutfitColour[];
+  complementary: [OutfitColour, OutfitColour][];
+  contrasting: [OutfitColour, OutfitColour][];
+  pieces_with_palette: number;
+  pieces_without_palette: number;
+};
+
+export type OutfitPieceRead = {
+  item: Item;
+  role: OutfitPieceRole;
+  position: number;
+};
+
+export type OutfitSummary = {
+  id: string;
+  name: string;
+  description: string | null;
+  occasion: string | null;
+  season: OutfitSeason | null;
+  style_tags: string[];
+  layout: OutfitLayout;
+  piece_count: number;
+  cover_thumbnails: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type OutfitList = {
+  outfits: OutfitSummary[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type OutfitDetail = Omit<OutfitSummary, "piece_count" | "cover_thumbnails"> & {
+  notes: string | null;
+  pieces: OutfitPieceRead[];
+  colours: OutfitColours;
+  collection_ids: string[];
+};
+
+export type OutfitUpdate = {
+  name?: string;
+  description?: string | null;
+  occasion?: string | null;
+  season?: OutfitSeason | null;
+  style_tags?: string[];
+  notes?: string | null;
+  layout?: OutfitLayout;
 };
 
 export type ItemUpdate = {

@@ -8,6 +8,7 @@ import { useState, type FormEvent } from "react";
 
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PaletteStrip } from "@/features/palette/palette-strip";
+import { OutfitCard } from "@/features/outfit-studio/outfit-list";
 import { PublishSwitch } from "@/features/showcase/publish-switch";
 import { ApiError, apiUrl } from "@/lib/api-client";
 import {
@@ -17,6 +18,7 @@ import {
   updateCollection,
   updateCollectionItem,
 } from "@/services/collections";
+import { removeOutfitFromCollection } from "@/services/outfits";
 import type { CollectionDetail, CollectionEntry } from "@/types/api";
 
 export function CollectionDetailView({ id }: { id: string }) {
@@ -94,8 +96,45 @@ export function CollectionDetailView({ id }: { id: string }) {
         </ol>
       )}
 
+      {detail.outfits.length > 0 && <CollectionOutfits detail={detail} onUpdated={onUpdated} />}
+
       <DeleteCollection detail={detail} />
     </div>
+  );
+}
+
+function CollectionOutfits({ detail, onUpdated }: { detail: CollectionDetail; onUpdated: (d: CollectionDetail) => void }) {
+  const remove = useMutation({
+    mutationFn: (outfitId: string) => removeOutfitFromCollection(detail.id, outfitId),
+    onSuccess: onUpdated,
+  });
+  return (
+    <section aria-labelledby="collection-outfits" className="mt-14">
+      <h2 id="collection-outfits" className="font-display text-3xl">
+        Outfits
+      </h2>
+      <ul className="mt-5 grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3" aria-label="Outfits in this collection">
+        {detail.outfits.map((outfit) => (
+          <li key={outfit.id}>
+            <OutfitCard outfit={outfit} />
+            <button
+              type="button"
+              onClick={() => remove.mutate(outfit.id)}
+              disabled={remove.isPending}
+              aria-label={`Remove ${outfit.name} from this collection`}
+              className="mt-2 inline-flex items-center gap-1 text-xs text-ink-muted underline-offset-4 hover:text-ink hover:underline"
+            >
+              <X aria-hidden className="size-3.5" /> Remove from collection
+            </button>
+          </li>
+        ))}
+      </ul>
+      {remove.isError && (
+        <p role="alert" className="mt-3 text-sm text-danger">
+          The outfit could not be removed from this collection.
+        </p>
+      )}
+    </section>
   );
 }
 

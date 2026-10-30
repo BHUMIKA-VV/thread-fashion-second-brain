@@ -76,6 +76,8 @@ test("every screen sends security headers, has no CSP violations and passes auto
     await request.post("/api/collections", { data: { name: `Quality ${Date.now()}-${Math.random()}` } })
   ).json();
   await request.post(`/api/collections/${collection.id}/items`, { data: { item_id: itemId } });
+  const outfit = await (await request.post("/api/outfits", { data: { name: "Quality outfit" } })).json();
+  await request.put(`/api/outfits/${outfit.id}/items`, { data: { items: [{ item_id: itemId }] } });
   try {
     const screens = [
       "/",
@@ -89,9 +91,12 @@ test("every screen sends security headers, has no CSP violations and passes auto
       "/settings",
       "/account",
       "/accounts",
+      "/outfit-studio",
+      `/outfit-studio/${outfit.id}`,
     ];
     for (const path of screens) await checkScreen(page, path);
   } finally {
+    await request.delete(`/api/outfits/${outfit.id}`);
     await request.delete(`/api/collections/${collection.id}`);
     await request.delete(`/api/items/${itemId}`);
   }
