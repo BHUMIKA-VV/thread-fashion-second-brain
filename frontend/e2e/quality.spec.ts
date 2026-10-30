@@ -60,7 +60,7 @@ test.describe("signed out", () => {
     page,
   }) => {
     test.setTimeout(90_000);
-    for (const path of ["/", "/login", "/signup", "/forgot-password", "/reset-password?token=x", "/terms", "/privacy", "/gallery"]) {
+    for (const path of ["/", "/login", "/signup", "/forgot-password", "/reset-password?token=x", "/terms", "/privacy", "/gallery", "/showcase"]) {
       await checkScreen(page, path);
     }
   });

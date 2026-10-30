@@ -39,6 +39,7 @@ def _detail(repo: CollectionRepository, collection: Collection) -> CollectionDet
         id=collection.id,
         name=collection.name,
         description=collection.description,
+        is_public=collection.is_public,
         created_at=collection.created_at,
         updated_at=collection.updated_at,
         items=[
@@ -66,6 +67,7 @@ def list_collections(
             name=c.name,
             description=c.description,
             item_count=count,
+            is_public=c.is_public,
             cover_thumbnails=[ItemRead.model_validate(i).thumbnail_url for i in covers],
             contains_item=contains if item_id is not None else None,
             created_at=c.created_at,

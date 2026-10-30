@@ -8,6 +8,7 @@ import { useState, type FormEvent } from "react";
 
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PaletteStrip } from "@/features/palette/palette-strip";
+import { PublishSwitch } from "@/features/showcase/publish-switch";
 import { ApiError, apiUrl } from "@/lib/api-client";
 import {
   deleteCollection,
@@ -58,6 +59,9 @@ export function CollectionDetailView({ id }: { id: string }) {
         <ArrowLeft aria-hidden className="size-4" /> Collections
       </Link>
       <DetailsForm detail={detail} onUpdated={onUpdated} />
+      <div className="mt-4">
+        <PublishSwitch kind="collection" id={detail.id} isPublic={detail.is_public} />
+      </div>
 
       {itemChange.isError && (
         <p role="alert" className="mt-4 text-sm text-danger">

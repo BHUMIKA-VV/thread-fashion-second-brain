@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import Collection, Item, Palette
@@ -22,9 +22,13 @@ class LibrarySummary:
 
 
 def library_summary(
-    db: Session, owner_id: UUID, *, top: int = 12, recent: int = 6
+    db: Session, owner_id: UUID, *, top: int = 12, recent: int = 6, public_only: bool = False
 ) -> LibrarySummary:
+    """Counts for one owner; with public_only (the showcase), only published pieces and
+    collections are counted, so the numbers reveal nothing about private ones."""
     mine = Item.user_id == owner_id
+    if public_only:
+        mine = and_(mine, Item.is_public.is_(True))
     by_type = dict(
         db.execute(select(Item.type, func.count()).where(mine).group_by(Item.type)).all()
     )
@@ -64,7 +68,12 @@ def library_summary(
         color_families=[(f, n) for f, n in color_families],
         tags=[(c, t, n) for c, t, n in tags],
         collections=db.scalar(
-            select(func.count()).select_from(Collection).where(Collection.user_id == owner_id)
+            select(func.count())
+            .select_from(Collection)
+            .where(
+                Collection.user_id == owner_id,
+                *([Collection.is_public.is_(True)] if public_only else []),
+            )
         )
         or 0,
         recent=list(

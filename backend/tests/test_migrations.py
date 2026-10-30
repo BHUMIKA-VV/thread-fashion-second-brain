@@ -256,3 +256,41 @@ def test_deep_analysis_database_with_data_upgrades_to_accounts_and_back(
         assert conn.execute(text("SELECT count(*) FROM items")).scalar_one() == 1
     migrations.upgrade(empty_db_url)
     engine.dispose()
+
+
+ACCOUNTS_REVISION = "e4b8c2d6f1a3"
+
+
+def test_accounts_database_with_data_upgrades_to_showcase_and_back(empty_db_url: str) -> None:
+    """Milestone 9b adds is_public, false for every existing piece and collection, so nothing
+    becomes public by upgrading; downgrading drops only the new columns."""
+    migrations.upgrade(empty_db_url, ACCOUNTS_REVISION)
+    engine = create_engine(empty_db_url)
+    with engine.begin() as conn:
+        owner = conn.execute(
+            text("INSERT INTO users (display_name) VALUES ('owner') RETURNING id")
+        ).scalar_one()
+        conn.execute(
+            text(
+                "INSERT INTO items (user_id, original_key, content_hash, mime_type, width,"
+                " height, file_size) VALUES (:u, 'a/original.jpg', :h, 'image/jpeg', 10, 10, 10)"
+            ),
+            {"u": owner, "h": "a" * 64},
+        )
+        conn.execute(
+            text("INSERT INTO collections (user_id, name) VALUES (:u, 'Kept')"), {"u": owner}
+        )
+
+    migrations.upgrade(empty_db_url)  # -> head
+    with engine.begin() as conn:
+        assert conn.execute(text("SELECT bool_or(is_public) FROM items")).scalar_one() is False
+        assert (
+            conn.execute(text("SELECT bool_or(is_public) FROM collections")).scalar_one() is False
+        )
+
+    migrations.downgrade(empty_db_url, ACCOUNTS_REVISION)
+    with engine.begin() as conn:
+        assert conn.execute(text("SELECT count(*) FROM items")).scalar_one() == 1
+        assert conn.execute(text("SELECT name FROM collections")).scalar_one() == "Kept"
+    migrations.upgrade(empty_db_url)
+    engine.dispose()

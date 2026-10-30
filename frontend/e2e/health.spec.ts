@@ -17,9 +17,14 @@ test.describe("signed out", () => {
   test("the landing page invites a visitor to begin an archive", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1, name: "Thread" })).toBeVisible();
-    await expect(page.getByText("Your archive starts with one photograph.")).toBeVisible();
     await expect(page.getByRole("link", { name: "Begin your archive" })).toHaveAttribute("href", "/signup");
-    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Archive" }).click();
+    await expect(page.getByRole("link", { name: "See the showcase" })).toHaveAttribute("href", "/showcase");
+    // Signed out, the header offers the public showcase, not an archive.
+    const nav = page.getByRole("navigation", { name: "Main" });
+    await expect(nav.getByRole("link", { name: "Archive" })).toHaveCount(0);
+    await nav.getByRole("link", { name: "Showcase" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Showcase" })).toBeVisible();
+    await page.goto("/gallery");
     await expect(page.getByText("Sign in to see your archive")).toBeVisible();
   });
 });

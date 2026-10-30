@@ -10,7 +10,8 @@ import { ButtonLink } from "@/components/ui/button";
 import { useSession } from "@/features/auth/use-session";
 import { apiUrl } from "@/lib/api-client";
 import { listItems } from "@/services/items";
-import type { Item } from "@/types/api";
+import { getShowcaseSummary } from "@/services/showcase";
+import type { Item, ShowcaseItem } from "@/types/api";
 
 /**
  * The landing page: an asymmetric editorial grid. The wordmark and tagline hold the left
@@ -28,7 +29,16 @@ export function Hero() {
     queryFn: () => listItems({ limit: 1 }),
     enabled: signedIn,
   });
+  // Signed out, the plate is the newest published piece (if the showcase has one).
+  const showcase = useQuery({
+    queryKey: ["showcase", "summary"],
+    queryFn: getShowcaseSummary,
+    enabled: session.data === null,
+    retry: false,
+  });
   const item = latest.data?.items[0];
+  const published = showcase.data?.recent[0];
+  const plate = item ? plateFor(item) : published ? plateForShowcase(published) : null;
 
   const rise = (delay: number) =>
     reduceMotion
@@ -65,7 +75,11 @@ export function Hero() {
           {...rise(0.18)}
           className="lg:col-span-4 lg:col-start-9 lg:row-span-3 lg:row-start-1 lg:mt-28"
         >
-          {item ? <Plate item={item} /> : <EmptyPlate pending={session.isPending || (signedIn && latest.isPending)} />}
+          {plate ? (
+            <Plate {...plate} />
+          ) : (
+            <EmptyPlate pending={session.isPending || (signedIn ? latest.isPending : showcase.isPending)} />
+          )}
         </motion.figure>
 
         <motion.div {...rise(0.24)} className="max-w-md lg:col-span-4 lg:col-start-2 lg:row-start-3">
@@ -79,8 +93,8 @@ export function Hero() {
                 <ButtonLink href="/signup">
                   Begin your archive <ArrowRight aria-hidden className="size-4" />
                 </ButtonLink>
-                <ButtonLink href="/login" variant="secondary">
-                  Sign in
+                <ButtonLink href="/showcase" variant="secondary">
+                  See the showcase
                 </ButtonLink>
               </>
             ) : (
@@ -116,25 +130,34 @@ const INDEX = [
   { title: "Kindred pieces", body: "Visual search across your own archive: by look, by palette, or by fabric." },
 ];
 
-function Plate({ item }: { item: Item }) {
-  const colours = item.palette?.colors.slice(0, 4) ?? [];
+type PlateProps = {
+  href: string;
+  src: string;
+  alt: string;
+  where: string;
+  type: string;
+  colours: { hex: string; name: string }[];
+};
+
+function Plate({ href, src, alt, where, type, colours }: PlateProps) {
+  const shown = colours.slice(0, 4);
   return (
     <>
-      <Link href={`/items/${item.id}`} className="group block overflow-hidden bg-paper-raised">
-        {/* eslint-disable-next-line @next/next/no-img-element -- private image served by the API */}
+      <Link href={href} className="group block overflow-hidden bg-paper-raised">
+        {/* eslint-disable-next-line @next/next/no-img-element -- served by the API */}
         <img
-          src={apiUrl(item.thumbnail_url)}
-          alt={item.notes ? item.notes.slice(0, 120) : `The newest ${item.type} in your archive`}
+          src={apiUrl(src)}
+          alt={alt}
           className="aspect-[4/5] w-full object-cover transition-transform sm:aspect-[3/4] duration-700 group-hover:scale-[1.02] motion-reduce:transition-none"
         />
       </Link>
       <figcaption className="mt-3 flex items-start justify-between gap-4 text-xs text-ink-muted">
         <span>
-          <span className="font-display italic text-ink">Fig. 01</span> · newest in your archive · {item.type}
+          <span className="font-display italic text-ink">Fig. 01</span> · {where} · {type}
         </span>
-        {colours.length > 0 && (
-          <span role="img" className="flex shrink-0 gap-1" aria-label={`Palette: ${colours.map((c) => c.name).join(", ")}`}>
-            {colours.map((c) => (
+        {shown.length > 0 && (
+          <span role="img" className="flex shrink-0 gap-1" aria-label={`Palette: ${shown.map((c) => c.name).join(", ")}`}>
+            {shown.map((c) => (
               <span key={c.hex} className="size-3 border border-ink/10" style={{ backgroundColor: c.hex }} />
             ))}
           </span>
@@ -142,6 +165,28 @@ function Plate({ item }: { item: Item }) {
       </figcaption>
     </>
   );
+}
+
+function plateFor(item: Item): PlateProps {
+  return {
+    href: `/items/${item.id}`,
+    src: item.thumbnail_url,
+    alt: item.notes ? item.notes.slice(0, 120) : `The newest ${item.type} in your archive`,
+    where: "newest in your archive",
+    type: item.type,
+    colours: item.palette?.colors ?? [],
+  };
+}
+
+function plateForShowcase(item: ShowcaseItem): PlateProps {
+  return {
+    href: `/showcase/${item.id}`,
+    src: item.thumbnail_url,
+    alt: `The newest ${item.type} in the showcase`,
+    where: "newest in the showcase",
+    type: item.type,
+    colours: item.palette?.colors ?? [],
+  };
 }
 
 function EmptyPlate({ pending }: { pending: boolean }) {

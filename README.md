@@ -305,6 +305,50 @@ API: `POST /auth/signup`, `/auth/login`, `/auth/logout`, `/auth/logout-everywher
 `email_not_verified`, `quota_exceeded`, `owner_only`, `rate_limited` (with `Retry-After`) and
 `invalid_token`.
 
+## Public showcase
+
+Signed-out visitors can browse the pieces **the owner** chooses to publish: `/showcase` (search,
+colour and type filters, published collections), `/showcase/[id]` (image, palette, visible tags,
+kindred published pieces, swatch card) and `/showcase/collections/[id]`. The header shows
+**Showcase** to signed-out visitors, and the landing page's Fig. 01 is the newest published piece.
+
+- **Everything is private until published.** `items.is_public` and `collections.is_public`
+  default to false (migration `f2c9a7e5b1d4`), so upgrading publishes nothing.
+- **Only the owner publishes**: a "Show in showcase" switch on each piece and collection, and
+  "Publish all…" / "Unpublish all…" (with a confirmation step) in the archive, where a Showcase
+  filter (All / Public / Private) and a "Public" marker show what is out. Other accounts get
+  403 `owner_only`, so nothing a stranger uploads can reach the public site.
+- **What visitors see**: image, type, palette, visible tags and date added. Never notes, source
+  URLs, file details, processing state or deep analysis. Showcase search matches tags, colours
+  and type but **not notes or URLs**, so a visitor can't probe their words. Counts cover
+  published pieces only. A published collection shows only its published pieces and hides
+  per-piece notes.
+- **Read-only by construction**: `/showcase/*` has GET routes only, and the showcase service never
+  writes. Similar pieces compare stored vectors among published pieces; nothing is indexed on a
+  visitor's request, and the image model need not be loaded.
+- **Caching**: published images are sent with `Cache-Control: public, max-age=300`, so after a
+  piece is unpublished a cached copy can be seen for up to 5 minutes. The owner's own image
+  routes stay `private`.
+- **Response sizes are bounded** for anonymous requests: lists return at most 100 pieces a page,
+  similar pieces at most 24, the collection list the 50 most recently updated, and a collection its
+  first 200 published pieces (with `total` for the full count). Images are served as stored, never
+  processed per request; originals are at most 15 MB (the upload limit).
+- **No viewing rate limit** yet; limit scraping at the hosting layer.
+
+API: `GET /showcase` (owner name and counts), `/showcase/items` (same filters as `/items`),
+`/showcase/items/{id}`, `/showcase/items/{id}/image`, `/showcase/items/{id}/similar`,
+`/showcase/collections`, `/showcase/collections/{id}`; 404 `showcase_not_set_up` until an owner
+exists. Owner only: `PUT /items/{id}/showcase`, `POST /items/showcase-all`,
+`PUT /collections/{id}/showcase`, each with `{"public": true|false}`; `GET /items?published=`.
+
+### Swatch card
+
+"Download swatch card" on a piece (yours or a published one) makes a **1080 × 1350 PNG** in the
+browser, using the site's own fonts: the photo, the measured palette as a proportional band, up
+to five colours with names, hex values and shares, the type and record number, and the
+wordmark. Every colour and number comes from the stored palette. The older 1200 × 675
+palette PNG (`/items/{id}/palette.png`) is still there.
+
 ## Uploads and storage
 
 ### API
@@ -866,7 +910,7 @@ collection) on desktop and mobile, and a **quality** test that checks every scre
 headers, CSP violations, automated WCAG 2.2 AA issues (axe) and keyboard focus. The e2e API runs
 deep analysis with the local fake analyzer, so end-to-end tests never call Claude. Every test signs
 up its own account (verified through the local outbox) and deletes it afterwards; the Deep Analyze
-test signs in as an e2e owner account with a password generated per run. Images go to
+and showcase tests sign in as an e2e owner account with a password generated per run. Images go to
 `.cache/e2e-storage/`, which each run empties.
 
 Run Ruff on migrations too: `.venv/Scripts/ruff check . ../database/migrations`.

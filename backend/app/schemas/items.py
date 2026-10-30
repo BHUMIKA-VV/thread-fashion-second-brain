@@ -43,6 +43,7 @@ class ItemRead(BaseModel):
     suggested_type: ItemType | None
     notes: str | None
     source_url: str | None
+    is_public: bool = Field(description="Shown in the public showcase (owner account only)")
     processing_status: ProcessingStatus
     processing_error: str | None
     width: int

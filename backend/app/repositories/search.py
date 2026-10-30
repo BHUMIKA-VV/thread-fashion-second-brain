@@ -21,6 +21,7 @@ from sqlalchemy import (
     case,
     column,
     exists,
+    false,
     func,
     literal,
     or_,
@@ -46,6 +47,7 @@ class SearchParams:
     tags: Sequence[tuple[str | None, str]] = ()  # (category or None for any, tag)
     colors: Sequence[str] = ()
     item_type: str | None = None
+    published: bool | None = None  # the owner's own filter: in the showcase or not
     sort: Sort = "newest"
     limit: int = 48
     offset: int = 0
@@ -90,14 +92,26 @@ def parse_tag(raw: str) -> tuple[str | None, str]:
 
 
 class ItemSearch:
-    def __init__(self, db: Session, owner_id: UUID) -> None:
+    """Search one owner's pieces.
+
+    With public_only (the showcase), only published pieces are searched, and notes and source
+    URLs are neither matched nor quoted in reasons: they are private even on a public piece,
+    and matching them would let a visitor probe their contents word by word.
+    """
+
+    def __init__(self, db: Session, owner_id: UUID, *, public_only: bool = False) -> None:
         self.db = db
         self.owner_id = owner_id
+        self.public_only = public_only
 
     def _conditions(self, params: SearchParams, vt) -> list[ColumnElement[bool]]:  # noqa: ANN001
         conditions: list[ColumnElement[bool]] = [Item.user_id == self.owner_id]
+        if self.public_only:
+            conditions.append(Item.is_public.is_(True))
         if params.item_type:
             conditions.append(Item.type == params.item_type)
+        if params.published is not None:
+            conditions.append(Item.is_public.is_(params.published))
         for category, tag in params.tags:  # every requested tag must be visible on the item
             match = and_(vt.c.item_id == Item.id, vt.c.tag == tag)
             if category:
@@ -136,8 +150,13 @@ class ItemSearch:
                 ),
             )
         )
-        text_hit = or_(
-            Item.notes.ilike(pattern, escape="\\"), Item.source_url.ilike(pattern, escape="\\")
+        text_hit = (
+            false()
+            if self.public_only
+            else or_(
+                Item.notes.ilike(pattern, escape="\\"),
+                Item.source_url.ilike(pattern, escape="\\"),
+            )
         )
         return (
             case((tag_exact, W_TAG_EXACT), else_=0)
@@ -192,6 +211,8 @@ class ItemSearch:
             reasons += [f"Colour family: {family}" for family in families if not names]
             if item.type == needle:
                 reasons.append(f"Type: {item.type}")
+            if self.public_only:
+                continue
             if item.notes and needle in item.notes.lower():
                 reasons.append("Notes mention it")
             if item.source_url and needle in item.source_url.lower():

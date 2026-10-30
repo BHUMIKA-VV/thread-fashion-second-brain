@@ -9,6 +9,8 @@ import { useState, type FormEvent } from "react";
 import { ProcessingBadge } from "@/components/processing-badge";
 import { AddToCollection } from "@/features/collections/add-to-collection";
 import { OwnerDeepAnalysis } from "@/features/deep-analysis/owner-deep-analysis";
+import { PublishSwitch } from "@/features/showcase/publish-switch";
+import { SwatchCardButton } from "@/features/swatch-card/swatch-card-button";
 import { PaletteView } from "@/features/palette/palette-view";
 import { SimilarPieces } from "@/features/similar/similar-pieces";
 import { TagsPanel } from "@/features/tags/tags-panel";
@@ -111,9 +113,15 @@ function ItemView({ item }: { item: Item }) {
                 {item.mime_type.replace("image/", "").toUpperCase()} · {formatBytes(item.file_size)}
               </dd>
             </dl>
+            <div className="mt-6">
+              <PublishSwitch kind="item" id={item.id} isPublic={item.is_public} />
+            </div>
           </div>
 
           <PaletteView item={item} />
+          {item.palette && (
+            <SwatchCardButton id={item.id} imageUrl={item.image_url} colours={item.palette.colors} type={item.type} />
+          )}
           <TagsPanel item={item} />
           <OwnerDeepAnalysis itemId={item.id} />
           <AddToCollection itemId={item.id} />

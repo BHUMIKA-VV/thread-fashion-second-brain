@@ -20,17 +20,19 @@ export type ListItemsParams = {
   tags?: string[];
   colors?: ColorFamily[];
   type?: ItemType;
+  published?: boolean;
   sort?: SortOrder;
   limit?: number;
   offset?: number;
 };
 
-export function itemsQueryString({ q, tags = [], colors = [], type, sort, limit = 48, offset = 0 }: ListItemsParams = {}): string {
+export function itemsQueryString({ q, tags = [], colors = [], type, published, sort, limit = 48, offset = 0 }: ListItemsParams = {}): string {
   const query = new URLSearchParams();
   if (q) query.set("q", q);
   tags.forEach((tag) => query.append("tag", tag));
   colors.forEach((color) => query.append("color", color));
   if (type) query.set("type", type);
+  if (published !== undefined) query.set("published", String(published));
   if (sort && sort !== "newest") query.set("sort", sort);
   query.set("limit", String(limit));
   query.set("offset", String(offset));

@@ -6,6 +6,8 @@ export type GalleryFilters = {
   tags: string[]; // "category:tag" or "tag"
   colors: ColorFamily[];
   type?: ItemType;
+  /** The owner's own filter: in the public showcase (true) or private (false). */
+  published?: boolean;
   sort: SortOrder;
 };
 
@@ -17,6 +19,7 @@ const SORTS: readonly SortOrder[] = ["newest", "oldest", "relevance"];
 export function parseFilters(params: Pick<URLSearchParams, "get" | "getAll">): GalleryFilters {
   const type = params.get("type");
   const sort = params.get("sort");
+  const published = params.get("published");
   return {
     q: (params.get("q") ?? "").slice(0, 100),
     tags: unique(params.getAll("tag").map((t) => t.trim()).filter(Boolean)).slice(0, 10),
@@ -24,6 +27,7 @@ export function parseFilters(params: Pick<URLSearchParams, "get" | "getAll">): G
       (COLOR_FAMILIES as readonly string[]).includes(c),
     ),
     type: type && (ITEM_TYPES as readonly string[]).includes(type) ? (type as ItemType) : undefined,
+    published: published === "true" ? true : published === "false" ? false : undefined,
     sort: sort && (SORTS as readonly string[]).includes(sort) ? (sort as SortOrder) : "newest",
   };
 }
@@ -35,12 +39,15 @@ export function filtersToSearch(filters: GalleryFilters): string {
   filters.tags.forEach((tag) => params.append("tag", tag));
   filters.colors.forEach((color) => params.append("color", color));
   if (filters.type) params.set("type", filters.type);
+  if (filters.published !== undefined) params.set("published", String(filters.published));
   if (filters.sort !== "newest") params.set("sort", filters.sort);
   return params.toString();
 }
 
 export function hasActiveFilters(filters: GalleryFilters): boolean {
-  return Boolean(filters.q.trim() || filters.tags.length || filters.colors.length || filters.type);
+  return Boolean(
+    filters.q.trim() || filters.tags.length || filters.colors.length || filters.type || filters.published !== undefined,
+  );
 }
 
 /** "craft:ikat" -> "ikat (craft)"; "ikat" -> "ikat". */

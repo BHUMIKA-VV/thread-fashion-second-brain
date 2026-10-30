@@ -17,6 +17,7 @@ export function makeItem(overrides: Partial<Item> = {}): Item {
     suggested_type: null,
     notes: null,
     source_url: null,
+    is_public: false,
     processing_status: "queued",
     processing_error: null,
     width: 600,

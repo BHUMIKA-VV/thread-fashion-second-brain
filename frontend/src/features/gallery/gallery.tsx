@@ -9,6 +9,7 @@ import { useCallback, useMemo } from "react";
 
 import { ProcessingBadge } from "@/components/processing-badge";
 import { Button, ButtonLink } from "@/components/ui/button";
+import { useSession } from "@/features/auth/use-session";
 import { GalleryFilterBar } from "@/features/gallery/filter-bar";
 import { PaletteStrip } from "@/features/palette/palette-strip";
 import { apiUrl } from "@/lib/api-client";
@@ -56,6 +57,7 @@ export function Gallery() {
         tags: filters.tags,
         colors: filters.colors,
         type: filters.type,
+        published: filters.published,
         sort: filters.sort,
         limit: PAGE_SIZE,
         offset: pageParam,
@@ -91,6 +93,7 @@ export function Gallery() {
             </FilterChip>
           ))}
         </div>
+        <ShowcaseFilter filters={filters} onChange={setFilters} />
         {total !== undefined && (
           <p className="text-sm text-ink-muted" aria-live="polite">
             {total} {total === 1 ? "piece" : "pieces"}
@@ -150,7 +153,7 @@ export function Gallery() {
   );
 }
 
-function FilterChip({
+export function FilterChip({
   active,
   onClick,
   children,
@@ -198,7 +201,10 @@ function GalleryCard({ item, index, reasons }: { item: Item; index: number; reas
         </div>
         {item.palette && <PaletteStrip colors={item.palette.colors} />}
         <div className="flex items-center justify-between gap-2 border-b border-line py-2.5">
-          <span className="text-[11px] uppercase tracking-[0.2em] text-ink-muted">{item.type}</span>
+          <span className="text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+            {item.type}
+            {item.is_public && <span className="ml-2 text-indigo">· Public</span>}
+          </span>
           <ProcessingBadge status={item.processing_status} />
         </div>
       </Link>
@@ -236,6 +242,31 @@ function EmptyState({ filtered }: { filtered: boolean }) {
       <ButtonLink href="/upload" className="mt-6">
         Upload images
       </ButtonLink>
+    </div>
+  );
+}
+
+/** The owner's view of what is public; other accounts can't publish, so they don't see it. */
+function ShowcaseFilter({ filters, onChange }: { filters: GalleryFilters; onChange: (next: GalleryFilters) => void }) {
+  const owner = useSession().data?.is_owner === true;
+  if (!owner) return null;
+  const options = [
+    { value: undefined, label: "All" },
+    { value: true, label: "Public" },
+    { value: false, label: "Private" },
+  ] as const;
+  return (
+    <div role="group" aria-label="Filter by showcase" className="flex flex-wrap items-center gap-x-6 gap-y-2">
+      <span className="text-[11px] uppercase tracking-[0.2em] text-ink-muted">Showcase</span>
+      {options.map((option) => (
+        <FilterChip
+          key={option.label}
+          active={filters.published === option.value}
+          onClick={() => onChange({ ...filters, published: option.value })}
+        >
+          {option.label}
+        </FilterChip>
+      ))}
     </div>
   );
 }

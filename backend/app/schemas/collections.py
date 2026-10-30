@@ -48,6 +48,7 @@ class CollectionSummary(BaseModel):
     name: str
     description: str | None
     item_count: int
+    is_public: bool
     cover_thumbnails: list[str] = Field(description="API-relative thumbnail URLs of the first 4")
     contains_item: bool | None = Field(
         default=None, description="With ?item_id=: whether that item is in this collection"
@@ -67,6 +68,7 @@ class CollectionDetail(BaseModel):
     id: UUID
     name: str
     description: str | None
+    is_public: bool
     created_at: datetime
     updated_at: datetime
     items: list[CollectionEntry]

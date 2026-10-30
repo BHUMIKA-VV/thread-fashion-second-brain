@@ -114,6 +114,8 @@ export type Item = {
   suggested_type: ItemType | null;
   notes: string | null;
   source_url: string | null;
+  /** In the public showcase (only the owner account can publish). */
+  is_public: boolean;
   processing_status: ProcessingStatus;
   processing_error: string | null;
   width: number;
@@ -173,6 +175,7 @@ export type CollectionSummary = {
   name: string;
   description: string | null;
   item_count: number;
+  is_public: boolean;
   /** API-relative thumbnail URLs of the first four items. */
   cover_thumbnails: string[];
   contains_item: boolean | null;
@@ -186,6 +189,7 @@ export type CollectionDetail = {
   id: string;
   name: string;
   description: string | null;
+  is_public: boolean;
   created_at: string;
   updated_at: string;
   items: CollectionEntry[];
@@ -292,4 +296,60 @@ export type AccountRead = {
   disabled: boolean;
   is_owner: boolean;
   items: number;
+};
+
+/** A published piece as the public showcase shows it: no notes, source or file details. */
+export type ShowcaseItem = {
+  id: string;
+  type: ItemType;
+  width: number;
+  height: number;
+  created_at: string;
+  palette: Palette | null;
+  image_url: string;
+  thumbnail_url: string;
+};
+
+export type ShowcaseItemDetail = ShowcaseItem & { tags: { category: string; tag: string }[] };
+
+export type ShowcaseList = {
+  items: ShowcaseItem[];
+  total: number;
+  limit: number;
+  offset: number;
+  reasons: Record<string, string[]>;
+};
+
+export type ShowcaseSummary = {
+  owner_name: string;
+  total: number;
+  by_type: Partial<Record<ItemType, number>>;
+  color_families: { family: ColorFamily; items: number }[];
+  tags: { category: string; tag: string; items: number }[];
+  collections: number;
+  recent: ShowcaseItem[];
+};
+
+export type ShowcaseSimilar = {
+  item_id: string;
+  results: { item: ShowcaseItem; similarity: number }[];
+  compared: number;
+};
+
+export type ShowcaseCollectionSummary = {
+  id: string;
+  name: string;
+  description: string | null;
+  item_count: number;
+  cover_thumbnails: string[];
+};
+
+export type ShowcaseCollection = {
+  id: string;
+  name: string;
+  description: string | null;
+  /** The first 200 published pieces, in order. */
+  items: ShowcaseItem[];
+  /** All published pieces in the collection (may be more than items.length). */
+  total: number;
 };

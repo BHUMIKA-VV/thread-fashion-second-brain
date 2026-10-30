@@ -131,6 +131,9 @@ def list_items(
         list[ColorFamily], Query(max_length=13, description="Colour family; all must match")
     ] = [],  # noqa: B006
     type: Annotated[ItemType | None, Query()] = None,  # noqa: A002
+    published: Annotated[
+        bool | None, Query(description="Only pieces in (true) or out of (false) the showcase")
+    ] = None,
     sort: Annotated[Sort, Query(description="relevance needs q")] = "newest",
     limit: Annotated[int, Query(ge=1, le=100)] = 48,
     offset: Annotated[int, Query(ge=0)] = 0,
@@ -143,6 +146,7 @@ def list_items(
         tags=[parse_tag(t) for t in tag if t.strip()],
         colors=[c.value for c in color],
         item_type=type.value if type else None,
+        published=published,
         sort=sort,
         limit=limit,
         offset=offset,

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -48,6 +49,13 @@ class Item(TimestampMixin, Base):
         UniqueConstraint("id", "user_id"),
         Index("ix_items_user_id_created_at", "user_id", text("created_at DESC")),
         Index("ix_items_user_id_type", "user_id", "type"),
+        # The public showcase reads only these rows.
+        Index(
+            "ix_items_public_created_at",
+            "user_id",
+            text("created_at DESC"),
+            postgresql_where=text("is_public"),
+        ),
         # Small partial index the worker uses to find pending work.
         Index(
             "ix_items_pending",
@@ -75,6 +83,8 @@ class Item(TimestampMixin, Base):
 
     notes: Mapped[str | None] = mapped_column(Text)
     source_url: Mapped[str | None] = mapped_column(Text)
+    # Shown in the public showcase. Only the owner account can set it (see app/api/routes).
+    is_public: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
 
     processing_status: Mapped[str] = mapped_column(
         String(30), server_default=ProcessingStatus.QUEUED.value

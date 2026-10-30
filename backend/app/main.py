@@ -7,7 +7,18 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.errors import error_body, register_error_handlers
-from app.api.routes import admin, auth, collections, deep_analysis, dev, health, items, tags
+from app.api.routes import (
+    admin,
+    auth,
+    collections,
+    deep_analysis,
+    dev,
+    health,
+    items,
+    publishing,
+    showcase,
+    tags,
+)
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.db.session import get_session_factory
@@ -84,6 +95,8 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(auth.router)
     app.include_router(admin.router)
+    app.include_router(showcase.router)
+    app.include_router(publishing.router)  # before items: /items/showcase-all is literal
     app.include_router(items.router)
     app.include_router(tags.router)
     app.include_router(collections.router)

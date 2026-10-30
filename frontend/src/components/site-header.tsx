@@ -10,7 +10,10 @@ import { useResetForAccount, useSession } from "@/features/auth/use-session";
 import { cn } from "@/lib/cn";
 import { signOut } from "@/services/auth";
 
-// The main sections. Overview and System are in the footer, to keep this compact.
+// The main sections. Overview and System are in the footer, to keep this compact. Signed
+// out, there is no archive to show, so the header offers the public showcase instead.
+export const PUBLIC_NAV = [{ href: "/showcase", label: "Showcase" }] as const;
+
 export const NAV = [
   { href: "/gallery", label: "Archive" },
   { href: "/colour-lab", label: "Colour Lab" },
@@ -52,9 +55,11 @@ function ActiveNavLinks() {
 }
 
 function NavLinks({ pathname }: { pathname: string | null }) {
+  const signedOut = useSession().data === null;
+  const links = signedOut ? PUBLIC_NAV : NAV;
   return (
     <ul className="flex items-center gap-5 sm:gap-8">
-      {NAV.map((item) => {
+      {links.map((item) => {
         const active = isActive(item.href, pathname);
         return (
           <li key={item.href}>
