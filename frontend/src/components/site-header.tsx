@@ -12,7 +12,10 @@ import { signOut } from "@/services/auth";
 
 // The main sections. Overview and System are in the footer, to keep this compact. Signed
 // out, there is no archive to show, so the header offers the public showcase instead.
-export const PUBLIC_NAV = [{ href: "/showcase", label: "Showcase" }] as const;
+export const PUBLIC_NAV = [
+  { href: "/showcase", label: "Showcase" },
+  { href: "/how-it-works", label: "How it works" },
+] as const;
 
 export const NAV = [
   { href: "/gallery", label: "Archive" },
