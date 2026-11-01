@@ -85,16 +85,21 @@ export function Composition({
             style={{
               gridColumn: `${cell.col} / span ${cell.colSpan}`,
               gridRow: `${cell.row} / span ${cell.rowSpan}`,
-              aspectRatio: `${cell.colSpan * plan.cellAspect} / ${cell.rowSpan}`,
+              // A two-column tile beside a one-column one takes its height from that row, so
+              // the column gap can't make the two differ.
+              aspectRatio:
+                cell.colSpan === 2 && cell.rowSpan === 1
+                  ? undefined
+                  : `${cell.colSpan * plan.cellAspect} / ${cell.rowSpan}`,
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- private image served by the API */}
             <img
-              src={apiUrl(index === 0 ? piece.item.image_url : piece.item.thumbnail_url)}
+              src={apiUrl(cell.colSpan > 1 ? piece.item.image_url : piece.item.thumbnail_url)}
               alt={pieceLabel(piece.item)}
               draggable={false}
               loading="lazy"
-              className="size-full object-cover"
+              className="absolute inset-0 size-full object-cover"
             />
             {piece.role !== "piece" && (
               <figcaption className="absolute bottom-1 left-1 bg-paper-raised px-1.5 py-0.5 text-[11px] text-ink">

@@ -387,6 +387,59 @@ test("outfits never reach the public showcase", async ({ request }) => {
   }
 });
 
+test("a five-piece feature composition has no gap, on screen and in the same order", async ({ page, request }) => {
+  const ids: string[] = [];
+  for (const [i, name] of ["One", "Two", "Three", "Four", "Five"].entries()) {
+    ids.push(await uploadVia(request, [40 + i * 40, 90, 200 - i * 30], name));
+  }
+  const id = await makeOutfit(request, "No gap", ids);
+  await page.goto(`/outfit-studio/${id}`);
+  const composition = page.getByTestId("outfit-composition");
+  await expect(composition.locator("figure")).toHaveCount(5);
+  const whole = (await composition.boundingBox())!;
+  const last = (await composition.locator("figure").last().boundingBox())!;
+  const fourth = (await composition.locator("figure").nth(3).boundingBox())!;
+  expect(Math.abs(last.x + last.width - (whole.x + whole.width))).toBeLessThan(1);
+  expect(Math.abs(fourth.y - last.y)).toBeLessThan(1);
+  expect(Math.abs(fourth.height - last.height)).toBeLessThan(1);
+  expect(fourth.width).toBeGreaterThan(last.width);
+});
+
+test("the reorder hint only offers dragging where dragging works", async ({ page, request }, testInfo) => {
+  const red = await uploadVia(request, [200, 30, 40], "Red stole");
+  const id = await makeOutfit(request, "Hint", [red]);
+  await page.goto(`/outfit-studio/${id}`);
+  const drag = page.getByText("Drag photographs to reorder, or use the arrows.");
+  const arrows = page.getByText("Use the arrows to reorder.");
+  if (testInfo.project.name === "mobile") {
+    await expect(arrows).toBeVisible();
+    await expect(drag).toBeHidden();
+  } else {
+    await expect(drag).toBeVisible();
+    await expect(arrows).toBeHidden();
+  }
+});
+
+test("the phone header keeps the sections on one line and every control reachable", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "this is about phone widths");
+  await page.goto("/outfit-studio");
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await expect(nav.getByRole("link", { name: "Studio" })).toBeVisible();
+  for (const width of [360, 390, 412]) {
+    await page.setViewportSize({ width, height: 800 });
+    const tops = await nav.getByRole("link").evaluateAll((links) => links.map((l) => l.getBoundingClientRect().top));
+    expect(new Set(tops).size, `${width}px`).toBe(1);
+    const logo = (await page.getByRole("link", { name: "Thread, home" }).boundingBox())!;
+    const signOut = (await page.getByRole("button", { name: "Sign out" }).boundingBox())!;
+    expect(Math.abs(logo.y + logo.height / 2 - (signOut.y + signOut.height / 2)), `${width}px`).toBeLessThan(8);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), `${width}px`).toBeLessThanOrEqual(0);
+  }
+  // The narrowest common width may wrap, but must not scroll sideways or hide a section.
+  await page.setViewportSize({ width: 320, height: 700 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+  await expect(nav.getByRole("link")).toHaveCount(5);
+});
+
 test("the studio fits a phone without sideways scrolling", async ({ page, request }) => {
   const red = await uploadVia(request, [200, 30, 40], "Red stole");
   const id = await makeOutfit(request, "A very long outfit name that has to wrap on small screens", [red]);

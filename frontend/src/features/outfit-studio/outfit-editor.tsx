@@ -46,9 +46,17 @@ export function OutfitEditor({ id }: { id: string }) {
   const desired = useRef<OutfitPieceRead[] | null>(null);
   const [layoutShown, setLayoutShown] = useState<OutfitLayout | null>(null);
 
-  const onSaved = (outfit: OutfitDetail) => {
-    queryClient.setQueryData(key, outfit);
+  // Saves can overlap, so each answer only updates what that save is about: details never
+  // bring back an older list of pieces, and pieces never bring back older details.
+  const onDetailsSaved = (outfit: OutfitDetail) => {
+    const current = queryClient.getQueryData<OutfitDetail>(key);
+    const queued = desired.current && current;
+    queryClient.setQueryData(key, queued ? { ...outfit, pieces: current.pieces, colours: current.colours } : outfit);
     void queryClient.invalidateQueries({ queryKey: ["outfits", "list"] });
+  };
+  const setPieces = (from: OutfitDetail) => {
+    const current = queryClient.getQueryData<OutfitDetail>(key);
+    queryClient.setQueryData(key, { ...(current ?? from), pieces: from.pieces, colours: from.colours });
   };
 
   // Shown at once and sent strictly in order, so quick changes are never lost or reordered.
@@ -70,27 +78,28 @@ export function OutfitEditor({ id }: { id: string }) {
       if (!isLastReplace()) return;
       desired.current = null;
       focusNext.current = null;
-      if (confirmed.current) queryClient.setQueryData(key, confirmed.current);
+      if (confirmed.current) setPieces(confirmed.current);
       void queryClient.invalidateQueries({ queryKey: key });
     },
     onSuccess: (saved) => {
       confirmed.current = saved;
       if (!isLastReplace()) return;
       desired.current = null;
-      onSaved(saved);
+      setPieces(saved);
+      void queryClient.invalidateQueries({ queryKey: ["outfits", "list"] });
     },
   });
   const details = useMutation({
     mutationFn: (changes: OutfitUpdate) => updateOutfit(id, changes),
     onSuccess: (outfit) => {
-      onSaved(outfit);
+      onDetailsSaved(outfit);
       setDirty(false);
     },
   });
   // Apart from the details form, so changing layout never marks unsaved typing as saved.
   const layoutChange = useMutation({
     mutationFn: (layout: OutfitLayout) => updateOutfit(id, { layout }),
-    onSuccess: onSaved,
+    onSuccess: onDetailsSaved,
     onSettled: () => setLayoutShown(null),
   });
   const duplicate = useMutation({
@@ -337,7 +346,10 @@ export function OutfitEditor({ id }: { id: string }) {
           {pieces.length > 0 && (
             <div className="mt-5">
               <p className="mb-2 text-xs text-ink-muted">
-                {pieces.length} of {MAX_PIECES} pieces. Drag photographs to reorder, or use the arrows.
+                {pieces.length} of {MAX_PIECES} pieces.{" "}
+                {/* Dragging needs a mouse or trackpad, so touch screens are only told about the arrows. */}
+                <span className="pointer-coarse:hidden">Drag photographs to reorder, or use the arrows.</span>
+                <span className="hidden pointer-coarse:inline">Use the arrows to reorder.</span>
               </p>
               <PieceList
                 pieces={pieces}

@@ -179,6 +179,31 @@ describe("OutfitEditor", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "Composition" })).toHaveFocus());
   });
 
+  it("keeps overlapping layout and piece saves from undoing each other", async () => {
+    let release: () => void = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    editorRoutes(outfit(placed(A)), {
+      // Each answer reflects the server before the other save landed.
+      "PUT /api/outfits/o1/items": async () => {
+        await held;
+        return Response.json(outfit(placed(A, B)));
+      },
+      "PATCH /api/outfits/o1": () => Response.json(outfit(placed(A), { layout: "grid" })),
+    });
+    renderWithQuery(<OutfitEditor id="o1" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Add Linen kurta" }));
+    await screen.findByRole("button", { name: "Remove Linen kurta" });
+    fireEvent.click(screen.getByRole("radio", { name: "Grid" }));
+    await waitFor(() => expect(screen.getByRole("radio", { name: "Grid" })).toBeChecked());
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.getByRole("button", { name: "Remove Linen kurta" })).toBeInTheDocument();
+
+    release();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.getByRole("radio", { name: "Grid" })).toBeChecked();
+    expect(screen.getByRole("button", { name: "Remove Linen kurta" })).toBeInTheDocument();
+  });
+
   it("restores the previous order and says so when a change is refused", async () => {
     editorRoutes(outfit(placed(A, B)), {
       "PUT /api/outfits/o1/items": () => apiErrorResponse(422, "outfit_too_large", "An outfit can hold up to 12 pieces."),

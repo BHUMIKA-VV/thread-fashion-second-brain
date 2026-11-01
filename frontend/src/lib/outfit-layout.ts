@@ -35,14 +35,21 @@ export function layoutPlan(layout: OutfitLayout, count: number): LayoutPlan {
     return plain(count <= 1 ? 1 : count === 2 || count === 4 ? 2 : 3, count, PORTRAIT);
   }
   // Feature: the first piece fills two columns and two rows; the next two sit beside it (one
-  // alone takes the full height), and the rest continue below in rows of three.
+  // alone takes the full height), and the rest continue below in rows of three. A last row
+  // that isn't full stretches to the full width, so a feature composition never leaves a gap.
   const cells: LayoutCell[] = [{ col: 1, row: 1, colSpan: 2, rowSpan: 2 }];
   if (count === 2) {
     cells.push({ col: 3, row: 1, colSpan: 1, rowSpan: 2 });
   } else {
     cells.push({ col: 3, row: 1, colSpan: 1, rowSpan: 1 }, { col: 3, row: 2, colSpan: 1, rowSpan: 1 });
-    for (let i = 3; i < count; i++) {
-      cells.push({ col: ((i - 3) % 3) + 1, row: Math.floor((i - 3) / 3) + 3, colSpan: 1, rowSpan: 1 });
+    const rest = count - 3;
+    const left = rest % 3;
+    for (let i = 0; i < rest; i++) {
+      const row = Math.floor(i / 3) + 3;
+      if (i < rest - left) cells.push({ col: (i % 3) + 1, row, colSpan: 1, rowSpan: 1 });
+      else if (left === 1) cells.push({ col: 1, row, colSpan: 3, rowSpan: 1 });
+      else if (i === rest - 2) cells.push({ col: 1, row, colSpan: 2, rowSpan: 1 });
+      else cells.push({ col: 3, row, colSpan: 1, rowSpan: 1 });
     }
   }
   return { cols: 3, rows: count <= 3 ? 2 : 2 + Math.ceil((count - 3) / 3), cells, cellAspect: PORTRAIT };

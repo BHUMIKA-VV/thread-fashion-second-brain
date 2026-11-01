@@ -36,8 +36,9 @@ export function SiteHeader() {
           <Logo height={42} label="" priority className="hidden sm:block" />
           <Logo height={32} label="" priority className="sm:hidden" />
         </Link>
-        <div className="flex flex-wrap items-center gap-x-8 gap-y-1">
-          <nav aria-label="Main">
+        {/* On phones: logo and account on the first line, and the sections on a line of their own. */}
+        <div className="contents sm:flex sm:flex-wrap sm:items-center sm:gap-x-8 sm:gap-y-1">
+          <nav aria-label="Main" className="order-last w-full sm:order-none sm:w-auto">
             {/* The pathname is runtime data on dynamic routes, so the active state streams in;
                 the fallback renders the same links without highlighting. */}
             <Suspense fallback={<NavLinks pathname={null} />}>
@@ -59,7 +60,7 @@ function NavLinks({ pathname }: { pathname: string | null }) {
   const signedOut = useSession().data === null;
   const links = signedOut ? PUBLIC_NAV : NAV;
   return (
-    <ul className="flex flex-wrap items-center gap-x-5 gap-y-1 sm:gap-x-8">
+    <ul className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 sm:justify-start sm:gap-x-8">
       {links.map((item) => {
         const active = isActive(item.href, pathname);
         return (
@@ -68,7 +69,7 @@ function NavLinks({ pathname }: { pathname: string | null }) {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "inline-block border-b py-1 text-[13px] tracking-[0.06em] transition-colors sm:text-sm",
+                "inline-block border-b py-1 text-[13px] tracking-[0.02em] transition-colors sm:text-sm sm:tracking-[0.06em]",
                 active ? "border-ink text-ink" : "border-transparent text-ink-muted hover:text-ink",
               )}
             >
@@ -100,7 +101,7 @@ function AccountLinks() {
   if (session.isPending) return <span aria-hidden className="inline-block h-5 w-28" />;
   if (!session.data) {
     return (
-      <div className="flex items-center gap-4 border-l border-line pl-6">
+      <div className="flex items-center gap-4 sm:border-l sm:border-line sm:pl-6">
         <Link href="/login" className={quiet}>
           Sign in
         </Link>
@@ -115,7 +116,7 @@ function AccountLinks() {
   }
   const firstName = session.data.display_name.split(/\s+/)[0] || "Account";
   return (
-    <div className="flex items-center gap-4 border-l border-line pl-6">
+    <div className="flex items-center gap-4 sm:border-l sm:border-line sm:pl-6">
       <Link href="/account" className={cn(quiet, "max-w-32 truncate")}>
         <span className="sr-only">Your account: </span>
         {firstName}

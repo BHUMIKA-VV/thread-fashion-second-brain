@@ -39,6 +39,20 @@ describe("layoutPlan", () => {
     expect(layoutPlan("feature", 1).cols).toBe(1);
   });
 
+  it("never leaves a gap in a feature composition", () => {
+    for (let count = 1; count <= 12; count++) {
+      const plan = layoutPlan("feature", count);
+      const filled = plan.cells.reduce((sum, cell) => sum + cell.colSpan * cell.rowSpan, 0);
+      expect(filled, `${count} pieces`).toBe(plan.cols * plan.rows);
+    }
+    expect(layoutPlan("feature", 4).cells[3]).toEqual({ col: 1, row: 3, colSpan: 3, rowSpan: 1 });
+    expect(layoutPlan("feature", 5).cells.slice(3)).toEqual([
+      { col: 1, row: 3, colSpan: 2, rowSpan: 1 },
+      { col: 3, row: 3, colSpan: 1, rowSpan: 1 },
+    ]);
+    expect(layoutPlan("feature", 6).cells[5]).toEqual({ col: 3, row: 3, colSpan: 1, rowSpan: 1 });
+  });
+
   it("keeps even counts tidy in the grid and stacks the column", () => {
     expect(layoutPlan("grid", 4).cols).toBe(2);
     expect(layoutPlan("grid", 6).cols).toBe(3);
