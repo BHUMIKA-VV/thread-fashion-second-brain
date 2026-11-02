@@ -4,10 +4,11 @@ A personal visual library for fashion: upload outfits, garments and fabric swatc
 extracts their palette, tags style and textile craft (including Indian traditions such as ikat,
 bandhani and chikankari) and finds similar pieces in your own library.
 
-> **Status: MVP complete (Milestone 8).** Everything below exists and is tested; this README
-> documents only what exists today. Tag and deep-analysis accuracy have not been measured (see
-> [Known limitations](#known-limitations)). For an interview-level walkthrough of the
-> architecture and algorithms, see [docs/architecture.md](docs/architecture.md).
+> **Status: Milestone 10a complete.** The MVP (Milestones 1-8) was followed by accounts with
+> public sign-up (9a), a public showcase (9b) and the Outfit Studio (10a). Everything below exists
+> and is tested; this README documents only what exists today. Tag and deep-analysis accuracy
+> have not been measured (see [Known limitations](#known-limitations)). For an interview-level
+> walkthrough of the architecture and algorithms, see [docs/architecture.md](docs/architecture.md).
 
 ## Features
 
@@ -27,6 +28,11 @@ bandhani and chikankari) and finds similar pieces in your own library.
 - **Outfit Studio**: compose up to 12 pieces in a structured layout, see how their measured
   colours relate, and export a PNG card.
 - **Dashboard** of real counts that link into filtered gallery views.
+- **Colour Lab**: every colour measured in your archive, by family and piece by piece.
+- **Accounts**: sign-up with email verification, password reset, and an owner who can disable
+  accounts. Every archive is private to its account.
+- **Public showcase**: the owner can publish their own pieces and collections, with swatch cards.
+- **How it works**: a public page explaining what Thread measures and what stays private.
 - **Deep analysis** (optional): a user-confirmed Claude vision description of one piece; off
   without an API key.
 - **System page** with live API, database, pgvector, model and migration status.
@@ -70,10 +76,14 @@ backend/              FastAPI app (Python 3.11)
   tests/              pytest suite
 frontend/             Next.js App Router + TypeScript (strict) + Tailwind 4
   src/app/            routes: / /dashboard /upload /gallery /items/[id] /collections
-                      /collections/[id] /outfit-studio /outfit-studio/[id] /settings, plus not-found and error pages
+                      /collections/[id] /colour-lab /outfit-studio /outfit-studio/[id] /settings
+                      /account /accounts /showcase /showcase/[id] /showcase/collections/[id]
+                      /how-it-works /login /signup /verify-email /forgot-password
+                      /reset-password /terms /privacy, plus not-found and error pages
   src/components/     design-system primitives (Button, StatusBadge, header)
   src/features/       one folder per feature (gallery, upload, items, palette, tags, similar,
-                      collections, dashboard, deep-analysis, health, landing)
+                      collections, dashboard, deep-analysis, health, landing, auth, colour-lab,
+                      showcase, swatch-card, outfit-studio)
   src/lib, services, types   API client, typed API calls, API types
   e2e/                Playwright tests (journeys, accessibility, security headers)
 database/init/        first-run script for the Postgres container (creates thread_test)
@@ -1003,7 +1013,8 @@ They are skipped with a clear reason if Postgres is not reachable.
 
 ## Roadmap
 
-The MVP (Milestones 1-8) is complete. Possible next steps, none started: a background worker
-(analysis off the request path, deep analysis that survives restarts), authentication and
-multiple users, measured tag accuracy on a labelled set, full-text search, bulk gallery actions,
-sharing and trend summaries.
+Milestones 1-10a are complete. Planned next, not started: Fabric Intelligence (10b: fabric and
+weave suggestions, labelled as AI guesses, with texture similarity and comparisons) and
+Inspiration Boards (10c: editorial moodboards). Other possible steps: a background worker
+(analysis off the request path, deep analysis that survives restarts), measured tag accuracy on
+a labelled set, full-text search, bulk gallery actions and trend summaries.
