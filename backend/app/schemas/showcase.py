@@ -13,6 +13,7 @@ from app.schemas.items import FamilyCount, PaletteRead, TagCount
 class ShowcaseTag(BaseModel):
     category: str
     tag: str
+    is_guess: bool = Field(description="True for fabric: guessed from a photo, not measured")
 
 
 class ShowcaseItem(BaseModel):

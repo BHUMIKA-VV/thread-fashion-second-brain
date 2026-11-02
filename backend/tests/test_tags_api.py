@@ -297,6 +297,9 @@ def test_vocabulary_endpoint(api: TestClient) -> None:
     assert "kanjeevaram" in categories["craft"]["tags"]
     assert "none" not in categories["craft"]["tags"]
     assert categories["fabric"]["is_guess"] is True
+    assert categories["weave"]["suggested"] is False and categories["weave"]["is_guess"] is False
+    assert "twill" in categories["weave"]["tags"]
+    assert all(c["suggested"] for name, c in categories.items() if name != "weave")
 
 
 # --- ownership --------------------------------------------------------------------------------
@@ -318,3 +321,29 @@ def test_other_users_items_cannot_be_read_or_tagged(
 
 def test_tagger_object_is_the_real_class(api: TestClient) -> None:
     assert isinstance(registry.get_tagger_if_ready(), Tagger)
+
+
+def test_you_can_record_a_weave_and_the_model_never_adds_one(api: TestClient) -> None:
+    item = add_item(api, item_type="fabric")
+    assert not any(t["category"] == "weave" for t in tags(api, item["id"])["tags"])
+    assert "weave" not in {
+        c["category"] for c in api.get(f"/items/{item['id']}/tag-scores").json()["categories"]
+    }
+
+    assert edit(api, item["id"], add=[("weave", "Twill")]).status_code == 200
+    body = tags(api, item["id"])
+    weave = [t for t in body["tags"] if t["category"] == "weave"]
+    assert weave == [
+        {
+            "category": "weave",
+            "tag": "twill",
+            "source": "user",
+            "score": None,
+            "custom": False,
+            "outdated": False,
+            "is_guess": False,
+        }
+    ]
+    # Re-analysis rewrites AI tags only: the weave you recorded stays.
+    assert api.post(f"/items/{item['id']}/reanalyze").status_code == 200
+    assert ("weave", "twill", "user") in shown(tags(api, item["id"]))

@@ -148,6 +148,7 @@ def get_vocabulary() -> Vocabulary:
             VocabularyCategory(
                 category=c.name,
                 is_guess=c.is_guess,
+                suggested=c.suggested,
                 max_tags=c.max_tags,
                 tags=vocabulary.vocabulary_tags(c.name.value),
             )

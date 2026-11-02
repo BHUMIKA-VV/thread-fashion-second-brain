@@ -17,7 +17,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from app.ml import model_spec, vocabulary
-from app.ml.vocabulary import CATEGORIES, ITEM_TYPE_LABELS, TEMPLATES, Category, Label
+from app.ml.vocabulary import ITEM_TYPE_LABELS, SUGGESTED, TEMPLATES, Category, Label
 from app.models.enums import ItemType
 
 logger = logging.getLogger(__name__)
@@ -82,7 +82,7 @@ class Tagger:
 
     @classmethod
     def build(cls, model_name: str, encode: TextEncoder, logit_scale: float) -> "Tagger":
-        matrices = {c.name.value: _label_matrix(c.labels, encode) for c in CATEGORIES}
+        matrices = {c.name.value: _label_matrix(c.labels, encode) for c in SUGGESTED}
         item_types = _normalise_rows(
             np.stack(
                 [encode([t.format(p) for t in TEMPLATES]).mean(axis=0) for _, p in ITEM_TYPE_LABELS]
@@ -105,7 +105,7 @@ class Tagger:
             try:
                 with np.load(path, allow_pickle=False) as data:
                     if json.loads(str(data["meta"])) == meta:
-                        matrices = {c.name.value: data[f"cat_{c.name.value}"] for c in CATEGORIES}
+                        matrices = {c.name.value: data[f"cat_{c.name.value}"] for c in SUGGESTED}
                         logger.info("Loaded cached text vectors %s", path.name)
                         return cls(model_name, matrices, data["item_types"], logit_scale)
                 logger.warning("Text-vector cache %s does not match; rebuilding", path.name)
@@ -138,7 +138,7 @@ class Tagger:
     ) -> dict[str, list[LabelScore]]:
         """Every label's score per category (sorted), marking which would be stored."""
         result: dict[str, list[LabelScore]] = {}
-        for category in CATEGORIES:
+        for category in SUGGESTED:
             if item_type is not None and item_type in category.skip_for:
                 continue
             probabilities = self._softmax(self._category_matrices[category.name.value], vector)
@@ -159,7 +159,7 @@ class Tagger:
         self, vector: NDArray[np.floating], item_type: str | None = None
     ) -> list[Prediction]:
         predictions: list[Prediction] = []
-        for category in CATEGORIES:
+        for category in SUGGESTED:
             if item_type is not None and item_type in category.skip_for:
                 continue
             probabilities = self._softmax(self._category_matrices[category.name.value], vector)

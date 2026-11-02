@@ -1,5 +1,6 @@
 """Zero-shot tag selection rules and the text-vector cache (no real model, no database)."""
 
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -7,7 +8,7 @@ import pytest
 
 from app.ml import tagging, vocabulary
 from app.ml.tagging import Tagger, cache_key
-from app.ml.vocabulary import BY_NAME, CATEGORIES, ITEM_TYPE_LABELS
+from app.ml.vocabulary import BY_NAME, CATEGORIES, ITEM_TYPE_LABELS, SUGGESTED
 from app.models.enums import ItemType, TagCategory
 from app.services.tags import TagEdit, validate
 
@@ -115,8 +116,8 @@ def test_scores_list_every_label_and_agree_with_predict() -> None:
 
     scores = tagger.scores(vector)
 
-    assert set(scores) == {c.name.value for c in CATEGORIES}
-    for category in CATEGORIES:
+    assert set(scores) == {c.name.value for c in SUGGESTED}  # weave is never scored
+    for category in SUGGESTED:
         listed = scores[category.name.value]
         assert len(listed) == len(category.labels)
         assert [s.score for s in listed] == sorted((s.score for s in listed), reverse=True)
@@ -212,3 +213,31 @@ def test_every_vocabulary_tag_is_valid_and_unique() -> None:
 
 def test_fabric_is_marked_as_a_guess() -> None:
     assert BY_NAME["fabric"].is_guess and not BY_NAME["craft"].is_guess
+
+
+def test_weave_is_recorded_by_people_and_never_suggested() -> None:
+    weave = BY_NAME["weave"]
+    assert not weave.suggested and not weave.is_guess
+    assert {"plain weave", "twill", "satin", "jacquard"} <= set(vocabulary.vocabulary_tags("weave"))
+    # Even an image that matches a weave label exactly gets no weave tag or score.
+    vector = image(**{"weave:twill": 1.0, "craft:ikat": 1.0})
+    assert "weave" not in {c for c, _ in stored(axis_tagger(), vector)}
+    assert "weave" not in axis_tagger().scores(vector)
+
+
+def test_a_record_only_category_does_not_outdate_ai_tags() -> None:
+    """Adding weave must not mark every AI tag as outdated or rebuild the text vectors."""
+    assert vocabulary._fingerprint(CATEGORIES) == vocabulary._fingerprint(vocabulary.SUGGESTED)
+    suggested_weave = tuple(
+        replace(c, suggested=True) if c.name is TagCategory.WEAVE else c for c in CATEGORIES
+    )
+    assert vocabulary._fingerprint(suggested_weave) != vocabulary.VOCABULARY_HASH
+
+
+def test_the_text_vector_cache_holds_only_suggested_categories(tmp_path: Path) -> None:
+    def encode(texts: list[str]) -> np.ndarray:
+        return np.ones((len(texts), 4), dtype=np.float32)
+
+    Tagger.load_or_build(tmp_path, "test-model", encode, 10.0)
+    with np.load(next(tmp_path.glob("text-*.npz"))) as data:
+        assert "cat_weave" not in data and "cat_craft" in data

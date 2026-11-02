@@ -38,6 +38,8 @@ function PieceView({ item }: { item: ShowcaseItemDetail }) {
     (acc[t.category] ??= []).push(t.tag);
     return acc;
   }, {});
+  // Fabric is guessed from the photo, so it is never shown to visitors as a fact.
+  const guessed = new Set(item.tags.filter((t) => t.is_guess).map((t) => t.category));
   return (
     <div>
       <Link href="/showcase" className="inline-flex items-center gap-2 text-sm text-ink-muted hover:text-ink">
@@ -110,7 +112,10 @@ function PieceView({ item }: { item: ShowcaseItemDetail }) {
               <dl className="mt-4 space-y-3 text-sm">
                 {Object.entries(byCategory).map(([category, tags]) => (
                   <div key={category} className="grid grid-cols-[7rem_1fr] gap-3">
-                    <dt className="capitalize text-ink-muted">{category}</dt>
+                    <dt className="capitalize text-ink-muted">
+                      {category}
+                      {guessed.has(category) && " (guess)"}
+                    </dt>
                     <dd>{tags.join(", ")}</dd>
                   </div>
                 ))}

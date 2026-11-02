@@ -183,6 +183,20 @@ def test_fabric_mode_needs_shared_evidence_and_prefers_a_different_colour(
 
 
 @pytest.mark.db
+def test_a_weave_you_recorded_counts_as_fabric_evidence(api: TestClient, no_ai_tags: None) -> None:
+    query = add(api, RED)
+    twill = add(api, BLUE)
+    satin = add(api, NEAR_RED)
+    set_tags(api, query, ("weave", "twill"))
+    set_tags(api, twill, ("weave", "twill"))
+    set_tags(api, satin, ("weave", "satin"))
+
+    results = {r["item"]["id"]: r for r in similar(api, query, "fabric").json()["results"]}
+    assert set(results) == {twill}
+    assert "Shares weave: twill" in results[twill]["reasons"]
+
+
+@pytest.mark.db
 def test_fabric_mode_explains_when_the_item_has_no_evidence(
     api: TestClient, no_ai_tags: None
 ) -> None:
@@ -190,7 +204,7 @@ def test_fabric_mode_explains_when_the_item_has_no_evidence(
     add(api, BLUE)
     body = similar(api, query, "fabric").json()
     assert body["results"] == []
-    assert "no fabric, pattern or craft tag" in body["notice"]
+    assert "no fabric, weave, pattern or craft tag" in body["notice"]
 
 
 @pytest.mark.db

@@ -71,6 +71,9 @@ class TagScores(BaseModel):
 class VocabularyCategory(BaseModel):
     category: TagCategory
     is_guess: bool
+    suggested: bool = Field(
+        description="False for categories only people record (weave): never suggested by AI"
+    )
     max_tags: int
     tags: list[str]
 

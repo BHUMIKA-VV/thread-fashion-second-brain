@@ -52,6 +52,37 @@ test("tags: corrections and custom tags survive re-analysis", async ({ page, req
   }
 });
 
+test("you record a weave yourself; Thread never guesses one", async ({ page, request }) => {
+  test.setTimeout(120_000);
+  const id = await uploadVia(request, swatch([30, 60, 180]));
+  try {
+    await page.goto(`/items/${id}`);
+    const panel = page.getByRole("region", { name: "Tags" });
+    const form = panel.getByRole("form", { name: "Add a tag" });
+    await form.getByLabel("Category").selectOption("weave");
+    await expect(form.getByText(/Weave is yours to record/)).toBeVisible();
+    await form.getByLabel("Tag").fill("twill");
+    await form.getByRole("button", { name: "Add tag" }).click();
+
+    await expect(panel.getByRole("heading", { name: "Weave", exact: true })).toBeVisible();
+    const tags = await (await request.get(`/api/items/${id}/tags`)).json();
+    const weave = tags.tags.filter((t: { category: string }) => t.category === "weave");
+    expect(weave).toEqual([expect.objectContaining({ tag: "twill", source: "user", is_guess: false })]);
+    // The image model loads in the background: wait until it can score, then check weave is absent.
+    await expect.poll(async () => (await request.get(`/api/items/${id}/tag-scores`)).status(), { timeout: 90_000 }).toBe(200);
+    const scores = await (await request.get(`/api/items/${id}/tag-scores`)).json();
+    expect(scores.categories.map((c: { category: string }) => c.category)).not.toContain("weave");
+    for (const width of [360, 390]) {
+      await page.setViewportSize({ width, height: 800 });
+      await expect(form.getByText(/Weave is yours to record/)).toBeVisible();
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow, `${width}px`).toBeLessThanOrEqual(0);
+    }
+  } finally {
+    await request.delete(`/api/items/${id}`);
+  }
+});
+
 test("similarity modes explain their matches", async ({ page, request }) => {
   test.setTimeout(150_000);
   const ids: string[] = [];

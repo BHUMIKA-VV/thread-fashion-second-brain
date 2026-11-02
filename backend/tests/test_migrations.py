@@ -379,3 +379,45 @@ def test_showcase_database_with_data_upgrades_to_outfits_and_back(empty_db_url: 
         assert conn.execute(text("SELECT count(*) FROM collection_items")).scalar_one() == 1
     migrations.upgrade(empty_db_url)
     engine.dispose()
+
+
+OUTFITS_REVISION = "a6d3f1c8e2b7"
+
+
+def test_outfits_database_with_tags_upgrades_to_weave_and_back(empty_db_url: str) -> None:
+    """Milestone 10b-1 only widens the tag category check: existing tags are untouched, weave
+    becomes allowed, and downgrading removes weave tags alone."""
+    migrations.upgrade(empty_db_url, OUTFITS_REVISION)
+    engine = create_engine(empty_db_url)
+    insert_tag = text(
+        "INSERT INTO tags (item_id, tag, category, source, user_action, is_user_edited)"
+        " VALUES (:i, :t, :c, 'user', 'add', true)"
+    )
+    with engine.begin() as conn:
+        owner = conn.execute(
+            text("INSERT INTO users (display_name) VALUES ('owner') RETURNING id")
+        ).scalar_one()
+        item = conn.execute(
+            text(
+                "INSERT INTO items (user_id, original_key, content_hash, mime_type, width,"
+                " height, file_size) VALUES (:u, 'a/original.jpg', :h, 'image/jpeg', 10, 10, 10)"
+                " RETURNING id"
+            ),
+            {"u": owner, "h": "a" * 64},
+        ).scalar_one()
+        conn.execute(insert_tag, {"i": item, "t": "ikat", "c": "craft"})
+        with pytest.raises(Exception, match="ck_tags_category"), conn.begin_nested():
+            conn.execute(insert_tag, {"i": item, "t": "twill", "c": "weave"})
+
+    migrations.upgrade(empty_db_url)  # -> head
+    with engine.begin() as conn:
+        conn.execute(insert_tag, {"i": item, "t": "twill", "c": "weave"})
+        with pytest.raises(Exception, match="ck_tags_category"), conn.begin_nested():
+            conn.execute(insert_tag, {"i": item, "t": "x", "c": "not-a-category"})
+        assert conn.execute(text("SELECT count(*) FROM tags")).scalar_one() == 2
+
+    migrations.downgrade(empty_db_url, OUTFITS_REVISION)
+    with engine.begin() as conn:
+        assert conn.execute(text("SELECT category, tag FROM tags")).one() == ("craft", "ikat")
+    migrations.upgrade(empty_db_url)
+    engine.dispose()

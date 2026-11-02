@@ -399,3 +399,27 @@ def test_the_public_collection_list_returns_at_most_50_newest_first(
     listed = visitor.get("/showcase/collections").json()
     assert len(listed) == 50
     assert [c["name"] for c in listed] == [f"Public {i}" for i in range(52, 2, -1)]
+
+
+def test_guessed_tags_are_marked_as_guesses_for_visitors(
+    api: TestClient, owner_account: User, visitor: TestClient
+) -> None:
+    """Fabric comes from the photo, so the showcase must never present it as a fact."""
+    item_id = piece(api)
+    body = {
+        "add": [
+            {"category": "fabric", "tag": "silk"},
+            {"category": "weave", "tag": "twill"},
+            {"category": "craft", "tag": "ikat"},
+        ]
+    }
+    assert api.patch(f"/items/{item_id}/tags", json=body).status_code == 200
+    publish(api, item_id)
+
+    shown = {
+        (t["category"], t["tag"]): t["is_guess"]
+        for t in visitor.get(f"/showcase/items/{item_id}").json()["tags"]
+    }
+    assert shown[("fabric", "silk")] is True
+    assert shown[("weave", "twill")] is False
+    assert shown[("craft", "ikat")] is False

@@ -105,13 +105,23 @@ describe("ShowcasePiece", () => {
   it("shows the palette, tags and the swatch card, never notes", async () => {
     routeFetch({
       [`GET /api/showcase/items/${published.id}/similar`]: () => Response.json({ item_id: published.id, results: [], compared: 0 }),
-      [`GET /api/showcase/items/${published.id}`]: () => Response.json({ ...published, tags: [{ category: "craft", tag: "ikat" }] }),
+      [`GET /api/showcase/items/${published.id}`]: () =>
+        Response.json({
+          ...published,
+          tags: [
+            { category: "fabric", tag: "silk", is_guess: true },
+            { category: "craft", tag: "ikat", is_guess: false },
+          ],
+        }),
     });
     renderWithQuery(<ShowcasePiece id={published.id} />);
 
     expect(await screen.findByRole("heading", { level: 1, name: "sindoor red fabric" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Palette: sindoor red 62%, neel indigo 30%, ivory 8%" })).toBeInTheDocument();
     expect(screen.getByText("ikat")).toBeInTheDocument();
+    // A fabric guessed from the photo is never shown to visitors as a fact.
+    expect(screen.getByText("silk").previousElementSibling).toHaveTextContent("fabric (guess)");
+    expect(screen.getByText("ikat").previousElementSibling).toHaveTextContent(/^craft$/);
     expect(screen.getByRole("button", { name: "Download swatch card" })).toBeInTheDocument();
   });
 });

@@ -42,8 +42,9 @@ function itemTags(overrides: Partial<ItemTags> = {}): ItemTags {
 const vocabulary: Vocabulary = {
   version: "pt1/vabc",
   categories: [
-    { category: "craft", is_guess: false, max_tags: 2, tags: ["ikat", "bandhani", "kanjeevaram"] },
-    { category: "fabric", is_guess: true, max_tags: 1, tags: ["silk", "cotton"] },
+    { category: "craft", is_guess: false, suggested: true, max_tags: 2, tags: ["ikat", "bandhani", "kanjeevaram"] },
+    { category: "fabric", is_guess: true, suggested: true, max_tags: 1, tags: ["silk", "cotton"] },
+    { category: "weave", is_guess: false, suggested: false, max_tags: 1, tags: ["plain weave", "twill"] },
   ],
 };
 
@@ -135,6 +136,30 @@ describe("TagsPanel", () => {
     fireEvent.change(within(form).getByLabelText("Tag"), { target: { value: "cotton" } });
     fireEvent.click(within(form).getByRole("button", { name: "Add tag" }));
     await waitFor(() => expect(within(form).getByLabelText("Tag")).toHaveValue(""));
+  });
+
+  it("says weave is yours to record, since Thread never guesses it", async () => {
+    let sent: unknown = null;
+    routeFetch({
+      [`GET ${BASE}/tags`]: () => Response.json(itemTags()),
+      "GET /api/tags/vocabulary": () => Response.json(vocabulary),
+      [`PATCH ${BASE}/tags`]: ({ body }) => {
+        sent = body;
+        return Response.json(itemTags());
+      },
+    });
+    renderWithQuery(<TagsPanel item={item} />);
+
+    const form = await screen.findByRole("form", { name: "Add a tag" });
+    const tagInput = within(form).getByLabelText("Tag");
+    expect(within(form).queryByText(/yours to record/)).not.toBeInTheDocument();
+    fireEvent.change(within(form).getByLabelText("Category"), { target: { value: "weave" } });
+    expect(await within(form).findByText(/Weave is yours to record/)).toBeInTheDocument();
+    expect(tagInput).toHaveAccessibleDescription(/doesn't guess it from photos/);
+
+    fireEvent.change(tagInput, { target: { value: "twill" } });
+    fireEvent.click(within(form).getByRole("button", { name: "Add tag" }));
+    await waitFor(() => expect(sent).toEqual({ add: [{ category: "weave", tag: "twill" }], remove: [] }));
   });
 
   it("explains pending and unavailable AI tags", async () => {

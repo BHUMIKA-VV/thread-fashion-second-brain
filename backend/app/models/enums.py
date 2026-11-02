@@ -28,6 +28,7 @@ class TagCategory(StrEnum):
     SILHOUETTE = "silhouette"
     PATTERN = "pattern"
     FABRIC = "fabric"
+    WEAVE = "weave"  # recorded by people only, never suggested by the image model
     AESTHETIC = "aesthetic"
     OCCASION = "occasion"
     CRAFT = "craft"  # Indian textile and craft traditions

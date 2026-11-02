@@ -59,6 +59,7 @@ export const TAG_CATEGORIES = [
   "silhouette",
   "pattern",
   "fabric",
+  "weave",
   "aesthetic",
   "occasion",
   "craft",
@@ -105,7 +106,14 @@ export type TagScores = {
 
 export type Vocabulary = {
   version: string;
-  categories: { category: TagCategory; is_guess: boolean; max_tags: number; tags: string[] }[];
+  categories: {
+    category: TagCategory;
+    is_guess: boolean;
+    /** False for categories only people record (weave): never suggested by AI. */
+    suggested: boolean;
+    max_tags: number;
+    tags: string[];
+  }[];
 };
 
 export type Item = {
@@ -375,7 +383,10 @@ export type ShowcaseItem = {
   thumbnail_url: string;
 };
 
-export type ShowcaseItemDetail = ShowcaseItem & { tags: { category: string; tag: string }[] };
+export type ShowcaseItemDetail = ShowcaseItem & {
+  /** is_guess: fabric, guessed from a photo and not measured. */
+  tags: { category: string; tag: string; is_guess: boolean }[];
+};
 
 export type ShowcaseList = {
   items: ShowcaseItem[];

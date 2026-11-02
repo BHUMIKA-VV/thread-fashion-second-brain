@@ -11,7 +11,8 @@ Scores are relative and uncalibrated. Thresholds below were set conservatively b
 not fitted to labelled data (none exists for this project); treat them as a starting point.
 
 Changing anything here changes VOCABULARY_HASH, which marks existing AI tags as outdated and
-invalidates the cached text vectors.
+invalidates the cached text vectors. Categories with `suggested=False` are recorded by people
+only: the image model never scores them, so they are left out of the hash.
 """
 
 import hashlib
@@ -41,6 +42,7 @@ class Category:
     labels: tuple[Label, ...]
     skip_for: tuple[ItemType, ...] = field(default_factory=tuple)  # not meaningful for these
     is_guess: bool = False  # shown to users as a guess (fabric from a photo)
+    suggested: bool = True  # False: only people add these; the image model never suggests them
 
 
 def L(tag: str, *phrases: str, none: bool = False) -> Label:  # noqa: N802 - tiny DSL
@@ -126,6 +128,25 @@ CATEGORIES: tuple[Category, ...] = (
             L("knit", "knitted fabric"),
         ),
     ),
+    # Weave is recorded by people only. Tried on the sample swatches, the image model named a
+    # weave from the printed pattern instead of the cloth (stripes as twill, checks as plain
+    # weave, prints as jacquard, denim twill as satin), confidently. Thresholds are unused.
+    Category(
+        name=TagCategory.WEAVE,
+        max_tags=1,
+        min_score=0.5,
+        min_margin=0.1,
+        suggested=False,
+        labels=(
+            L("plain weave"),
+            L("twill"),
+            L("satin"),
+            L("jacquard"),
+            L("dobby"),
+            L("gauze"),
+            L("pile"),
+        ),
+    ),
     Category(
         name=TagCategory.AESTHETIC,
         max_tags=2,
@@ -192,6 +213,7 @@ ITEM_TYPE_LABELS: tuple[tuple[ItemType, str], ...] = (
 ITEM_TYPE_MIN_SCORE = 0.5
 
 BY_NAME: dict[str, Category] = {c.name.value: c for c in CATEGORIES}
+SUGGESTED: tuple[Category, ...] = tuple(c for c in CATEGORIES if c.suggested)
 
 
 def vocabulary_tags(category: str) -> list[str]:
@@ -199,10 +221,18 @@ def vocabulary_tags(category: str) -> list[str]:
     return [label.tag for label in BY_NAME[category].labels if not label.none]
 
 
-def _fingerprint() -> str:
+def _fingerprint(categories: tuple[Category, ...] = SUGGESTED) -> str:
+    """Covers only what the image model uses, so adding a category people record by hand
+    doesn't mark every AI tag as outdated."""
+
+    def scored(category: Category) -> dict[str, object]:
+        fields = asdict(category)
+        del fields["suggested"]
+        return fields
+
     payload = {
         "templates": [TEMPLATE_VERSION, list(TEMPLATES)],
-        "categories": [asdict(c) for c in CATEGORIES],
+        "categories": [scored(c) for c in categories if c.suggested],
         "item_types": [[t.value, p] for t, p in ITEM_TYPE_LABELS],
         "item_type_min_score": ITEM_TYPE_MIN_SCORE,
     }

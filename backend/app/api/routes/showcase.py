@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_storage
 from app.api.routes.items import ColorFamily
 from app.db.session import get_db
+from app.ml import vocabulary
 from app.models.enums import ItemType
 from app.repositories.search import SearchParams, Sort, parse_tag
 from app.schemas.items import FamilyCount, TagCount
@@ -104,7 +105,10 @@ def showcase_item(item_id: UUID, showcase: Showcase) -> ShowcaseItemDetail:
     item = showcase.piece(item_id)
     return ShowcaseItemDetail(
         **ShowcaseItem.model_validate(item).model_dump(exclude={"image_url", "thumbnail_url"}),
-        tags=[ShowcaseTag(category=c, tag=t) for c, t in showcase.tags(item_id)],
+        tags=[
+            ShowcaseTag(category=c, tag=t, is_guess=vocabulary.BY_NAME[c].is_guess)
+            for c, t in showcase.tags(item_id)
+        ],
     )
 
 

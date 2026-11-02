@@ -15,6 +15,7 @@ const CATEGORY_LABEL: Record<TagCategory, string> = {
   silhouette: "Silhouette",
   pattern: "Pattern",
   fabric: "Fabric (guess)",
+  weave: "Weave",
   aesthetic: "Aesthetic",
   occasion: "Occasion",
   craft: "Craft",
@@ -227,7 +228,9 @@ function AddTagForm({ busy, onAdd }: { busy: boolean; onAdd: (edit: TagEdit) => 
   const [category, setCategory] = useState<TagCategory>("craft");
   const [text, setText] = useState("");
   const listId = useId();
-  const suggestions = vocabulary.data?.categories.find((c) => c.category === category)?.tags ?? [];
+  const chosen = vocabulary.data?.categories.find((c) => c.category === category);
+  const suggestions = chosen?.tags ?? [];
+  const hintId = useId();
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -264,6 +267,7 @@ function AddTagForm({ busy, onAdd }: { busy: boolean; onAdd: (edit: TagEdit) => 
           list={listId}
           maxLength={40}
           placeholder="e.g. ikat, or your own"
+          aria-describedby={chosen?.suggested === false ? hintId : undefined}
           className="mt-1 block w-full rounded-[2px] border border-line bg-paper px-2 py-1.5 text-sm text-ink"
         />
         <datalist id={listId}>
@@ -275,6 +279,12 @@ function AddTagForm({ busy, onAdd }: { busy: boolean; onAdd: (edit: TagEdit) => 
       <Button type="submit" variant="secondary" disabled={busy || !text.trim()}>
         <Plus aria-hidden className="size-4" /> Add tag
       </Button>
+      {chosen?.suggested === false && (
+        <p id={hintId} className="w-full text-xs text-ink-muted">
+          {CATEGORY_LABEL[category]} is yours to record: Thread doesn&apos;t guess it from photos, which
+          show the print more clearly than the weave.
+        </p>
+      )}
     </form>
   );
 }

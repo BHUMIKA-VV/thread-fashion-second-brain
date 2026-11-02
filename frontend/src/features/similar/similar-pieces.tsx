@@ -29,7 +29,7 @@ const MODES: { mode: SimilarMode; label: string; description: string }[] = [
     mode: "fabric",
     label: "Same fabric, different colour",
     description:
-      "Visually close pieces that share a fabric, pattern or craft tag, different dominant colours first.",
+      "Visually close pieces that share a fabric, weave, pattern or craft tag, different dominant colours first.",
   },
 ];
 

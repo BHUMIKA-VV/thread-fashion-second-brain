@@ -5,7 +5,7 @@
   silhouette or garment tag are excluded, but only when both items have that tag; otherwise
   nothing is excluded and the result says the shape is unknown. Needs no image model.
 - fabric ("same fabric, different colour"): starts from the 100 nearest visual neighbours,
-  keeps those sharing at least one fabric / pattern / craft tag with the query, then ranks
+  keeps those sharing at least one fabric / weave / pattern / craft tag with the query, then ranks
   different dominant colour families first (and by visual similarity within each group).
 
 Every result carries plain-language reasons. Tags are model guesses or user corrections, so
@@ -26,7 +26,7 @@ from app.services.tags import EffectiveTag, TagService
 from app.storage import Storage
 
 FABRIC_CANDIDATES = 100
-EVIDENCE_CATEGORIES = ("fabric", "pattern", "craft")
+EVIDENCE_CATEGORIES = ("fabric", "weave", "pattern", "craft")
 SHAPE_CATEGORIES = ("silhouette", "garment")
 
 
@@ -139,8 +139,8 @@ class SimilarityModes:
                 visual.compared,
                 visual.not_indexed,
                 notice=(
-                    "This item has no fabric, pattern or craft tag yet, so there is nothing to "
-                    "match on. Add one in the tags panel to use this mode."
+                    "This item has no fabric, weave, pattern or craft tag yet, so there is "
+                    "nothing to match on. Add one in the tags panel to use this mode."
                 ),
             )
         query_family = dominant_family(query.palette.colors) if query.palette else None
@@ -175,7 +175,7 @@ class SimilarityModes:
         notice = None
         if not results:
             notice = (
-                "None of the visually closest pieces share a fabric, pattern or craft tag with "
-                "this item."
+                "None of the visually closest pieces share a fabric, weave, pattern or craft "
+                "tag with this item."
             )
         return ModeOutcome(results[:limit], visual.compared, visual.not_indexed, notice)
