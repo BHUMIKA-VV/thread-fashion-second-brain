@@ -432,12 +432,31 @@ test("the phone header keeps the sections on one line and every control reachabl
     const logo = (await page.getByRole("link", { name: "Thread, home" }).boundingBox())!;
     const signOut = (await page.getByRole("button", { name: "Sign out" }).boundingBox())!;
     expect(Math.abs(logo.y + logo.height / 2 - (signOut.y + signOut.height / 2)), `${width}px`).toBeLessThan(8);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), `${width}px`).toBeLessThanOrEqual(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${width}px`).toBeLessThanOrEqual(0);
   }
   // The narrowest common width may wrap, but must not scroll sideways or hide a section.
   await page.setViewportSize({ width: 320, height: 700 });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
   await expect(nav.getByRole("link")).toHaveCount(5);
+});
+
+test("a full composition with long piece names stays inside a phone screen", async ({ page, request }) => {
+  const ids: string[] = [];
+  for (let i = 0; i < 5; i++) {
+    ids.push(await uploadVia(request, [40 + i * 40, 90, 200 - i * 30], `Synthetic sample swatch number ${i + 1} with a long descriptive name`));
+  }
+  const id = await makeOutfit(request, "Long names", ids);
+  for (const width of [360, 390]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto(`/outfit-studio/${id}`);
+    const composition = page.getByTestId("outfit-composition");
+    await expect(composition.locator("figure")).toHaveCount(5);
+    await page.waitForLoadState("networkidle");
+    const widths = await page.evaluate(() => ({ page: document.documentElement.scrollWidth, screen: document.documentElement.clientWidth }));
+    expect(widths.page, `${width}px`).toBeLessThanOrEqual(widths.screen);
+    const box = (await composition.boundingBox())!;
+    expect(box.x + box.width, `${width}px`).toBeLessThanOrEqual(widths.screen);
+  }
 });
 
 test("the studio fits a phone without sideways scrolling", async ({ page, request }) => {
@@ -447,7 +466,8 @@ test("the studio fits a phone without sideways scrolling", async ({ page, reques
   for (const path of ["/outfit-studio", `/outfit-studio/${id}`]) {
     await page.goto(path);
     await page.waitForLoadState("networkidle");
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    // Not innerWidth: on a phone it grows with the content, which hides the overflow.
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow, path).toBeLessThanOrEqual(0);
   }
 });

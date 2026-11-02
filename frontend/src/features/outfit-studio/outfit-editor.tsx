@@ -325,7 +325,7 @@ export function OutfitEditor({ id }: { id: string }) {
         )}
       </div>
 
-      <div className="mt-6 grid gap-x-8 gap-y-10 lg:grid-cols-[16rem_minmax(0,1fr)_18rem]">
+      <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-10 lg:grid-cols-[16rem_minmax(0,1fr)_18rem]">
         {/* Composition first on small screens: it is what the page is about. */}
         <section aria-labelledby="composition-title" className="lg:col-start-2 lg:row-start-1">
           <div className="flex flex-wrap items-center justify-between gap-3">
