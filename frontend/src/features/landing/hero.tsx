@@ -10,6 +10,7 @@ import { apiUrl } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
 import { FAMILY_SWATCH } from "@/lib/colour-families";
 
+import { BeforeAfter, ProductTour, WhoFor, WhyThread } from "./story-sections";
 import { useLandingPieces, type LandingData, type LandingPiece } from "./use-landing-pieces";
 
 /**
@@ -19,17 +20,24 @@ import { useLandingPieces, type LandingData, type LandingPiece } from "./use-lan
  * how Thread works, and a way in. Every image and colour is real; with nothing to show, the page
  * uses plain brand colour, never stand-in photography.
  */
-export function Hero() {
+export function Hero({ demoInvite }: { demoInvite?: ReactNode }) {
   const data = useLandingPieces();
   // The scenes use the first three pieces; the gallery shows the next ones (or repeats, if few).
   const gallery = data.pieces.length > 3 ? data.pieces.slice(3) : data.pieces;
   return (
     <>
       <CoverScenes data={data} />
+      {/* The story and the demo are for visitors; signed in, the page stays about your archive. */}
+      {!data.signedIn && <BeforeAfter />}
+      {!data.signedIn && <ProductTour />}
+      {/* Rendered on the server (app/page.tsx), so the demo dataset never ships to the browser. */}
+      {!data.signedIn && demoInvite}
       <QuietGallery data={data} framed={gallery[0]} collage={gallery.slice(1, 3)} />
       <PieceStrip data={data} />
       <ColourStory data={data} />
       <HowItWorks />
+      {!data.signedIn && <WhoFor />}
+      {!data.signedIn && <WhyThread />}
       <Closing signedIn={data.signedIn} />
     </>
   );
@@ -38,14 +46,16 @@ export function Hero() {
 /** Fade-and-rise on first view; nothing moves for people who prefer reduced motion. */
 function Reveal({ children, className, delay = 0, onMount = false }: { children: ReactNode; className?: string; delay?: number; onMount?: boolean }) {
   const reduce = useReducedMotion();
-  if (reduce) return <div className={className}>{children}</div>;
   const visible = { opacity: 1, y: 0 };
+  // Always the same element: the server can't know the preference and renders it hidden, so
+  // swapping in a plain <div> on the client would keep that hidden style after hydration.
+  // With reduced motion it is simply set visible at once, with no movement.
   return (
     <motion.div
       className={className}
       initial={{ opacity: 0, y: 16 }}
-      {...(onMount ? { animate: visible } : { whileInView: visible, viewport: { once: true, margin: "-10% 0px" } })}
-      transition={{ duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
+      {...(reduce || onMount ? { animate: visible } : { whileInView: visible, viewport: { once: true, margin: "-10% 0px" } })}
+      transition={reduce ? { duration: 0 } : { duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.div>
@@ -95,11 +105,11 @@ function CoverScenes({ data }: { data: LandingData }) {
               </>
             ) : (
               <>
-                <Link href="/signup" className={onPhotoPrimary}>
-                  Begin your archive <ArrowRight aria-hidden className="size-4" />
+                <Link href="/demo" className={onPhotoPrimary}>
+                  Explore Thread <ArrowRight aria-hidden className="size-4" />
                 </Link>
-                <Link href="/showcase" className={onPhotoSecondary}>
-                  See the showcase
+                <Link href="/signup" className={onPhotoSecondary}>
+                  Create your wardrobe
                 </Link>
               </>
             )}
@@ -413,9 +423,24 @@ function Closing({ signedIn }: { signedIn: boolean }) {
         <h2 id="closing-title" className="max-w-2xl text-balance font-display text-4xl italic leading-tight sm:text-5xl">
           {signedIn ? "Add the next piece to your archive." : "Your archive starts with one photograph."}
         </h2>
-        <Link href={signedIn ? "/upload" : "/signup"} className={onPhotoPrimary}>
-          {signedIn ? "Upload a photograph" : "Start with one photograph"} <ArrowRight aria-hidden className="size-4" />
-        </Link>
+        {signedIn ? (
+          <Link href="/upload" className={onPhotoPrimary}>
+            Upload a photograph <ArrowRight aria-hidden className="size-4" />
+          </Link>
+        ) : (
+          // The way in, in order: look around first, then start your own, or come back to it.
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+            <Link href="/demo" className={onPhotoPrimary}>
+              Explore the demo <ArrowRight aria-hidden className="size-4" />
+            </Link>
+            <Link href="/signup" className={onPhotoSecondary}>
+              Create your wardrobe
+            </Link>
+            <Link href="/login" className="text-sm text-paper-raised/90 underline underline-offset-4 hover:text-paper-raised">
+              Sign in
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

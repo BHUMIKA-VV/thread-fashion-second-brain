@@ -1,0 +1,3998 @@
+{
+ "version": 1,
+ "model": "open_clip/ViT-B-32/laion2b_s34b_b79k@1a25a44/pp1",
+ "vocabulary": "c85cb24c05",
+ "pieces": [
+  {
+   "id": "silk-dress-1883",
+   "title": "Silk dress, French, 1883–85",
+   "type": "garment",
+   "note": "Silk. Museum record C.I.53.63a, b.",
+   "credit": "The Metropolitan Museum of Art, Gift of Mr. and Mrs. Leonard Shepley, 1953, C.I.53.63a, b. https://www.metmuseum.org/art/collection/search/105336",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/silk-dress-1883.webp",
+   "thumbnail": "thumbs/silk-dress-1883.webp",
+   "width": 1253,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#979691",
+     "name": "grey",
+     "family": "grey",
+     "percentage": 64.3,
+     "lab": [
+      62.03,
+      -0.58,
+      2.76
+     ]
+    },
+    {
+     "hex": "#161110",
+     "name": "kajal black",
+     "family": "black",
+     "percentage": 13.5,
+     "lab": [
+      5.5,
+      1.89,
+      1.26
+     ]
+    },
+    {
+     "hex": "#2c1e1c",
+     "name": "very dark brown",
+     "family": "black",
+     "percentage": 10.5,
+     "lab": [
+      12.91,
+      6.47,
+      4.05
+     ]
+    },
+    {
+     "hex": "#4a2925",
+     "name": "purple brown",
+     "family": "brown",
+     "percentage": 7.3,
+     "lab": [
+      20.73,
+      14.87,
+      9.24
+     ]
+    },
+    {
+     "hex": "#b6b5b1",
+     "name": "chandi silver",
+     "family": "grey",
+     "percentage": 4.4,
+     "lab": [
+      73.65,
+      -0.38,
+      2.16
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "grey",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "classic",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "silk",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "dress",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "occasionwear",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "embroidery",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "silhouette",
+     "tag": "fitted",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "wool-dress-1896",
+     "distance": 6.77
+    },
+    {
+     "id": "cotton-coat-1845",
+     "distance": 6.92
+    },
+    {
+     "id": "trousers-1800",
+     "distance": 7.79
+    },
+    {
+     "id": "leather-boots-1780",
+     "distance": 8.14
+    },
+    {
+     "id": "cotton-dress-1872",
+     "distance": 8.33
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 8.58
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "wool-dress-1896",
+     "similarity": 0.768
+    },
+    {
+     "id": "cotton-dress-1872",
+     "similarity": 0.753
+    },
+    {
+     "id": "silk-coat-1882",
+     "similarity": 0.641
+    },
+    {
+     "id": "wool-shawl-1800s",
+     "similarity": 0.584
+    },
+    {
+     "id": "silk-coat-1900",
+     "similarity": 0.579
+    },
+    {
+     "id": "leather-boots-1780",
+     "similarity": 0.549
+    }
+   ]
+  },
+  {
+   "id": "wool-dress-1896",
+   "title": "Wool and silk dress, American, 1896–99",
+   "type": "garment",
+   "note": "Wool, silk. Museum record 2009.300.833a, b.",
+   "credit": "The Metropolitan Museum of Art, Brooklyn Museum Costume Collection at The Metropolitan Museum of Art, Gift of the Brooklyn Museum, 2009; Gift of Mary Louise Deming in memory of her mother, Mrs. Nelson Lloyd Deming, 1959, 2009.300.833a, b. https://www.metmuseum.org/art/collection/search/159408",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/wool-dress-1896.webp",
+   "thumbnail": "thumbs/wool-dress-1896.webp",
+   "width": 1200,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#cccbcb",
+     "name": "chandi silver",
+     "family": "grey",
+     "percentage": 30.2,
+     "lab": [
+      81.76,
+      0.34,
+      0.12
+     ]
+    },
+    {
+     "hex": "#8e8e8d",
+     "name": "grey",
+     "family": "grey",
+     "percentage": 18.8,
+     "lab": [
+      58.99,
+      -0.19,
+      0.53
+     ]
+    },
+    {
+     "hex": "#a78e5c",
+     "name": "dark sand",
+     "family": "yellow",
+     "percentage": 18.4,
+     "lab": [
+      60.19,
+      2.46,
+      30.08
+     ]
+    },
+    {
+     "hex": "#b1b1b1",
+     "name": "chandi silver",
+     "family": "grey",
+     "percentage": 15.6,
+     "lab": [
+      72.21,
+      -0.0,
+      0.0
+     ]
+    },
+    {
+     "hex": "#7e663a",
+     "name": "dirt brown",
+     "family": "brown",
+     "percentage": 13.4,
+     "lab": [
+      44.58,
+      3.68,
+      28.31
+     ]
+    },
+    {
+     "hex": "#1e1a17",
+     "name": "kajal black",
+     "family": "black",
+     "percentage": 3.6,
+     "lab": [
+      9.61,
+      1.28,
+      2.81
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "grey",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "classic",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "wool",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "dress",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "occasionwear",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "embroidery",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "silhouette",
+     "tag": "fitted",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "silk-dress-1883",
+     "distance": 6.77
+    },
+    {
+     "id": "leather-boots-1780",
+     "distance": 7.82
+    },
+    {
+     "id": "leather-boots-1795",
+     "distance": 8.06
+    },
+    {
+     "id": "cotton-dress-1872",
+     "distance": 8.12
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 8.23
+    },
+    {
+     "id": "cotton-coat-1845",
+     "distance": 9.13
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "silk-dress-1883",
+     "similarity": 0.768
+    },
+    {
+     "id": "cotton-dress-1872",
+     "similarity": 0.737
+    },
+    {
+     "id": "silk-coat-1900",
+     "similarity": 0.649
+    },
+    {
+     "id": "leather-boots-1780",
+     "similarity": 0.636
+    },
+    {
+     "id": "silk-coat-1882",
+     "similarity": 0.632
+    },
+    {
+     "id": "leather-boots-1795",
+     "similarity": 0.586
+    }
+   ]
+  },
+  {
+   "id": "cotton-dress-1872",
+   "title": "Printed cotton dress, French, c. 1872",
+   "type": "garment",
+   "note": "A) cotton, porcelain; b) cotton. Museum record 2003.426a, b.",
+   "credit": "The Metropolitan Museum of Art, Purchase, Irene Lewisohn Bequest, 2003, 2003.426a, b. https://www.metmuseum.org/art/collection/search/96434",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/cotton-dress-1872.webp",
+   "thumbnail": "thumbs/cotton-dress-1872.webp",
+   "width": 1280,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#3a3a3a",
+     "name": "dark grey",
+     "family": "grey",
+     "percentage": 22.8,
+     "lab": [
+      24.42,
+      -0.0,
+      0.0
+     ]
+    },
+    {
+     "hex": "#a7a4a5",
+     "name": "grey",
+     "family": "grey",
+     "percentage": 20.9,
+     "lab": [
+      67.64,
+      1.26,
+      -0.14
+     ]
+    },
+    {
+     "hex": "#565452",
+     "name": "charcoal grey",
+     "family": "grey",
+     "percentage": 17.0,
+     "lab": [
+      35.85,
+      0.39,
+      1.45
+     ]
+    },
+    {
+     "hex": "#86807c",
+     "name": "hathi grey",
+     "family": "grey",
+     "percentage": 15.3,
+     "lab": [
+      53.99,
+      1.51,
+      2.97
+     ]
+    },
+    {
+     "hex": "#212121",
+     "name": "kajal black",
+     "family": "black",
+     "percentage": 13.6,
+     "lab": [
+      12.74,
+      -0.0,
+      0.0
+     ]
+    },
+    {
+     "hex": "#cfced4",
+     "name": "chandi silver",
+     "family": "grey",
+     "percentage": 10.4,
+     "lab": [
+      83.0,
+      1.45,
+      -2.85
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "grey",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "classic",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "aesthetic",
+     "tag": "contemporary",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "cotton",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "dress",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "occasionwear",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "silhouette",
+     "tag": "fitted",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "leather-boots-1780",
+     "distance": 5.42
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 5.84
+    },
+    {
+     "id": "leather-boots-1795",
+     "distance": 5.99
+    },
+    {
+     "id": "cotton-coat-1845",
+     "distance": 6.58
+    },
+    {
+     "id": "silk-coat-1900",
+     "distance": 6.93
+    },
+    {
+     "id": "wool-dress-1896",
+     "distance": 8.12
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "silk-dress-1883",
+     "similarity": 0.753
+    },
+    {
+     "id": "wool-dress-1896",
+     "similarity": 0.737
+    },
+    {
+     "id": "silk-coat-1900",
+     "similarity": 0.622
+    },
+    {
+     "id": "silk-coat-1882",
+     "similarity": 0.611
+    },
+    {
+     "id": "leather-boots-1780",
+     "similarity": 0.528
+    },
+    {
+     "id": "cotton-coat-1845",
+     "similarity": 0.518
+    }
+   ]
+  },
+  {
+   "id": "wool-jacket-1855",
+   "title": "Wool jacket, American, 1855–65",
+   "type": "garment",
+   "note": "Wool. Museum record 2009.300.3337.",
+   "credit": "The Metropolitan Museum of Art, Brooklyn Museum Costume Collection at The Metropolitan Museum of Art, Gift of the Brooklyn Museum, 2009; Gift of The Jason and Peggy Westerfield Collection, 1969, 2009.300.3337. https://www.metmuseum.org/art/collection/search/158263",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/wool-jacket-1855.webp",
+   "thumbnail": "thumbs/wool-jacket-1855.webp",
+   "width": 1484,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#c43c36",
+     "name": "reddish",
+     "family": "red",
+     "percentage": 41.6,
+     "lab": [
+      45.96,
+      53.51,
+      34.68
+     ]
+    },
+    {
+     "hex": "#ea514a",
+     "name": "pale red",
+     "family": "red",
+     "percentage": 26.5,
+     "lab": [
+      55.96,
+      58.52,
+      36.7
+     ]
+    },
+    {
+     "hex": "#dbc7a7",
+     "name": "very light brown",
+     "family": "beige",
+     "percentage": 15.8,
+     "lab": [
+      81.13,
+      2.04,
+      18.59
+     ]
+    },
+    {
+     "hex": "#8b2a25",
+     "name": "carmine",
+     "family": "brown",
+     "percentage": 10.1,
+     "lab": [
+      32.44,
+      40.73,
+      26.42
+     ]
+    },
+    {
+     "hex": "#b6856d",
+     "name": "pinkish brown",
+     "family": "orange",
+     "percentage": 3.3,
+     "lab": [
+      59.73,
+      15.66,
+      20.33
+     ]
+    },
+    {
+     "hex": "#30302f",
+     "name": "dark grey",
+     "family": "black",
+     "percentage": 2.7,
+     "lab": [
+      19.83,
+      -0.23,
+      0.64
+     ]
+    }
+   ],
+   "palette_source": "masked",
+   "family": "red",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "contemporary",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "wool",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "jacket",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "occasionwear",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "embroidery",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "silhouette",
+     "tag": "fitted",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "wool-shawl-1800s",
+     "distance": 7.25
+    },
+    {
+     "id": "ikat-striped-panel",
+     "distance": 9.51
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "distance": 10.44
+    },
+    {
+     "id": "bandhani-sari",
+     "distance": 11.74
+    },
+    {
+     "id": "cotton-blouse-1800s",
+     "distance": 12.83
+    },
+    {
+     "id": "leather-boots-1795",
+     "distance": 13.14
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "silk-coat-1882",
+     "similarity": 0.61
+    },
+    {
+     "id": "wool-shawl-1800s",
+     "similarity": 0.582
+    },
+    {
+     "id": "cotton-coat-1845",
+     "similarity": 0.582
+    },
+    {
+     "id": "silk-coat-1900",
+     "similarity": 0.56
+    },
+    {
+     "id": "wool-dress-1896",
+     "similarity": 0.485
+    },
+    {
+     "id": "cotton-dress-1872",
+     "similarity": 0.465
+    }
+   ]
+  },
+  {
+   "id": "silk-coat-1882",
+   "title": "Silk coat, French, 1882",
+   "type": "garment",
+   "note": "Silk, cotton, shell. Museum record 2009.300.901.",
+   "credit": "The Metropolitan Museum of Art, Brooklyn Museum Costume Collection at The Metropolitan Museum of Art, Gift of the Brooklyn Museum, 2009; Gift of Amelia Beard Hollenback, 1966, 2009.300.901. https://www.metmuseum.org/art/collection/search/159483",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/silk-coat-1882.webp",
+   "thumbnail": "thumbs/silk-coat-1882.webp",
+   "width": 1174,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#0f0d0f",
+     "name": "black",
+     "family": "black",
+     "percentage": 52.3,
+     "lab": [
+      3.83,
+      0.99,
+      -0.71
+     ]
+    },
+    {
+     "hex": "#1d1921",
+     "name": "kajal black",
+     "family": "black",
+     "percentage": 25.3,
+     "lab": [
+      9.53,
+      4.03,
+      -4.81
+     ]
+    },
+    {
+     "hex": "#2e2937",
+     "name": "dark",
+     "family": "black",
+     "percentage": 14.8,
+     "lab": [
+      17.66,
+      5.76,
+      -8.17
+     ]
+    },
+    {
+     "hex": "#494458",
+     "name": "dusk",
+     "family": "blue",
+     "percentage": 5.5,
+     "lab": [
+      30.05,
+      6.78,
+      -11.12
+     ]
+    },
+    {
+     "hex": "#91785f",
+     "name": "brownish grey",
+     "family": "brown",
+     "percentage": 2.1,
+     "lab": [
+      52.15,
+      5.9,
+      17.38
+     ]
+    }
+   ],
+   "palette_source": "masked",
+   "family": "black",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "classic",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "aesthetic",
+     "tag": "contemporary",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "silk",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "jacket",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "occasionwear",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "silhouette",
+     "tag": "fitted",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "gold-block-print",
+     "distance": 3.79
+    },
+    {
+     "id": "bandhani-odhani",
+     "distance": 8.62
+    },
+    {
+     "id": "cotton-blouse-1800s",
+     "distance": 8.99
+    },
+    {
+     "id": "silk-dress-1883",
+     "distance": 9.33
+    },
+    {
+     "id": "wool-shawl-1800s",
+     "distance": 10.25
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 10.36
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "cotton-coat-1845",
+     "similarity": 0.693
+    },
+    {
+     "id": "silk-dress-1883",
+     "similarity": 0.641
+    },
+    {
+     "id": "wool-dress-1896",
+     "similarity": 0.632
+    },
+    {
+     "id": "cotton-dress-1872",
+     "similarity": 0.611
+    },
+    {
+     "id": "wool-jacket-1855",
+     "similarity": 0.61
+    },
+    {
+     "id": "silk-coat-1900",
+     "similarity": 0.594
+    }
+   ]
+  },
+  {
+   "id": "silk-coat-1900",
+   "title": "Painted silk coat, Japanese, c. 1900",
+   "type": "garment",
+   "note": "Silk. Museum record 1985.362.1.",
+   "credit": "The Metropolitan Museum of Art, Gift of Joseph L. Brotherton, 1985, 1985.362.1. https://www.metmuseum.org/art/collection/search/83924",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/silk-coat-1900.webp",
+   "thumbnail": "thumbs/silk-coat-1900.webp",
+   "width": 1280,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#6c6c6c",
+     "name": "hathi grey",
+     "family": "grey",
+     "percentage": 45.7,
+     "lab": [
+      45.63,
+      -0.0,
+      0.0
+     ]
+    },
+    {
+     "hex": "#504f4f",
+     "name": "charcoal grey",
+     "family": "grey",
+     "percentage": 27.0,
+     "lab": [
+      33.69,
+      0.41,
+      0.14
+     ]
+    },
+    {
+     "hex": "#96938d",
+     "name": "grey",
+     "family": "grey",
+     "percentage": 13.2,
+     "lab": [
+      61.02,
+      -0.02,
+      3.56
+     ]
+    },
+    {
+     "hex": "#76684f",
+     "name": "greyish brown",
+     "family": "brown",
+     "percentage": 6.9,
+     "lab": [
+      44.68,
+      1.43,
+      16.14
+     ]
+    },
+    {
+     "hex": "#d1ccb4",
+     "name": "malai cream",
+     "family": "beige",
+     "percentage": 4.0,
+     "lab": [
+      81.86,
+      -2.33,
+      12.59
+     ]
+    },
+    {
+     "hex": "#28211a",
+     "name": "kajal black",
+     "family": "black",
+     "percentage": 3.2,
+     "lab": [
+      13.31,
+      1.94,
+      5.98
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "grey",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "contemporary",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "silk",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "dress",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "occasionwear",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "embroidery",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "silhouette",
+     "tag": "draped",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "cotton-coat-1845",
+     "distance": 5.03
+    },
+    {
+     "id": "cotton-dress-1872",
+     "distance": 6.93
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 7.1
+    },
+    {
+     "id": "trousers-1800",
+     "distance": 7.88
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "distance": 8.17
+    },
+    {
+     "id": "silk-dress-1883",
+     "distance": 8.92
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "wool-shawl-1800s",
+     "similarity": 0.678
+    },
+    {
+     "id": "wool-dress-1896",
+     "similarity": 0.649
+    },
+    {
+     "id": "cotton-dress-1872",
+     "similarity": 0.622
+    },
+    {
+     "id": "silk-coat-1882",
+     "similarity": 0.594
+    },
+    {
+     "id": "silk-dress-1883",
+     "similarity": 0.579
+    },
+    {
+     "id": "wool-jacket-1855",
+     "similarity": 0.56
+    }
+   ]
+  },
+  {
+   "id": "cotton-coat-1845",
+   "title": "Cotton coat, French, c. 1845",
+   "type": "garment",
+   "note": "Cotton. Museum record 1984.83.",
+   "credit": "The Metropolitan Museum of Art, Purchase, Gifts from Various Donors Fund, 1984, 1984.83. https://www.metmuseum.org/art/collection/search/83934",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/cotton-coat-1845.webp",
+   "thumbnail": "thumbs/cotton-coat-1845.webp",
+   "width": 1189,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#98948b",
+     "name": "grey",
+     "family": "beige",
+     "percentage": 37.1,
+     "lab": [
+      61.41,
+      -0.19,
+      5.28
+     ]
+    },
+    {
+     "hex": "#868177",
+     "name": "hathi grey",
+     "family": "grey",
+     "percentage": 23.2,
+     "lab": [
+      54.13,
+      0.02,
+      6.09
+     ]
+    },
+    {
+     "hex": "#6d675d",
+     "name": "greyish brown",
+     "family": "grey",
+     "percentage": 15.0,
+     "lab": [
+      43.86,
+      0.47,
+      6.49
+     ]
+    },
+    {
+     "hex": "#4e493f",
+     "name": "charcoal grey",
+     "family": "grey",
+     "percentage": 14.4,
+     "lab": [
+      31.22,
+      0.13,
+      6.74
+     ]
+    },
+    {
+     "hex": "#2e2a23",
+     "name": "dark grey",
+     "family": "black",
+     "percentage": 6.4,
+     "lab": [
+      17.26,
+      0.35,
+      5.24
+     ]
+    },
+    {
+     "hex": "#f6f6ec",
+     "name": "white",
+     "family": "white",
+     "percentage": 3.9,
+     "lab": [
+      96.64,
+      -1.73,
+      4.8
+     ]
+    }
+   ],
+   "palette_source": "masked",
+   "family": "beige",
+   "tags": [
+    {
+     "category": "fabric",
+     "tag": "cotton",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "jacket",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "occasionwear",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "striped",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "silk-coat-1900",
+     "distance": 5.03
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 6.37
+    },
+    {
+     "id": "leather-boots-1795",
+     "distance": 6.51
+    },
+    {
+     "id": "cotton-dress-1872",
+     "distance": 6.58
+    },
+    {
+     "id": "silk-dress-1883",
+     "distance": 6.92
+    },
+    {
+     "id": "trousers-1800",
+     "distance": 7.91
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "trousers-1800",
+     "similarity": 0.699
+    },
+    {
+     "id": "silk-coat-1882",
+     "similarity": 0.693
+    },
+    {
+     "id": "wool-jacket-1855",
+     "similarity": 0.582
+    },
+    {
+     "id": "silk-coat-1900",
+     "similarity": 0.553
+    },
+    {
+     "id": "cotton-dress-1872",
+     "similarity": 0.518
+    },
+    {
+     "id": "wool-dress-1896",
+     "similarity": 0.5
+    }
+   ]
+  },
+  {
+   "id": "silk-slippers-1865",
+   "title": "Silk slippers, American, 1865–85",
+   "type": "accessory",
+   "note": "Silk, metal. Museum record 2009.300.1517a, b.",
+   "credit": "The Metropolitan Museum of Art, Brooklyn Museum Costume Collection at The Metropolitan Museum of Art, Gift of the Brooklyn Museum, 2009; Gift of Beulah Stevenson, 1958, 2009.300.1517a, b. https://www.metmuseum.org/art/collection/search/156241",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/silk-slippers-1865.webp",
+   "thumbnail": "thumbs/silk-slippers-1865.webp",
+   "width": 1600,
+   "height": 996,
+   "palette": [
+    {
+     "hex": "#f2f2f3",
+     "name": "pale grey",
+     "family": "white",
+     "percentage": 31.9,
+     "lab": [
+      95.52,
+      0.18,
+      -0.48
+     ]
+    },
+    {
+     "hex": "#d1cfd5",
+     "name": "chandi silver",
+     "family": "grey",
+     "percentage": 28.8,
+     "lab": [
+      83.43,
+      1.78,
+      -2.72
+     ]
+    },
+    {
+     "hex": "#5c2665",
+     "name": "jamuni purple",
+     "family": "purple",
+     "percentage": 16.2,
+     "lab": [
+      25.57,
+      34.86,
+      -26.32
+     ]
+    },
+    {
+     "hex": "#291028",
+     "name": "eggplant",
+     "family": "purple",
+     "percentage": 14.4,
+     "lab": [
+      8.95,
+      17.38,
+      -10.79
+     ]
+    },
+    {
+     "hex": "#765c60",
+     "name": "purplish brown",
+     "family": "pink",
+     "percentage": 4.4,
+     "lab": [
+      41.77,
+      11.29,
+      1.78
+     ]
+    },
+    {
+     "hex": "#a6783c",
+     "name": "leather",
+     "family": "brown",
+     "percentage": 4.3,
+     "lab": [
+      53.89,
+      11.51,
+      39.36
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "white",
+   "tags": [
+    {
+     "category": "fabric",
+     "tag": "silk",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "accessory",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "occasionwear",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "houndstooth",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "leather-boots-1795",
+     "distance": 9.71
+    },
+    {
+     "id": "leather-boots-1780",
+     "distance": 10.34
+    },
+    {
+     "id": "wool-dress-1896",
+     "distance": 10.9
+    },
+    {
+     "id": "cotton-dress-1872",
+     "distance": 12.15
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 13.89
+    },
+    {
+     "id": "kashmir-shawl-boteh",
+     "distance": 14.23
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "silk-coat-1882",
+     "similarity": 0.528
+    },
+    {
+     "id": "silk-dress-1883",
+     "similarity": 0.519
+    },
+    {
+     "id": "leather-boots-1795",
+     "similarity": 0.503
+    },
+    {
+     "id": "leather-boots-1780",
+     "similarity": 0.489
+    },
+    {
+     "id": "wool-dress-1896",
+     "similarity": 0.474
+    },
+    {
+     "id": "wool-shawl-1800s",
+     "similarity": 0.465
+    }
+   ]
+  },
+  {
+   "id": "leather-boots-1795",
+   "title": "Leather boots, European, 1795–1815",
+   "type": "accessory",
+   "note": "Leather. Museum record 2009.300.3511a–d.",
+   "credit": "The Metropolitan Museum of Art, Brooklyn Museum Costume Collection at The Metropolitan Museum of Art, Gift of the Brooklyn Museum, 2009; Gift of Herman Delman, 1954, 2009.300.3511a–d. https://www.metmuseum.org/art/collection/search/158457",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/leather-boots-1795.webp",
+   "thumbnail": "thumbs/leather-boots-1795.webp",
+   "width": 1600,
+   "height": 1064,
+   "palette": [
+    {
+     "hex": "#f0f0ee",
+     "name": "pale grey",
+     "family": "white",
+     "percentage": 35.6,
+     "lab": [
+      94.75,
+      -0.35,
+      0.96
+     ]
+    },
+    {
+     "hex": "#cfcfcf",
+     "name": "chandi silver",
+     "family": "grey",
+     "percentage": 31.1,
+     "lab": [
+      83.12,
+      -0.0,
+      0.0
+     ]
+    },
+    {
+     "hex": "#373834",
+     "name": "charcoal",
+     "family": "grey",
+     "percentage": 14.1,
+     "lab": [
+      23.3,
+      -1.33,
+      2.35
+     ]
+    },
+    {
+     "hex": "#545852",
+     "name": "gunmetal",
+     "family": "grey",
+     "percentage": 11.0,
+     "lab": [
+      36.88,
+      -2.87,
+      2.93
+     ]
+    },
+    {
+     "hex": "#808178",
+     "name": "medium grey",
+     "family": "grey",
+     "percentage": 6.0,
+     "lab": [
+      53.65,
+      -2.11,
+      4.75
+     ]
+    },
+    {
+     "hex": "#903e2a",
+     "name": "brownish red",
+     "family": "brown",
+     "percentage": 2.2,
+     "lab": [
+      37.01,
+      33.3,
+      28.95
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "white",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "contemporary",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "leather",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "accessory",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "casual",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "embroidery",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "cotton-dress-1872",
+     "distance": 5.99
+    },
+    {
+     "id": "leather-boots-1780",
+     "distance": 6.25
+    },
+    {
+     "id": "cotton-coat-1845",
+     "distance": 6.51
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 7.43
+    },
+    {
+     "id": "wool-dress-1896",
+     "distance": 8.06
+    },
+    {
+     "id": "silk-coat-1900",
+     "distance": 9.28
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "leather-boots-1780",
+     "similarity": 0.843
+    },
+    {
+     "id": "wool-dress-1896",
+     "similarity": 0.586
+    },
+    {
+     "id": "silk-coat-1882",
+     "similarity": 0.542
+    },
+    {
+     "id": "silk-dress-1883",
+     "similarity": 0.511
+    },
+    {
+     "id": "silk-slippers-1865",
+     "similarity": 0.503
+    },
+    {
+     "id": "silk-coat-1900",
+     "similarity": 0.498
+    }
+   ]
+  },
+  {
+   "id": "leather-boots-1780",
+   "title": "Leather boots, European, 1780–95",
+   "type": "accessory",
+   "note": "Leather. Museum record 2009.300.1487.",
+   "credit": "The Metropolitan Museum of Art, Brooklyn Museum Costume Collection at The Metropolitan Museum of Art, Gift of the Brooklyn Museum, 2009; Gift of Herman Delman, 1954, 2009.300.1487. https://www.metmuseum.org/art/collection/search/156206",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/leather-boots-1780.webp",
+   "thumbnail": "thumbs/leather-boots-1780.webp",
+   "width": 1492,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#abacae",
+     "name": "cool grey",
+     "family": "grey",
+     "percentage": 43.2,
+     "lab": [
+      70.33,
+      0.03,
+      -1.15
+     ]
+    },
+    {
+     "hex": "#e3e2e2",
+     "name": "light grey",
+     "family": "white",
+     "percentage": 29.1,
+     "lab": [
+      89.96,
+      0.34,
+      0.12
+     ]
+    },
+    {
+     "hex": "#3d3531",
+     "name": "dark grey",
+     "family": "grey",
+     "percentage": 19.2,
+     "lab": [
+      22.86,
+      2.74,
+      3.82
+     ]
+    },
+    {
+     "hex": "#544b45",
+     "name": "charcoal grey",
+     "family": "grey",
+     "percentage": 8.5,
+     "lab": [
+      32.58,
+      2.6,
+      4.94
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "grey",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "contemporary",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "leather",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "accessory",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "occasionwear",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "solid",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "cotton-dress-1872",
+     "distance": 5.42
+    },
+    {
+     "id": "leather-boots-1795",
+     "distance": 6.25
+    },
+    {
+     "id": "wool-dress-1896",
+     "distance": 7.82
+    },
+    {
+     "id": "silk-dress-1883",
+     "distance": 8.14
+    },
+    {
+     "id": "cotton-coat-1845",
+     "distance": 8.52
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 8.75
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "leather-boots-1795",
+     "similarity": 0.843
+    },
+    {
+     "id": "wool-dress-1896",
+     "similarity": 0.636
+    },
+    {
+     "id": "silk-coat-1882",
+     "similarity": 0.562
+    },
+    {
+     "id": "silk-dress-1883",
+     "similarity": 0.549
+    },
+    {
+     "id": "silk-coat-1900",
+     "similarity": 0.546
+    },
+    {
+     "id": "cotton-dress-1872",
+     "similarity": 0.528
+    }
+   ]
+  },
+  {
+   "id": "wool-shawl-1800s",
+   "title": "Wool shawl, French, early 1800s",
+   "type": "accessory",
+   "note": "Wool. Museum record 2009.300.3218.",
+   "credit": "The Metropolitan Museum of Art, Brooklyn Museum Costume Collection at The Metropolitan Museum of Art, Gift of the Brooklyn Museum, 2009; Gift of Tracy S. Voorhees, 1960, 2009.300.3218. https://www.metmuseum.org/art/collection/search/158131",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/wool-shawl-1800s.webp",
+   "thumbnail": "thumbs/wool-shawl-1800s.webp",
+   "width": 1210,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#1b1718",
+     "name": "kajal black",
+     "family": "black",
+     "percentage": 33.8,
+     "lab": [
+      8.23,
+      2.23,
+      0.02
+     ]
+    },
+    {
+     "hex": "#d94f3d",
+     "name": "pale red",
+     "family": "red",
+     "percentage": 24.8,
+     "lab": [
+      52.6,
+      53.06,
+      39.29
+     ]
+    },
+    {
+     "hex": "#8f2d24",
+     "name": "red brown",
+     "family": "brown",
+     "percentage": 14.7,
+     "lab": [
+      33.66,
+      40.8,
+      28.62
+     ]
+    },
+    {
+     "hex": "#551e19",
+     "name": "dried blood",
+     "family": "brown",
+     "percentage": 10.8,
+     "lab": [
+      19.76,
+      25.19,
+      16.49
+     ]
+    },
+    {
+     "hex": "#694d43",
+     "name": "kattha brown",
+     "family": "brown",
+     "percentage": 8.4,
+     "lab": [
+      35.43,
+      10.29,
+      10.55
+     ]
+    },
+    {
+     "hex": "#c08e79",
+     "name": "pinkish tan",
+     "family": "red",
+     "percentage": 7.5,
+     "lab": [
+      63.29,
+      16.15,
+      18.62
+     ]
+    }
+   ],
+   "palette_source": "masked",
+   "family": "black",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "boho",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "wool",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "accessory",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "festive",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "occasionwear",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "embroidery",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "paisley",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "wool-jacket-1855",
+     "distance": 7.25
+    },
+    {
+     "id": "bandhani-odhani",
+     "distance": 9.03
+    },
+    {
+     "id": "cotton-blouse-1800s",
+     "distance": 10.22
+    },
+    {
+     "id": "silk-coat-1882",
+     "distance": 10.25
+    },
+    {
+     "id": "bandhani-sari",
+     "distance": 10.7
+    },
+    {
+     "id": "trousers-1800",
+     "distance": 11.13
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "silk-coat-1900",
+     "similarity": 0.678
+    },
+    {
+     "id": "silk-dress-1883",
+     "similarity": 0.584
+    },
+    {
+     "id": "wool-jacket-1855",
+     "similarity": 0.582
+    },
+    {
+     "id": "wool-dress-1896",
+     "similarity": 0.569
+    },
+    {
+     "id": "bandhani-sari",
+     "similarity": 0.552
+    },
+    {
+     "id": "silk-coat-1882",
+     "similarity": 0.55
+    }
+   ]
+  },
+  {
+   "id": "cotton-blouse-1800s",
+   "title": "Cotton and silk blouse, Indian, late 1800s",
+   "type": "garment",
+   "note": "Cotton, silk. Museum record 2009.300.2843.",
+   "credit": "The Metropolitan Museum of Art, Brooklyn Museum Costume Collection at The Metropolitan Museum of Art, Gift of the Brooklyn Museum, 2009; Gift of Mrs. M.D.C. Crawford and Adelaide Goan, 1960, 2009.300.2843. https://www.metmuseum.org/art/collection/search/157713",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/cotton-blouse-1800s.webp",
+   "thumbnail": "thumbs/cotton-blouse-1800s.webp",
+   "width": 1267,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#251d1f",
+     "name": "kajal black",
+     "family": "black",
+     "percentage": 47.5,
+     "lab": [
+      11.76,
+      4.33,
+      0.09
+     ]
+    },
+    {
+     "hex": "#e4c8a8",
+     "name": "light peach",
+     "family": "beige",
+     "percentage": 22.8,
+     "lab": [
+      82.18,
+      5.05,
+      19.65
+     ]
+    },
+    {
+     "hex": "#c6a27c",
+     "name": "badami almond",
+     "family": "orange",
+     "percentage": 15.7,
+     "lab": [
+      68.97,
+      7.97,
+      24.77
+     ]
+    },
+    {
+     "hex": "#917054",
+     "name": "mocha",
+     "family": "brown",
+     "percentage": 7.9,
+     "lab": [
+      49.8,
+      9.12,
+      20.57
+     ]
+    },
+    {
+     "hex": "#4c3425",
+     "name": "dark brown",
+     "family": "brown",
+     "percentage": 6.1,
+     "lab": [
+      24.08,
+      8.67,
+      13.77
+     ]
+    }
+   ],
+   "palette_source": "masked",
+   "family": "black",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "kalamkari",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "cotton",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "kurta",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "occasionwear",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "embroidery",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "bandhani-odhani",
+     "distance": 7.12
+    },
+    {
+     "id": "gold-block-print",
+     "distance": 7.62
+    },
+    {
+     "id": "trousers-1800",
+     "distance": 8.06
+    },
+    {
+     "id": "silk-coat-1882",
+     "distance": 8.99
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "distance": 9.07
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 10.21
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "resist-dyed-cotton",
+     "similarity": 0.646
+    },
+    {
+     "id": "trousers-1800",
+     "similarity": 0.614
+    },
+    {
+     "id": "ikat-striped-panel",
+     "similarity": 0.596
+    },
+    {
+     "id": "gold-block-print",
+     "similarity": 0.587
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "similarity": 0.569
+    },
+    {
+     "id": "bandhani-sari",
+     "similarity": 0.56
+    }
+   ]
+  },
+  {
+   "id": "trousers-1800",
+   "title": "Trousers, American or European, c. 1800",
+   "type": "garment",
+   "note": "[no medium available]. Museum record C.I.38.23.34.",
+   "credit": "The Metropolitan Museum of Art, Gift of Lee Simonson, 1938, C.I.38.23.34. https://www.metmuseum.org/art/collection/search/103227",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/trousers-1800.webp",
+   "thumbnail": "thumbs/trousers-1800.webp",
+   "width": 1119,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#44271d",
+     "name": "chocolate",
+     "family": "brown",
+     "percentage": 25.8,
+     "lab": [
+      19.09,
+      12.36,
+      12.34
+     ]
+    },
+    {
+     "hex": "#593b29",
+     "name": "kattha brown",
+     "family": "brown",
+     "percentage": 24.2,
+     "lab": [
+      27.88,
+      10.88,
+      16.47
+     ]
+    },
+    {
+     "hex": "#7c6e63",
+     "name": "dark taupe",
+     "family": "grey",
+     "percentage": 14.8,
+     "lab": [
+      47.42,
+      3.54,
+      8.14
+     ]
+    },
+    {
+     "hex": "#2b2b2f",
+     "name": "dark grey",
+     "family": "black",
+     "percentage": 12.4,
+     "lab": [
+      17.68,
+      0.99,
+      -2.59
+     ]
+    },
+    {
+     "hex": "#4c4a48",
+     "name": "charcoal grey",
+     "family": "grey",
+     "percentage": 12.2,
+     "lab": [
+      31.58,
+      0.4,
+      1.49
+     ]
+    },
+    {
+     "hex": "#a89c91",
+     "name": "greyish",
+     "family": "beige",
+     "percentage": 10.6,
+     "lab": [
+      65.08,
+      2.47,
+      7.34
+     ]
+    }
+   ],
+   "palette_source": "masked",
+   "family": "brown",
+   "tags": [
+    {
+     "category": "garment",
+     "tag": "trousers",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "striped",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "silhouette",
+     "tag": "straight",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "silk-dress-1883",
+     "distance": 7.79
+    },
+    {
+     "id": "silk-coat-1900",
+     "distance": 7.88
+    },
+    {
+     "id": "cotton-coat-1845",
+     "distance": 7.91
+    },
+    {
+     "id": "cotton-blouse-1800s",
+     "distance": 8.06
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 8.36
+    },
+    {
+     "id": "cotton-dress-1872",
+     "distance": 8.64
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "cotton-coat-1845",
+     "similarity": 0.699
+    },
+    {
+     "id": "cotton-blouse-1800s",
+     "similarity": 0.614
+    },
+    {
+     "id": "ikat-striped-panel",
+     "similarity": 0.607
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "similarity": 0.598
+    },
+    {
+     "id": "gold-block-print",
+     "similarity": 0.555
+    },
+    {
+     "id": "bandhani-odhani",
+     "similarity": 0.55
+    }
+   ]
+  },
+  {
+   "id": "bandhani-odhani",
+   "title": "Bandhani odhani, Kachchh, Gujarat, early 1900s",
+   "type": "fabric",
+   "note": "Silk, tie-dyed (but not ironed flat) and embroidered with polychrome silk and flat strips of silver plaited with silk thread. Museum record 1925.513.",
+   "credit": "The Cleveland Museum of Art, Purchase from the J. H. Wade Fund, 1925.513. https://clevelandart.org/art/1925.513",
+   "licence": "Public domain (CC0), Cleveland Museum of Art Open Access",
+   "image": "images/bandhani-odhani.webp",
+   "thumbnail": "thumbs/bandhani-odhani.webp",
+   "width": 1600,
+   "height": 1127,
+   "palette": [
+    {
+     "hex": "#261a1f",
+     "name": "very dark brown",
+     "family": "black",
+     "percentage": 56.3,
+     "lab": [
+      10.92,
+      7.0,
+      -1.13
+     ]
+    },
+    {
+     "hex": "#4e1622",
+     "name": "burgundy",
+     "family": "pink",
+     "percentage": 16.0,
+     "lab": [
+      17.03,
+      27.34,
+      6.36
+     ]
+    },
+    {
+     "hex": "#b06e2c",
+     "name": "leather",
+     "family": "brown",
+     "percentage": 12.1,
+     "lab": [
+      52.47,
+      20.62,
+      46.0
+     ]
+    },
+    {
+     "hex": "#873c14",
+     "name": "rust brown",
+     "family": "brown",
+     "percentage": 5.6,
+     "lab": [
+      34.87,
+      29.7,
+      38.0
+     ]
+    },
+    {
+     "hex": "#b0977c",
+     "name": "pale brown",
+     "family": "orange",
+     "percentage": 5.5,
+     "lab": [
+      64.01,
+      5.14,
+      17.68
+     ]
+    },
+    {
+     "hex": "#66513b",
+     "name": "dark taupe",
+     "family": "brown",
+     "percentage": 4.5,
+     "lab": [
+      36.03,
+      5.38,
+      16.26
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "black",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "bandhani",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "silk",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "festive",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "embroidery",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "cotton-blouse-1800s",
+     "distance": 7.12
+    },
+    {
+     "id": "silk-coat-1882",
+     "distance": 8.62
+    },
+    {
+     "id": "bandhani-sari",
+     "distance": 8.93
+    },
+    {
+     "id": "wool-shawl-1800s",
+     "distance": 9.03
+    },
+    {
+     "id": "gold-block-print",
+     "distance": 9.55
+    },
+    {
+     "id": "silk-dress-1883",
+     "distance": 9.86
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "bandhani-sari",
+     "similarity": 0.791
+    },
+    {
+     "id": "kashmir-shawl-boteh",
+     "similarity": 0.768
+    },
+    {
+     "id": "gold-block-print",
+     "similarity": 0.713
+    },
+    {
+     "id": "ikat-striped-panel",
+     "similarity": 0.702
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "similarity": 0.66
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "similarity": 0.608
+    }
+   ]
+  },
+  {
+   "id": "ikat-striped-panel",
+   "title": "Warp-ikat striped silk panel, Gujarat, 1900",
+   "type": "fabric",
+   "note": "Tabby weave, warp ikat; silk. Museum record 1925.498.",
+   "credit": "The Cleveland Museum of Art, Purchase from the J. H. Wade Fund, 1925.498. https://clevelandart.org/art/1925.498",
+   "licence": "Public domain (CC0), Cleveland Museum of Art Open Access",
+   "image": "images/ikat-striped-panel.webp",
+   "thumbnail": "thumbs/ikat-striped-panel.webp",
+   "width": 1097,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#8d192c",
+     "name": "wine red",
+     "family": "red",
+     "percentage": 30.4,
+     "lab": [
+      30.74,
+      47.88,
+      20.02
+     ]
+    },
+    {
+     "hex": "#a52d40",
+     "name": "anar red",
+     "family": "pink",
+     "percentage": 30.4,
+     "lab": [
+      38.29,
+      49.82,
+      17.86
+     ]
+    },
+    {
+     "hex": "#c5827a",
+     "name": "brownish pink",
+     "family": "red",
+     "percentage": 16.3,
+     "lab": [
+      61.0,
+      24.87,
+      14.98
+     ]
+    },
+    {
+     "hex": "#b65b5e",
+     "name": "dusty red",
+     "family": "red",
+     "percentage": 12.1,
+     "lab": [
+      49.78,
+      37.04,
+      15.48
+     ]
+    },
+    {
+     "hex": "#94514b",
+     "name": "light maroon",
+     "family": "brown",
+     "percentage": 9.2,
+     "lab": [
+      42.29,
+      27.24,
+      15.91
+     ]
+    },
+    {
+     "hex": "#adaba8",
+     "name": "greyish",
+     "family": "grey",
+     "percentage": 1.6,
+     "lab": [
+      70.06,
+      0.15,
+      1.79
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "red",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "ikat",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "silk",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "festive",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "striped",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "weave",
+     "tag": "plain weave",
+     "source": "recorded",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "wool-jacket-1855",
+     "distance": 9.51
+    },
+    {
+     "id": "bandhani-sari",
+     "distance": 9.83
+    },
+    {
+     "id": "wool-shawl-1800s",
+     "distance": 12.43
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "distance": 12.76
+    },
+    {
+     "id": "leather-boots-1795",
+     "distance": 15.33
+    },
+    {
+     "id": "silk-dress-1883",
+     "distance": 15.59
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "bandhani-odhani",
+     "similarity": 0.702
+    },
+    {
+     "id": "kashmir-shawl-boteh",
+     "similarity": 0.692
+    },
+    {
+     "id": "bandhani-sari",
+     "similarity": 0.678
+    },
+    {
+     "id": "gold-block-print",
+     "similarity": 0.642
+    },
+    {
+     "id": "trousers-1800",
+     "similarity": 0.607
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "similarity": 0.6
+    }
+   ]
+  },
+  {
+   "id": "resist-dyed-cotton",
+   "title": "Stamped-resist dyed cotton fragment, India",
+   "type": "fabric",
+   "note": "Cotton: dyed, stamped resist. Museum record 1951.498.",
+   "credit": "The Cleveland Museum of Art, Purchase from the J. H. Wade Fund, 1951.498. https://clevelandart.org/art/1951.498",
+   "licence": "Public domain (CC0), Cleveland Museum of Art Open Access",
+   "image": "images/resist-dyed-cotton.webp",
+   "thumbnail": "thumbs/resist-dyed-cotton.webp",
+   "width": 1197,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#272a30",
+     "name": "dark",
+     "family": "black",
+     "percentage": 47.3,
+     "lab": [
+      16.99,
+      0.25,
+      -4.35
+     ]
+    },
+    {
+     "hex": "#b1a899",
+     "name": "greyish",
+     "family": "beige",
+     "percentage": 19.1,
+     "lab": [
+      69.22,
+      0.63,
+      8.91
+     ]
+    },
+    {
+     "hex": "#8e867a",
+     "name": "warm grey",
+     "family": "grey",
+     "percentage": 13.4,
+     "lab": [
+      56.29,
+      0.84,
+      7.54
+     ]
+    },
+    {
+     "hex": "#cbcac2",
+     "name": "chandi silver",
+     "family": "grey",
+     "percentage": 12.6,
+     "lab": [
+      81.2,
+      -1.09,
+      4.11
+     ]
+    },
+    {
+     "hex": "#615f5b",
+     "name": "slate grey",
+     "family": "grey",
+     "percentage": 7.6,
+     "lab": [
+      40.38,
+      -0.02,
+      2.57
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "black",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "boho",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "block print",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "cotton",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "occasionwear",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "geometric",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "cotton-dress-1872",
+     "distance": 5.84
+    },
+    {
+     "id": "cotton-coat-1845",
+     "distance": 6.37
+    },
+    {
+     "id": "silk-coat-1900",
+     "distance": 7.1
+    },
+    {
+     "id": "leather-boots-1795",
+     "distance": 7.43
+    },
+    {
+     "id": "wool-dress-1896",
+     "distance": 8.23
+    },
+    {
+     "id": "trousers-1800",
+     "distance": 8.36
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "gold-block-print",
+     "similarity": 0.754
+    },
+    {
+     "id": "bandhani-odhani",
+     "similarity": 0.66
+    },
+    {
+     "id": "bandhani-sari",
+     "similarity": 0.657
+    },
+    {
+     "id": "cotton-blouse-1800s",
+     "similarity": 0.646
+    },
+    {
+     "id": "kashmir-shawl-boteh",
+     "similarity": 0.622
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "similarity": 0.599
+    }
+   ]
+  },
+  {
+   "id": "gold-block-print",
+   "title": "Gold-leaf block print on cotton muslin, India, 1800s",
+   "type": "fabric",
+   "note": "Block printed with gold leaf (varak) on dark blue dyed plain weave cotton muslin. Museum record 1925.685.",
+   "credit": "The Cleveland Museum of Art, Purchase from the J. H. Wade Fund, 1925.685. https://clevelandart.org/art/1925.685",
+   "licence": "Public domain (CC0), Cleveland Museum of Art Open Access",
+   "image": "images/gold-block-print.webp",
+   "thumbnail": "thumbs/gold-block-print.webp",
+   "width": 1600,
+   "height": 1492,
+   "palette": [
+    {
+     "hex": "#07060f",
+     "name": "black",
+     "family": "black",
+     "percentage": 51.1,
+     "lab": [
+      1.9,
+      1.62,
+      -3.59
+     ]
+    },
+    {
+     "hex": "#1c1b26",
+     "name": "dark",
+     "family": "black",
+     "percentage": 25.1,
+     "lab": [
+      10.34,
+      3.56,
+      -7.31
+     ]
+    },
+    {
+     "hex": "#34333c",
+     "name": "dark grey",
+     "family": "black",
+     "percentage": 13.8,
+     "lab": [
+      21.67,
+      2.64,
+      -5.49
+     ]
+    },
+    {
+     "hex": "#473a29",
+     "name": "dark brown",
+     "family": "brown",
+     "percentage": 4.1,
+     "lab": [
+      25.34,
+      2.86,
+      12.71
+     ]
+    },
+    {
+     "hex": "#816a48",
+     "name": "dull brown",
+     "family": "brown",
+     "percentage": 3.6,
+     "lab": [
+      46.24,
+      4.19,
+      22.5
+     ]
+    },
+    {
+     "hex": "#c6a566",
+     "name": "sand brown",
+     "family": "yellow",
+     "percentage": 2.3,
+     "lab": [
+      69.38,
+      3.97,
+      37.03
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "black",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "block print",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "cotton",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "festive",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "embroidery",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "weave",
+     "tag": "plain weave",
+     "source": "recorded",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "silk-coat-1882",
+     "distance": 3.79
+    },
+    {
+     "id": "cotton-blouse-1800s",
+     "distance": 7.62
+    },
+    {
+     "id": "trousers-1800",
+     "distance": 8.98
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 9.44
+    },
+    {
+     "id": "bandhani-odhani",
+     "distance": 9.55
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "distance": 10.37
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "resist-dyed-cotton",
+     "similarity": 0.754
+    },
+    {
+     "id": "kashmir-shawl-boteh",
+     "similarity": 0.725
+    },
+    {
+     "id": "bandhani-sari",
+     "similarity": 0.721
+    },
+    {
+     "id": "bandhani-odhani",
+     "similarity": 0.713
+    },
+    {
+     "id": "ikat-striped-panel",
+     "similarity": 0.642
+    },
+    {
+     "id": "cotton-blouse-1800s",
+     "similarity": 0.587
+    }
+   ]
+  },
+  {
+   "id": "kashmir-shawl-border",
+   "title": "Kashmir shawl border, c. 1815–25",
+   "type": "fabric",
+   "note": "Wool and silk: tapestry twill. Museum record 1934.330.",
+   "credit": "The Cleveland Museum of Art, Gift of Dr. E. Rosencrantz, 1934.330. https://clevelandart.org/art/1934.330",
+   "licence": "Public domain (CC0), Cleveland Museum of Art Open Access",
+   "image": "images/kashmir-shawl-border.webp",
+   "thumbnail": "thumbs/kashmir-shawl-border.webp",
+   "width": 1600,
+   "height": 1446,
+   "palette": [
+    {
+     "hex": "#dacbb3",
+     "name": "malai cream",
+     "family": "beige",
+     "percentage": 24.8,
+     "lab": [
+      82.31,
+      1.33,
+      13.86
+     ]
+    },
+    {
+     "hex": "#b49b80",
+     "name": "mushroom",
+     "family": "orange",
+     "percentage": 18.4,
+     "lab": [
+      65.52,
+      5.09,
+      17.59
+     ]
+    },
+    {
+     "hex": "#181b1c",
+     "name": "kajal black",
+     "family": "black",
+     "percentage": 17.2,
+     "lab": [
+      9.5,
+      -1.14,
+      -1.18
+     ]
+    },
+    {
+     "hex": "#3d4545",
+     "name": "charcoal grey",
+     "family": "grey",
+     "percentage": 14.9,
+     "lab": [
+      28.58,
+      -3.26,
+      -1.11
+     ]
+    },
+    {
+     "hex": "#8d2c32",
+     "name": "rouge",
+     "family": "red",
+     "percentage": 13.4,
+     "lab": [
+      33.34,
+      41.33,
+      19.45
+     ]
+    },
+    {
+     "hex": "#747670",
+     "name": "hathi grey",
+     "family": "grey",
+     "percentage": 11.3,
+     "lab": [
+      49.3,
+      -1.96,
+      3.04
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "beige",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "boho",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "ajrakh",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "wool",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "bridal",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "paisley",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "weave",
+     "tag": "twill",
+     "source": "recorded",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "silk-coat-1900",
+     "distance": 8.17
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 8.65
+    },
+    {
+     "id": "cotton-blouse-1800s",
+     "distance": 9.07
+    },
+    {
+     "id": "cotton-dress-1872",
+     "distance": 9.7
+    },
+    {
+     "id": "leather-boots-1795",
+     "distance": 9.88
+    },
+    {
+     "id": "cotton-coat-1845",
+     "distance": 10.03
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "bandhani-sari",
+     "similarity": 0.679
+    },
+    {
+     "id": "bandhani-odhani",
+     "similarity": 0.608
+    },
+    {
+     "id": "ikat-striped-panel",
+     "similarity": 0.6
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "similarity": 0.599
+    },
+    {
+     "id": "kashmir-shawl-boteh",
+     "similarity": 0.577
+    },
+    {
+     "id": "gold-block-print",
+     "similarity": 0.57
+    }
+   ]
+  },
+  {
+   "id": "bandhani-sari",
+   "title": "Tie-dyed satin sari, Gujarat, 1800s",
+   "type": "fabric",
+   "note": "Satin, tied and dyed. Museum record 1916.1206.",
+   "credit": "The Cleveland Museum of Art, Gift of Mr. and Mrs. J. H. Wade, 1916.1206. https://clevelandart.org/art/1916.1206",
+   "licence": "Public domain (CC0), Cleveland Museum of Art Open Access",
+   "image": "images/bandhani-sari.webp",
+   "thumbnail": "thumbs/bandhani-sari.webp",
+   "width": 1600,
+   "height": 1284,
+   "palette": [
+    {
+     "hex": "#793138",
+     "name": "purple brown",
+     "family": "pink",
+     "percentage": 55.0,
+     "lab": [
+      30.76,
+      32.11,
+      11.5
+     ]
+    },
+    {
+     "hex": "#372c2f",
+     "name": "dark grey",
+     "family": "black",
+     "percentage": 26.0,
+     "lab": [
+      19.3,
+      5.66,
+      -0.04
+     ]
+    },
+    {
+     "hex": "#996e65",
+     "name": "reddish grey",
+     "family": "brown",
+     "percentage": 8.4,
+     "lab": [
+      50.53,
+      15.81,
+      11.78
+     ]
+    },
+    {
+     "hex": "#aaaaa3",
+     "name": "greyish",
+     "family": "grey",
+     "percentage": 5.4,
+     "lab": [
+      69.43,
+      -1.3,
+      3.6
+     ]
+    },
+    {
+     "hex": "#9a6946",
+     "name": "earth",
+     "family": "brown",
+     "percentage": 5.2,
+     "lab": [
+      48.78,
+      15.59,
+      27.48
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "pink",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "bandhani",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "georgette",
+     "source": "ai",
+     "is_guess": true
+    },
+    {
+     "category": "pattern",
+     "tag": "paisley",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "weave",
+     "tag": "satin",
+     "source": "recorded",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "silk-dress-1883",
+     "distance": 8.87
+    },
+    {
+     "id": "bandhani-odhani",
+     "distance": 8.93
+    },
+    {
+     "id": "ikat-striped-panel",
+     "distance": 9.83
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "distance": 10.54
+    },
+    {
+     "id": "wool-shawl-1800s",
+     "distance": 10.7
+    },
+    {
+     "id": "cotton-blouse-1800s",
+     "distance": 10.96
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "bandhani-odhani",
+     "similarity": 0.791
+    },
+    {
+     "id": "kashmir-shawl-boteh",
+     "similarity": 0.761
+    },
+    {
+     "id": "gold-block-print",
+     "similarity": 0.721
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "similarity": 0.679
+    },
+    {
+     "id": "ikat-striped-panel",
+     "similarity": 0.678
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "similarity": 0.657
+    }
+   ]
+  },
+  {
+   "id": "kashmir-shawl-boteh",
+   "title": "Kashmir shawl with boteh, 1820–30",
+   "type": "fabric",
+   "note": "2/2 twill tapestry weave, double interlocked: wool, possibly pashmina. Museum record 1952.190.",
+   "credit": "The Cleveland Museum of Art, Gift of Mrs. Arthur Loesser, 1952.190. https://clevelandart.org/art/1952.190",
+   "licence": "Public domain (CC0), Cleveland Museum of Art Open Access",
+   "image": "images/kashmir-shawl-boteh.webp",
+   "thumbnail": "thumbs/kashmir-shawl-boteh.webp",
+   "width": 1600,
+   "height": 631,
+   "palette": [
+    {
+     "hex": "#1f4d6a",
+     "name": "dark slate blue",
+     "family": "blue",
+     "percentage": 61.2,
+     "lab": [
+      30.97,
+      -5.39,
+      -21.4
+     ]
+    },
+    {
+     "hex": "#3a434b",
+     "name": "charcoal grey",
+     "family": "grey",
+     "percentage": 10.6,
+     "lab": [
+      27.9,
+      -1.62,
+      -6.06
+     ]
+    },
+    {
+     "hex": "#4a3040",
+     "name": "baingani aubergine",
+     "family": "pink",
+     "percentage": 8.8,
+     "lab": [
+      23.47,
+      14.76,
+      -5.23
+     ]
+    },
+    {
+     "hex": "#632230",
+     "name": "burgundy",
+     "family": "pink",
+     "percentage": 7.8,
+     "lab": [
+      23.71,
+      30.68,
+      6.48
+     ]
+    },
+    {
+     "hex": "#8c6c5e",
+     "name": "brownish",
+     "family": "brown",
+     "percentage": 6.0,
+     "lab": [
+      48.4,
+      10.61,
+      12.72
+     ]
+    },
+    {
+     "hex": "#d2cdd4",
+     "name": "chandi silver",
+     "family": "grey",
+     "percentage": 5.6,
+     "lab": [
+      82.98,
+      2.99,
+      -2.86
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "blue",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "ajrakh",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "wool",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "festive",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "paisley",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "weave",
+     "tag": "twill",
+     "source": "recorded",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "cotton-dress-1872",
+     "distance": 11.73
+    },
+    {
+     "id": "leather-boots-1795",
+     "distance": 12.48
+    },
+    {
+     "id": "bandhani-sari",
+     "distance": 12.69
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 12.89
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "distance": 13.04
+    },
+    {
+     "id": "trousers-1800",
+     "distance": 13.4
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "bandhani-odhani",
+     "similarity": 0.768
+    },
+    {
+     "id": "bandhani-sari",
+     "similarity": 0.761
+    },
+    {
+     "id": "gold-block-print",
+     "similarity": 0.725
+    },
+    {
+     "id": "ikat-striped-panel",
+     "similarity": 0.692
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "similarity": 0.622
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "similarity": 0.577
+    }
+   ]
+  }
+ ],
+ "families": [
+  {
+   "family": "beige",
+   "pieces": 2
+  },
+  {
+   "family": "black",
+   "pieces": 6
+  },
+  {
+   "family": "blue",
+   "pieces": 1
+  },
+  {
+   "family": "brown",
+   "pieces": 1
+  },
+  {
+   "family": "grey",
+   "pieces": 5
+  },
+  {
+   "family": "pink",
+   "pieces": 1
+  },
+  {
+   "family": "red",
+   "pieces": 2
+  },
+  {
+   "family": "white",
+   "pieces": 2
+  }
+ ],
+ "collections": [
+  {
+   "id": "indian-textiles",
+   "title": "Indian textiles",
+   "description": "Bandhani, ikat, block print and Kashmir weaving, from Gujarat to Kashmir.",
+   "pieces": [
+    "bandhani-odhani",
+    "ikat-striped-panel",
+    "resist-dyed-cotton",
+    "gold-block-print",
+    "kashmir-shawl-border",
+    "bandhani-sari",
+    "kashmir-shawl-boteh",
+    "cotton-blouse-1800s"
+   ]
+  },
+  {
+   "id": "kashmir-boteh",
+   "title": "Kashmir shawls & boteh",
+   "description": "The boteh, or paisley, from Kashmir looms to a French shawl.",
+   "pieces": [
+    "wool-shawl-1800s",
+    "kashmir-shawl-border",
+    "kashmir-shawl-boteh"
+   ]
+  },
+  {
+   "id": "colour-reds",
+   "title": "Colour-coordinated: reds",
+   "description": "Pieces whose measured palette includes a red or pink of at least 10%.",
+   "pieces": [
+    "wool-jacket-1855",
+    "wool-shawl-1800s",
+    "ikat-striped-panel",
+    "bandhani-odhani",
+    "bandhani-sari",
+    "kashmir-shawl-border"
+   ]
+  },
+  {
+   "id": "nineteenth-century-dress",
+   "title": "Nineteenth-century dress",
+   "description": "Dresses, a coat and trousers from 1800 to 1899.",
+   "pieces": [
+    "silk-dress-1883",
+    "wool-dress-1896",
+    "cotton-dress-1872",
+    "cotton-coat-1845",
+    "trousers-1800"
+   ]
+  }
+ ],
+ "outfits": [
+  {
+   "id": "red-shawl-dark-coat",
+   "title": "Red shawl, dark coat",
+   "note": "Styled for this demo from pieces of different eras and makers; not a historical ensemble.",
+   "pieces": [
+    "silk-coat-1882",
+    "wool-shawl-1800s",
+    "silk-slippers-1865"
+   ],
+   "colours": {
+    "dominant": [
+     {
+      "hex": "#0f0d0f",
+      "name": "black",
+      "share": 37.1,
+      "pieces": [
+       "silk-coat-1882",
+       "wool-shawl-1800s"
+      ]
+     },
+     {
+      "hex": "#f2f2f3",
+      "name": "pale grey",
+      "share": 20.2,
+      "pieces": [
+       "silk-slippers-1865"
+      ]
+     },
+     {
+      "hex": "#d94f3d",
+      "name": "pale red",
+      "share": 8.3,
+      "pieces": [
+       "wool-shawl-1800s"
+      ]
+     },
+     {
+      "hex": "#2e2937",
+      "name": "dark",
+      "share": 6.8,
+      "pieces": [
+       "silk-coat-1882"
+      ]
+     },
+     {
+      "hex": "#5c2665",
+      "name": "jamuni purple",
+      "share": 5.4,
+      "pieces": [
+       "silk-slippers-1865"
+      ]
+     },
+     {
+      "hex": "#8f2d24",
+      "name": "red brown",
+      "share": 4.9,
+      "pieces": [
+       "wool-shawl-1800s"
+      ]
+     }
+    ],
+    "shared": [
+     {
+      "hex": "#0f0d0f",
+      "name": "black",
+      "share": 37.1,
+      "pieces": [
+       "silk-coat-1882",
+       "wool-shawl-1800s"
+      ]
+     }
+    ],
+    "complementary": [],
+    "contrasting": [
+     [
+      {
+       "hex": "#0f0d0f",
+       "name": "black",
+       "share": 37.1,
+       "pieces": [
+        "silk-coat-1882",
+        "wool-shawl-1800s"
+       ]
+      },
+      {
+       "hex": "#f2f2f3",
+       "name": "pale grey",
+       "share": 20.2,
+       "pieces": [
+        "silk-slippers-1865"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#0f0d0f",
+       "name": "black",
+       "share": 37.1,
+       "pieces": [
+        "silk-coat-1882",
+        "wool-shawl-1800s"
+       ]
+      },
+      {
+       "hex": "#d94f3d",
+       "name": "pale red",
+       "share": 8.3,
+       "pieces": [
+        "wool-shawl-1800s"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#0f0d0f",
+       "name": "black",
+       "share": 37.1,
+       "pieces": [
+        "silk-coat-1882",
+        "wool-shawl-1800s"
+       ]
+      },
+      {
+       "hex": "#c08e79",
+       "name": "pinkish tan",
+       "share": 2.5,
+       "pieces": [
+        "wool-shawl-1800s"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#f2f2f3",
+       "name": "pale grey",
+       "share": 20.2,
+       "pieces": [
+        "silk-slippers-1865"
+       ]
+      },
+      {
+       "hex": "#d94f3d",
+       "name": "pale red",
+       "share": 8.3,
+       "pieces": [
+        "wool-shawl-1800s"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#f2f2f3",
+       "name": "pale grey",
+       "share": 20.2,
+       "pieces": [
+        "silk-slippers-1865"
+       ]
+      },
+      {
+       "hex": "#2e2937",
+       "name": "dark",
+       "share": 6.8,
+       "pieces": [
+        "silk-coat-1882"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#f2f2f3",
+       "name": "pale grey",
+       "share": 20.2,
+       "pieces": [
+        "silk-slippers-1865"
+       ]
+      },
+      {
+       "hex": "#8f2d24",
+       "name": "red brown",
+       "share": 4.9,
+       "pieces": [
+        "wool-shawl-1800s"
+       ]
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "id": "ochre-afternoon",
+   "title": "Ochre afternoon",
+   "note": "Styled for this demo from pieces of different eras and makers; not a historical ensemble.",
+   "pieces": [
+    "wool-dress-1896",
+    "leather-boots-1780",
+    "kashmir-shawl-border"
+   ],
+   "colours": {
+    "dominant": [
+     {
+      "hex": "#abacae",
+      "name": "cool grey",
+      "share": 35.9,
+      "pieces": [
+       "leather-boots-1780",
+       "wool-dress-1896"
+      ]
+     },
+     {
+      "hex": "#a78e5c",
+      "name": "dark sand",
+      "share": 12.3,
+      "pieces": [
+       "wool-dress-1896",
+       "kashmir-shawl-border"
+      ]
+     },
+     {
+      "hex": "#e3e2e2",
+      "name": "light grey",
+      "share": 9.7,
+      "pieces": [
+       "leather-boots-1780"
+      ]
+     },
+     {
+      "hex": "#3d3531",
+      "name": "dark grey",
+      "share": 9.2,
+      "pieces": [
+       "leather-boots-1780"
+      ]
+     },
+     {
+      "hex": "#dacbb3",
+      "name": "malai cream",
+      "share": 8.3,
+      "pieces": [
+       "kashmir-shawl-border"
+      ]
+     },
+     {
+      "hex": "#181b1c",
+      "name": "kajal black",
+      "share": 5.7,
+      "pieces": [
+       "kashmir-shawl-border"
+      ]
+     }
+    ],
+    "shared": [
+     {
+      "hex": "#abacae",
+      "name": "cool grey",
+      "share": 35.9,
+      "pieces": [
+       "leather-boots-1780",
+       "wool-dress-1896"
+      ]
+     },
+     {
+      "hex": "#a78e5c",
+      "name": "dark sand",
+      "share": 12.3,
+      "pieces": [
+       "wool-dress-1896",
+       "kashmir-shawl-border"
+      ]
+     }
+    ],
+    "complementary": [],
+    "contrasting": [
+     [
+      {
+       "hex": "#abacae",
+       "name": "cool grey",
+       "share": 35.9,
+       "pieces": [
+        "leather-boots-1780",
+        "wool-dress-1896"
+       ]
+      },
+      {
+       "hex": "#3d3531",
+       "name": "dark grey",
+       "share": 9.2,
+       "pieces": [
+        "leather-boots-1780"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#abacae",
+       "name": "cool grey",
+       "share": 35.9,
+       "pieces": [
+        "leather-boots-1780",
+        "wool-dress-1896"
+       ]
+      },
+      {
+       "hex": "#181b1c",
+       "name": "kajal black",
+       "share": 5.7,
+       "pieces": [
+        "kashmir-shawl-border"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#abacae",
+       "name": "cool grey",
+       "share": 35.9,
+       "pieces": [
+        "leather-boots-1780",
+        "wool-dress-1896"
+       ]
+      },
+      {
+       "hex": "#3d4545",
+       "name": "charcoal grey",
+       "share": 5.0,
+       "pieces": [
+        "kashmir-shawl-border"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#a78e5c",
+       "name": "dark sand",
+       "share": 12.3,
+       "pieces": [
+        "wool-dress-1896",
+        "kashmir-shawl-border"
+       ]
+      },
+      {
+       "hex": "#181b1c",
+       "name": "kajal black",
+       "share": 5.7,
+       "pieces": [
+        "kashmir-shawl-border"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#3d3531",
+       "name": "dark grey",
+       "share": 9.2,
+       "pieces": [
+        "leather-boots-1780"
+       ]
+      },
+      {
+       "hex": "#dacbb3",
+       "name": "malai cream",
+       "share": 8.3,
+       "pieces": [
+        "kashmir-shawl-border"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#e3e2e2",
+       "name": "light grey",
+       "share": 9.7,
+       "pieces": [
+        "leather-boots-1780"
+       ]
+      },
+      {
+       "hex": "#181b1c",
+       "name": "kajal black",
+       "share": 5.7,
+       "pieces": [
+        "kashmir-shawl-border"
+       ]
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "id": "printed-cotton",
+   "title": "Printed cotton",
+   "note": "Styled for this demo from pieces of different eras and makers; not a historical ensemble.",
+   "pieces": [
+    "cotton-dress-1872",
+    "wool-jacket-1855",
+    "leather-boots-1795"
+   ],
+   "colours": {
+    "dominant": [
+     {
+      "hex": "#f0f0ee",
+      "name": "pale grey",
+      "share": 25.7,
+      "pieces": [
+       "leather-boots-1795",
+       "cotton-dress-1872"
+      ]
+     },
+     {
+      "hex": "#3a3a3a",
+      "name": "dark grey",
+      "share": 22.5,
+      "pieces": [
+       "cotton-dress-1872",
+       "leather-boots-1795"
+      ]
+     },
+     {
+      "hex": "#c43c36",
+      "name": "reddish",
+      "share": 13.9,
+      "pieces": [
+       "wool-jacket-1855"
+      ]
+     },
+     {
+      "hex": "#ea514a",
+      "name": "pale red",
+      "share": 8.8,
+      "pieces": [
+       "wool-jacket-1855"
+      ]
+     },
+     {
+      "hex": "#86807c",
+      "name": "hathi grey",
+      "share": 7.1,
+      "pieces": [
+       "cotton-dress-1872",
+       "leather-boots-1795"
+      ]
+     },
+     {
+      "hex": "#a7a4a5",
+      "name": "grey",
+      "share": 7.0,
+      "pieces": [
+       "cotton-dress-1872"
+      ]
+     }
+    ],
+    "shared": [
+     {
+      "hex": "#f0f0ee",
+      "name": "pale grey",
+      "share": 25.7,
+      "pieces": [
+       "leather-boots-1795",
+       "cotton-dress-1872"
+      ]
+     },
+     {
+      "hex": "#3a3a3a",
+      "name": "dark grey",
+      "share": 22.5,
+      "pieces": [
+       "cotton-dress-1872",
+       "leather-boots-1795"
+      ]
+     },
+     {
+      "hex": "#86807c",
+      "name": "hathi grey",
+      "share": 7.1,
+      "pieces": [
+       "cotton-dress-1872",
+       "leather-boots-1795"
+      ]
+     }
+    ],
+    "complementary": [],
+    "contrasting": [
+     [
+      {
+       "hex": "#f0f0ee",
+       "name": "pale grey",
+       "share": 25.7,
+       "pieces": [
+        "leather-boots-1795",
+        "cotton-dress-1872"
+       ]
+      },
+      {
+       "hex": "#3a3a3a",
+       "name": "dark grey",
+       "share": 22.5,
+       "pieces": [
+        "cotton-dress-1872",
+        "leather-boots-1795"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#f0f0ee",
+       "name": "pale grey",
+       "share": 25.7,
+       "pieces": [
+        "leather-boots-1795",
+        "cotton-dress-1872"
+       ]
+      },
+      {
+       "hex": "#c43c36",
+       "name": "reddish",
+       "share": 13.9,
+       "pieces": [
+        "wool-jacket-1855"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#f0f0ee",
+       "name": "pale grey",
+       "share": 25.7,
+       "pieces": [
+        "leather-boots-1795",
+        "cotton-dress-1872"
+       ]
+      },
+      {
+       "hex": "#86807c",
+       "name": "hathi grey",
+       "share": 7.1,
+       "pieces": [
+        "cotton-dress-1872",
+        "leather-boots-1795"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#3a3a3a",
+       "name": "dark grey",
+       "share": 22.5,
+       "pieces": [
+        "cotton-dress-1872",
+        "leather-boots-1795"
+       ]
+      },
+      {
+       "hex": "#a7a4a5",
+       "name": "grey",
+       "share": 7.0,
+       "pieces": [
+        "cotton-dress-1872"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#f0f0ee",
+       "name": "pale grey",
+       "share": 25.7,
+       "pieces": [
+        "leather-boots-1795",
+        "cotton-dress-1872"
+       ]
+      },
+      {
+       "hex": "#545852",
+       "name": "gunmetal",
+       "share": 3.7,
+       "pieces": [
+        "leather-boots-1795"
+       ]
+      }
+     ],
+     [
+      {
+       "hex": "#f0f0ee",
+       "name": "pale grey",
+       "share": 25.7,
+       "pieces": [
+        "leather-boots-1795",
+        "cotton-dress-1872"
+       ]
+      },
+      {
+       "hex": "#8b2a25",
+       "name": "carmine",
+       "share": 3.4,
+       "pieces": [
+        "wool-jacket-1855"
+       ]
+      }
+     ]
+    ]
+   }
+  }
+ ]
+}

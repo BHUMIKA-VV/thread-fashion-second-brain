@@ -3,6 +3,7 @@ import { Fraunces, Inter } from "next/font/google";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { shareMetadata, SITE_DESCRIPTION, SITE_URL } from "@/lib/site";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -19,8 +20,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: SITE_URL,
   title: { default: "Thread", template: "%s · Thread" },
-  description: "Everything you wear leaves a trace. A personal fashion archive for garments, fabrics, colour and craft.",
+  description: SITE_DESCRIPTION,
+  ...shareMetadata({ title: "Thread", description: SITE_DESCRIPTION }),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

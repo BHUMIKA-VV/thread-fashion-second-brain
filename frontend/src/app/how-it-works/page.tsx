@@ -2,10 +2,14 @@ import type { Metadata } from "next";
 
 import { PAGE, PageHeader } from "@/components/page-header";
 import { ButtonLink } from "@/components/ui/button";
+import { shareMetadata } from "@/lib/site";
+
+const DESCRIPTION = "How Thread stores a piece, measures its colours, finds kindred pieces and helps you compose outfits.";
 
 export const metadata: Metadata = {
   title: "How it works",
-  description: "How Thread stores a piece, measures its colours, finds kindred pieces and helps you compose outfits.",
+  description: DESCRIPTION,
+  ...shareMetadata({ title: "How it works · Thread", description: DESCRIPTION, path: "/how-it-works" }),
 };
 
 const STEPS = [

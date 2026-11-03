@@ -2,7 +2,13 @@ import { cn } from "@/lib/cn";
 import type { PaletteColor } from "@/types/api";
 
 /** A thin proportional band of palette colours (decorative summary; details live elsewhere). */
-export function PaletteStrip({ colors, className }: { colors: PaletteColor[]; className?: string }) {
+export function PaletteStrip({
+  colors,
+  className,
+}: {
+  colors: Pick<PaletteColor, "hex" | "name" | "percentage">[];
+  className?: string;
+}) {
   return (
     <div
       className={cn("flex h-2 overflow-hidden", className)}
