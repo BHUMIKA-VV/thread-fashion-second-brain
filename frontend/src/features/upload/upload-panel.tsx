@@ -9,17 +9,11 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import { PaletteStrip } from "@/features/palette/palette-strip";
 import { cn } from "@/lib/cn";
+import { TYPE_LABELS } from "@/lib/labels";
 import { ACCEPT_ATTRIBUTE, formatBytes } from "@/lib/upload-rules";
 import { ITEM_TYPES, type ItemType } from "@/types/api";
 import { useUploadQueue, type UploadEntry } from "./use-upload-queue";
 
-const TYPE_LABELS: Record<ItemType, string> = {
-  outfit: "Outfit",
-  garment: "Garment",
-  fabric: "Fabric swatch",
-  accessory: "Accessory",
-  other: "Other inspiration",
-};
 
 const STATUS: Record<UploadEntry["status"], { label: string; tone: StatusTone }> = {
   waiting: { label: "Waiting", tone: "idle" },

@@ -11,6 +11,8 @@ export const EVENT_LABELS: Record<MetricEvent, string> = {
   how_it_works_view: "How it works",
   pilot_view: "Studio pilot",
   signup_view: "Sign-up page",
+  playground_view: "Playground",
+  playground_analysis: "Tried a photo",
 };
 
 const SOURCE_LABELS: Record<string, string> = {

@@ -17,7 +17,7 @@ const STORY = [
 test.describe("signed out", () => {
   test.use({ signedIn: false });
 
-  test("a visitor is offered the demo first, then their own wardrobe, then sign in", async ({ page }) => {
+  test("a visitor is offered the demo first, then their own wardrobe, a photo to try, then sign in", async ({ page }) => {
     await page.goto("/");
     const cover = page.getByRole("region", { name: "Thread" });
     const coverLinks = cover.getByRole("link");
@@ -29,7 +29,8 @@ test.describe("signed out", () => {
     for (const name of STORY) await expect(page.getByRole("heading", { level: 2, name })).toBeVisible();
 
     const closing = page.getByRole("region", { name: "Your archive starts with one photograph." });
-    await expect(closing.getByRole("link")).toHaveText([/Explore the demo/, "Create your wardrobe", "Sign in"]);
+    await expect(closing.getByRole("link")).toHaveText([/Explore the demo/, "Create your wardrobe", "Try it on a photo", "Sign in"]);
+    await expect(closing.getByRole("link", { name: "Try it on a photo" })).toHaveAttribute("href", "/try");
     await expect(closing.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
 
     // No invented social proof on the page.

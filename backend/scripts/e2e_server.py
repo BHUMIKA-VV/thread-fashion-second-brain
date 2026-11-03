@@ -8,9 +8,9 @@ Used by frontend/playwright.config.ts; you never need to run it by hand. Every r
   maintenance database) and migrates it, so browser tests never touch your archive;
 - empties .cache/e2e-storage/ and stores test images there, not in storage/;
 - creates the owner account e2e-owner@thread.test with THREAD_E2E_OWNER_PASSWORD;
-- turns off the local auto sign-in and lifts the sign-up and visit-count rate limits (every
-  test signs up its own account and loads pages from one address), keeps emails in the local
-  outbox, and uses the fake deep analyzer.
+- turns off the local auto sign-in and lifts the sign-up, visit-count and playground rate
+  limits (every test signs up its own account and loads pages from one address), keeps emails
+  in the local outbox, and uses the fake deep analyzer.
 
 Refuses to run unless THREAD_TEST_DATABASE_URL is set, and never in production.
 """
@@ -82,9 +82,11 @@ def main(argv: list[str] | None = None) -> int:
 
     # Every browser test loads public pages from 127.0.0.1, which would soon reach the
     # per-address cap on visit counts and leave the counting test nothing to count.
-    from app.services import metrics
+    # The same goes for the playground's per-address and daily caps.
+    from app.services import metrics, playground
 
     metrics.LIMIT_PER_IP = 100_000
+    playground.PER_IP_PER_HOUR = playground.DAILY_CAP = 100_000
 
     from datetime import UTC, datetime
 

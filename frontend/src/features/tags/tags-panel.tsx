@@ -7,19 +7,10 @@ import { useId, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
+import { CATEGORY_LABEL } from "@/lib/labels";
 import { editItemTags, getItemTags, getTagScores, getVocabulary, reanalyzeItem } from "@/services/items";
 import { TAG_CATEGORIES, type Item, type ItemTag, type ItemTags, type TagCategory, type TagEdit } from "@/types/api";
 
-const CATEGORY_LABEL: Record<TagCategory, string> = {
-  garment: "Garment",
-  silhouette: "Silhouette",
-  pattern: "Pattern",
-  fabric: "Fabric (guess)",
-  weave: "Weave",
-  aesthetic: "Aesthetic",
-  occasion: "Occasion",
-  craft: "Craft",
-};
 
 export const TAGS_PENDING_RETRY_MS = 4_000;
 

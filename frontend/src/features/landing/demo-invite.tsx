@@ -21,9 +21,14 @@ export function DemoInvite() {
               palettes, tags, kindred pieces and outfits Thread computed for them. Nothing you do there is saved.
             </p>
           </div>
-          <ButtonLink href="/demo">
-            Explore the demo <ArrowRight aria-hidden className="size-4" />
-          </ButtonLink>
+          <div className="flex flex-wrap gap-3">
+            <ButtonLink href="/demo">
+              Explore the demo <ArrowRight aria-hidden className="size-4" />
+            </ButtonLink>
+            <ButtonLink href="/try" variant="secondary">
+              Try your own photo
+            </ButtonLink>
+          </div>
         </div>
         <DemoCollectionList collections={DEMO.collections} />
       </div>

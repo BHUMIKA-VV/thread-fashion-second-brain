@@ -70,6 +70,10 @@ function Offer() {
         See what Thread does first in the{" "}
         <Link href="/demo" className="text-ink underline underline-offset-4">
           demo
+        </Link>{" "}
+        or{" "}
+        <Link href="/try" className="text-ink underline underline-offset-4">
+          on one of your own photos
         </Link>
         {email ? (
           <>

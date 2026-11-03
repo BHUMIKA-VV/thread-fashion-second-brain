@@ -19,6 +19,10 @@ const HARMONY_TEXT: Record<Harmony, string> = {
   mixed: "Mixed — several unrelated hues",
 };
 
+type PaletteSummary = Pick<Palette, "harmony" | "source"> & {
+  colors: Pick<PaletteColor, "hex" | "name" | "percentage">[];
+};
+
 const SOURCE_TEXT: Record<Palette["source"], string> = {
   original: "Measured across the whole image.",
   masked: "A plain backdrop was detected and left out.",
@@ -98,7 +102,8 @@ export function PaletteView({ item }: { item: Item }) {
   );
 }
 
-function PaletteDetails({ palette }: { palette: Palette }) {
+/** The palette's band, colour chips and notes. The playground shows a palette that is never stored. */
+export function PaletteDetails({ palette }: { palette: PaletteSummary }) {
   const reduceMotion = useReducedMotion();
   return (
     <div>
@@ -144,7 +149,7 @@ function PaletteDetails({ palette }: { palette: Palette }) {
   );
 }
 
-function SwatchChip({ color }: { color: PaletteColor }) {
+function SwatchChip({ color }: { color: PaletteSummary["colors"][number] }) {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);

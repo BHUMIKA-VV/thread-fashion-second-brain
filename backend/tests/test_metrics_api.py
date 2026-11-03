@@ -180,6 +180,8 @@ def test_the_owner_sees_totals_by_page_and_source_within_the_window(
         "how_it_works_view": 0,
         "pilot_view": 1,
         "signup_view": 0,
+        "playground_view": 0,
+        "playground_analysis": 0,
     }
     assert summary["sources"] == [
         {"source": "instagram", "total": 4, "events": {"landing_view": 3, "demo_view": 1}},

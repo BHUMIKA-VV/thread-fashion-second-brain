@@ -4,8 +4,8 @@ import { DEMO } from "@/features/demo/demo-data";
 import { SITE_URL } from "@/lib/site";
 
 /**
- * The public pages: the landing page, the demo (every piece, collection and outfit), how it
- * works, the legal pages and the way in. Private archive pages are never listed; the showcase
+ * The public pages: the landing page, the demo (every piece, collection and outfit), the
+ * playground, how it works, the legal pages and the way in. Private archive pages are never listed; the showcase
  * holds pieces people chose to publish, so only its index is listed, not each piece.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...DEMO.pieces.map((p) => `/demo/pieces/${p.id}`),
     ...DEMO.collections.map((c) => `/demo/collections/${c.id}`),
     ...DEMO.outfits.map((o) => `/demo/outfits/${o.id}`),
+    "/try",
     "/how-it-works",
     "/pilot",
     "/showcase",

@@ -442,6 +442,9 @@ function Closing({ signedIn }: { signedIn: boolean }) {
             <Link href="/signup" className={onPhotoSecondary}>
               Create your wardrobe
             </Link>
+            <Link href="/try" className="text-sm text-paper-raised/90 underline underline-offset-4 hover:text-paper-raised">
+              Try it on a photo
+            </Link>
             <Link href="/login" className="text-sm text-paper-raised/90 underline underline-offset-4 hover:text-paper-raised">
               Sign in
             </Link>

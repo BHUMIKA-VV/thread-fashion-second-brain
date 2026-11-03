@@ -77,6 +77,9 @@ class MetricEvent(StrEnum):
     HOW_IT_WORKS_VIEW = "how_it_works_view"
     PILOT_VIEW = "pilot_view"
     SIGNUP_VIEW = "signup_view"
+    PLAYGROUND_VIEW = "playground_view"
+    # A visit that analysed at least one photo in the playground (sent after a result).
+    PLAYGROUND_ANALYSIS = "playground_analysis"
 
 
 class Harmony(StrEnum):

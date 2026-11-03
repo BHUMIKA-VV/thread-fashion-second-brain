@@ -456,8 +456,45 @@ export type InterestSummary = {
   verified_accounts: number;
 };
 
+/** The public playground: one photo analysed in memory, compared with the demo. */
+export type PlaygroundMatch = {
+  id: string;
+  title: string;
+  type: ItemType;
+  /** Relative to /demo/. */
+  thumbnail: string;
+  /** By look: cosine similarity, higher is closer. */
+  similarity: number | null;
+  /** By palette: CIEDE2000 distance, lower is closer. */
+  distance: number | null;
+};
+
+export type PlaygroundResult = {
+  width: number;
+  height: number;
+  type: ItemType;
+  type_source: "chosen" | "suggested" | "default";
+  palette: { hex: string; name: string; family: string; percentage: number }[];
+  palette_source: "original" | "masked" | "cutout" | null;
+  harmony: Harmony | null;
+  model: "ready" | "loading" | "unavailable";
+  /** False when the demo was indexed by a different model, so look-alikes are left out. */
+  look_compared: boolean;
+  tags: { category: TagCategory; tag: string; score: number; is_guess: boolean }[];
+  similar_look: PlaygroundMatch[];
+  similar_palette: PlaygroundMatch[];
+};
+
 /** Public pages that count a visit (cookieless daily totals; see lib/beacon.ts). */
-export type MetricEvent = "landing_view" | "demo_view" | "how_it_works_view" | "pilot_view" | "signup_view";
+export type MetricEvent =
+  | "landing_view"
+  | "demo_view"
+  | "how_it_works_view"
+  | "pilot_view"
+  | "signup_view"
+  | "playground_view"
+  /** A visit that analysed at least one photo in the playground. */
+  | "playground_analysis";
 
 export type SourceCounts = {
   /** "direct", "internal", "other", a category such as "search" or "instagram", or "ref:<tag>". */

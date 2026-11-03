@@ -72,7 +72,7 @@ function MetricsView({ summary: s }: { summary: MetricsSummary }) {
   const f = s.funnel;
   return (
     <div className="space-y-10">
-      <dl aria-label="Page visits" className="grid gap-px border-y border-ink bg-line grid-cols-2 sm:grid-cols-5">
+      <dl aria-label="Page visits" className="grid gap-px border-y border-ink bg-line grid-cols-2 sm:grid-cols-4">
         {EVENTS.map((event) => (
           <Stat key={event} label={EVENT_LABELS[event]} value={s.events[event] ?? 0} />
         ))}

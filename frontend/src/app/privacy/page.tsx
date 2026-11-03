@@ -25,11 +25,23 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
+        <h2>If you try a photo</h2>
+        <p>
+          The playground at /try sends the photo you choose to Thread&apos;s server once, to measure
+          its colours and compare it with the public demo. It is handled in memory and discarded
+          when the answer is sent: it is not saved to storage or the database, not logged, not
+          used to train anything and not shown to anyone. No account is needed. The swatch card
+          you can download is drawn by your own browser. Your network address is held briefly in
+          memory to limit how many photos can be sent, and is not stored.
+        </p>
+      </section>
+      <section>
         <h2>Counting visits</h2>
         <p>
-          A few public pages (the home page, the demo, how it works, the studio pilot and sign-up)
-          add one to a daily total when they are opened, so the owner can see which pages people
-          find and roughly where from.
+          A few public pages (the home page, the demo, the playground, how it works, the studio
+          pilot and sign-up) add one to a daily total when they are opened, so the owner can see
+          which pages people find and roughly where from. The playground also adds one when a
+          visit analyses a photo; nothing about the photo is part of the count.
         </p>
         <ul>
           <li>What is kept is only the day, the page, and a broad source such as &ldquo;search&rdquo;, &ldquo;Instagram&rdquo; or a tag in the link you followed. Never your IP address, browser, device, the full page you came from, or anything that could tell one visitor from another. (Your IP address is held briefly in the server&apos;s memory to stop floods of counts, and is not stored.)</li>
