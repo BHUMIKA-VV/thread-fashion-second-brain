@@ -2,6 +2,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 import { contactEmail } from "@/components/legal-page";
+import { ButtonLink } from "@/components/ui/button";
 
 /**
  * Who Thread is for, in two columns: your own wardrobe, and professional work with fashion and
@@ -97,6 +98,9 @@ export function Audiences() {
               </>
             )}
           </p>
+          <ButtonLink href="/pilot" variant="secondary" className="mt-6">
+            Join the studio pilot <ArrowRight aria-hidden className="size-4" />
+          </ButtonLink>
         </section>
       </div>
     </section>

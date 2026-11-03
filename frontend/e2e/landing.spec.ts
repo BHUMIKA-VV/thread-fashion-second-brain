@@ -53,8 +53,9 @@ test.describe("signed out", () => {
     await expect(who.getByRole("heading", { level: 3 })).toHaveText(["For your wardrobe", "For your studio or boutique"]);
     const studio = who.getByRole("region", { name: "For your studio or boutique" });
     await expect(studio.getByText(/^Not yet: sharing a collection with a client/)).toBeVisible();
-    // Each professional use links to the demo page that shows it.
-    await expect(studio.getByRole("link")).toHaveText([/A sample collection/, /A measured palette/, /A sample outfit/]);
+    // Each professional use links to the demo page that shows it, then the way into the pilot.
+    await expect(studio.getByRole("link")).toHaveText([/A sample collection/, /A measured palette/, /A sample outfit/, /Join the studio pilot/]);
+    await expect(studio.getByRole("link", { name: /Join the studio pilot/ })).toHaveAttribute("href", "/pilot");
     await studio.getByRole("link", { name: /A measured palette/ }).click();
     await expect(page).toHaveURL(/\/demo\/pieces\/bandhani-sari$/);
     await expect(page.getByRole("img", { name: /^Palette: .*%/ }).first()).toBeVisible();

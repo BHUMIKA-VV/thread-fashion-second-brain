@@ -14,6 +14,7 @@ from app.api.routes import (
     deep_analysis,
     dev,
     health,
+    interest,
     items,
     outfits,
     publishing,
@@ -96,6 +97,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(auth.router)
     app.include_router(admin.router)
+    app.include_router(interest.router)
     app.include_router(showcase.router)
     app.include_router(publishing.router)  # before items: /items/showcase-all is literal
     app.include_router(items.router)

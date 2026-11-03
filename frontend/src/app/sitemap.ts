@@ -16,6 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...DEMO.collections.map((c) => `/demo/collections/${c.id}`),
     ...DEMO.outfits.map((o) => `/demo/outfits/${o.id}`),
     "/how-it-works",
+    "/pilot",
     "/showcase",
     "/privacy",
     "/terms",

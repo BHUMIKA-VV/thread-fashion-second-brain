@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Privacy" };
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy" updated="29 October 2026">
+    <LegalPage title="Privacy" updated="3 November 2026">
       <section>
         <h2>What is stored</h2>
         <ul>
@@ -33,10 +33,25 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
+        <h2>If you register interest</h2>
+        <p>
+          The early access and studio pilot form keeps what you type: whether it is for your own
+          wardrobe or your studio, what you do, your name if you give it, your email address, your
+          message, and when you agreed to be contacted. Nothing is kept unless you tick that box.
+        </p>
+        <ul>
+          <li>It is used only to write to you about what you asked for: once when sign-up opens, or about the studio pilot.</li>
+          <li>Only the owner of this Thread can see it. It is never shared, sold or added to a mailing list.</li>
+          <li>It is deleted when you ask, and automatically a year after you last sent the form.</li>
+          <li>It is not an account, and registering again updates what you sent instead of adding a copy.</li>
+        </ul>
+      </section>
+      <section>
         <h2>Deleting your data</h2>
         <p>
           Deleting your account from your account page removes your account, every piece,
-          collection and image file at once. For any other request, write to <Contact />.
+          collection and image file at once. To have an interest registration deleted, or for any
+          other request, write to <Contact />.
         </p>
       </section>
     </LegalPage>

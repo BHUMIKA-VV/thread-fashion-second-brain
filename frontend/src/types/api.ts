@@ -429,3 +429,29 @@ export type ShowcaseCollection = {
   /** All published pieces in the collection (may be more than items.length). */
   total: number;
 };
+
+/** Interest from the public site: early access to a wardrobe, or the studio pilot. */
+export type InterestKind = "wardrobe" | "studio";
+export type InterestRole = "stylist" | "designer" | "boutique" | "textile_researcher" | "collector" | "student" | "other";
+
+export type InterestRead = {
+  id: string;
+  kind: InterestKind;
+  role: InterestRole | null;
+  name: string | null;
+  email: string;
+  message: string | null;
+  created_at: string;
+  updated_at: string;
+  contacted_at: string | null;
+};
+
+export type InterestSummary = {
+  interest: InterestRead[];
+  wardrobe: number;
+  studio: number;
+  studio_by_role: Partial<Record<InterestRole, number>>;
+  /** Accounts other than the owner's. */
+  accounts: number;
+  verified_accounts: number;
+};

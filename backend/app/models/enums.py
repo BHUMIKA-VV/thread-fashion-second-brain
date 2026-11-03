@@ -50,6 +50,25 @@ class DeepAnalysisStatus(StrEnum):
     FAILED = "failed"
 
 
+class InterestKind(StrEnum):
+    """Who registered interest: someone keeping their own wardrobe, or a professional."""
+
+    WARDROBE = "wardrobe"
+    STUDIO = "studio"
+
+
+class InterestRole(StrEnum):
+    """What a professional does (asked of studio interest only)."""
+
+    STYLIST = "stylist"
+    DESIGNER = "designer"
+    BOUTIQUE = "boutique"
+    TEXTILE_RESEARCHER = "textile_researcher"
+    COLLECTOR = "collector"
+    STUDENT = "student"
+    OTHER = "other"
+
+
 class Harmony(StrEnum):
     MONOCHROMATIC = "monochromatic"
     ANALOGOUS = "analogous"

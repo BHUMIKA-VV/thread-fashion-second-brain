@@ -100,7 +100,20 @@ export function SignUpForm() {
           .
         </span>
       </label>
-      <FormError>{create.isError && errorText(create.error)}</FormError>
+      <FormError>
+        {create.isError &&
+          (create.error instanceof ApiError && create.error.code === "signup_closed" ? (
+            <>
+              Sign-up isn&apos;t open yet.{" "}
+              <Link href="/pilot?for=wardrobe" className="underline underline-offset-4">
+                Leave your email
+              </Link>{" "}
+              and we&apos;ll write once when it opens.
+            </>
+          ) : (
+            errorText(create.error)
+          ))}
+      </FormError>
       <Button type="submit" disabled={create.isPending || !agreed || password.length < PASSWORD_MIN}>
         {create.isPending ? "Creating…" : "Create account"}
       </Button>

@@ -30,7 +30,7 @@ describe("sitemap and robots", () => {
   const urls = sitemap().map((entry) => new URL(entry.url).pathname);
 
   it("lists the public pages and every demo page", () => {
-    expect(urls).toEqual(expect.arrayContaining(["/", "/demo", "/how-it-works", "/privacy", "/terms"]));
+    expect(urls).toEqual(expect.arrayContaining(["/", "/demo", "/how-it-works", "/pilot", "/privacy", "/terms"]));
     for (const piece of DEMO.pieces) expect(urls).toContain(`/demo/pieces/${piece.id}`);
     for (const c of DEMO.collections) expect(urls).toContain(`/demo/collections/${c.id}`);
     for (const o of DEMO.outfits) expect(urls).toContain(`/demo/outfits/${o.id}`);

@@ -25,6 +25,7 @@ APP_TABLES = {
     "outfits",
     "outfit_items",
     "collection_outfits",
+    "interest",
 }
 
 

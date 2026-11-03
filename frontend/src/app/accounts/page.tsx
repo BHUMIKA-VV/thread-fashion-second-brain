@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PAGE, PageHeader } from "@/components/page-header";
 import { AccountsAdmin } from "@/features/auth/accounts-admin";
 import { AuthGate } from "@/features/auth/auth-gate";
+import { InterestAdmin } from "@/features/interest/interest-admin";
 
 export const metadata: Metadata = { title: "Accounts" };
 
@@ -17,6 +18,7 @@ export default function AccountsPage() {
       <div className="mt-10 max-w-4xl">
         <AuthGate what="accounts">
           <AccountsAdmin />
+          <InterestAdmin />
         </AuthGate>
       </div>
     </div>
