@@ -4,6 +4,7 @@ import { PAGE, PageHeader } from "@/components/page-header";
 import { AccountsAdmin } from "@/features/auth/accounts-admin";
 import { AuthGate } from "@/features/auth/auth-gate";
 import { InterestAdmin } from "@/features/interest/interest-admin";
+import { MetricsAdmin } from "@/features/metrics/metrics-admin";
 
 export const metadata: Metadata = { title: "Accounts" };
 
@@ -19,6 +20,7 @@ export default function AccountsPage() {
         <AuthGate what="accounts">
           <AccountsAdmin />
           <InterestAdmin />
+          <MetricsAdmin />
         </AuthGate>
       </div>
     </div>

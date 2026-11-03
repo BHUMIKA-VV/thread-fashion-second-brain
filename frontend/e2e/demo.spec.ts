@@ -5,7 +5,8 @@ import { expect, test } from "./helpers/auth";
 
 // The public demo is static: a JSON file and images under /demo, built offline. A visitor
 // can browse, search and open every page without the API doing anything for them (the
-// site header's own session check is the only API call), and nothing can be written.
+// site header's own session check and the anonymous visit count are the only API calls),
+// and nothing can be written.
 
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
@@ -18,7 +19,7 @@ function watchRequests(page: Page): Request[] {
 function apiCalls(requests: Request[]): string[] {
   return requests
     .map((r) => `${r.method()} ${new URL(r.url()).pathname}`)
-    .filter((call) => call.includes("/api/") && call !== "GET /api/auth/session");
+    .filter((call) => call.includes("/api/") && call !== "GET /api/auth/session" && call !== "POST /api/metrics/view");
 }
 
 async function noOverflow(page: Page, label: string) {
@@ -68,7 +69,9 @@ test.describe("signed out", () => {
     await expect(page.getByRole("list", { name: "Indian textiles pieces" }).getByRole("listitem")).toHaveCount(8);
 
     expect(apiCalls(requests)).toEqual([]);
-    expect(requests.filter((r) => r.method() !== "GET").map((r) => r.url())).toEqual([]);
+    // Nothing is written for the visitor; the visit count adds to an anonymous daily total only.
+    const writes = requests.filter((r) => r.method() !== "GET" && new URL(r.url()).pathname !== "/api/metrics/view");
+    expect(writes.map((r) => r.url())).toEqual([]);
   });
 
   test("every kind of demo page passes WCAG checks and fits a phone", async ({ page }) => {

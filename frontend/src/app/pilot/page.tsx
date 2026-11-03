@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { CountView } from "@/components/count-view";
 import { contactEmail } from "@/components/legal-page";
 import { AuthShell } from "@/features/auth/form-parts";
 import { InterestForm } from "@/features/interest/interest-form";
@@ -87,6 +88,7 @@ function Offer() {
 export default function PilotPage() {
   return (
     <AuthShell kicker="Studio pilot" title="Your pieces, organised and measured" aside={<Offer />}>
+      <CountView event="pilot_view" />
       {/* The form reads ?for= (useSearchParams), which needs a Suspense boundary. */}
       <Suspense fallback={<div role="status" aria-label="Loading" className="h-96 animate-pulse bg-ink/[0.05]" />}>
         <InterestForm />

@@ -6,6 +6,7 @@ from app.models.deep_analysis import DeepAnalysis, DeepAnalysisUsage
 from app.models.embedding import EMBEDDING_DIM, Embedding
 from app.models.interest import Interest
 from app.models.item import Item
+from app.models.metric import MetricCount
 from app.models.outfit import CollectionOutfit, Outfit, OutfitItem
 from app.models.palette import Palette
 from app.models.tag import Tag
@@ -22,6 +23,7 @@ __all__ = [
     "Embedding",
     "Interest",
     "Item",
+    "MetricCount",
     "Outfit",
     "OutfitItem",
     "Palette",

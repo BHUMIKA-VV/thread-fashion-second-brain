@@ -26,6 +26,7 @@ APP_TABLES = {
     "outfit_items",
     "collection_outfits",
     "interest",
+    "metric_counts",
 }
 
 

@@ -69,6 +69,16 @@ class InterestRole(StrEnum):
     OTHER = "other"
 
 
+class MetricEvent(StrEnum):
+    """Public pages whose visits are counted (anonymously, per day and source)."""
+
+    LANDING_VIEW = "landing_view"
+    DEMO_VIEW = "demo_view"
+    HOW_IT_WORKS_VIEW = "how_it_works_view"
+    PILOT_VIEW = "pilot_view"
+    SIGNUP_VIEW = "signup_view"
+
+
 class Harmony(StrEnum):
     MONOCHROMATIC = "monochromatic"
     ANALOGOUS = "analogous"

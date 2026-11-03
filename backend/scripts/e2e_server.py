@@ -8,8 +8,9 @@ Used by frontend/playwright.config.ts; you never need to run it by hand. Every r
   maintenance database) and migrates it, so browser tests never touch your archive;
 - empties .cache/e2e-storage/ and stores test images there, not in storage/;
 - creates the owner account e2e-owner@thread.test with THREAD_E2E_OWNER_PASSWORD;
-- turns off the local auto sign-in and lifts the sign-up rate limits (every test signs up
-  its own account), keeps emails in the local outbox, and uses the fake deep analyzer.
+- turns off the local auto sign-in and lifts the sign-up and visit-count rate limits (every
+  test signs up its own account and loads pages from one address), keeps emails in the local
+  outbox, and uses the fake deep analyzer.
 
 Refuses to run unless THREAD_TEST_DATABASE_URL is set, and never in production.
 """
@@ -78,6 +79,12 @@ def main(argv: list[str] | None = None) -> int:
         }
     )
     get_settings.cache_clear()
+
+    # Every browser test loads public pages from 127.0.0.1, which would soon reach the
+    # per-address cap on visit counts and leave the counting test nothing to count.
+    from app.services import metrics
+
+    metrics.LIMIT_PER_IP = 100_000
 
     from datetime import UTC, datetime
 

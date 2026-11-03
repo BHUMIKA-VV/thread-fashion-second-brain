@@ -20,9 +20,22 @@ export default function PrivacyPage() {
         <p>
           Your archive is private to your account. Other accounts can&apos;t see, search or find
           your pieces. The owner of this Thread can see account names, email addresses and how many
-          pieces each account holds, to deal with abuse. No advertising, no tracking, and no
-          analytics cookies; the only cookie is the one that keeps you signed in.
+          pieces each account holds, to deal with abuse. No advertising, no tracking of you across
+          pages or sites, and no analytics cookies; the only cookie is the one that keeps you signed in.
         </p>
+      </section>
+      <section>
+        <h2>Counting visits</h2>
+        <p>
+          A few public pages (the home page, the demo, how it works, the studio pilot and sign-up)
+          add one to a daily total when they are opened, so the owner can see which pages people
+          find and roughly where from.
+        </p>
+        <ul>
+          <li>What is kept is only the day, the page, and a broad source such as &ldquo;search&rdquo;, &ldquo;Instagram&rdquo; or a tag in the link you followed. Never your IP address, browser, device, the full page you came from, or anything that could tell one visitor from another. (Your IP address is held briefly in the server&apos;s memory to stop floods of counts, and is not stored.)</li>
+          <li>No cookie or browser storage is used for it, and it is not shared with anyone or any analytics service.</li>
+          <li>If your browser sends Global Privacy Control or Do Not Track, nothing is counted.</li>
+        </ul>
       </section>
       <section>
         <h2>Who else handles it</h2>

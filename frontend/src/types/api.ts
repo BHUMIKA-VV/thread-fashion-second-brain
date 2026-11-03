@@ -455,3 +455,28 @@ export type InterestSummary = {
   accounts: number;
   verified_accounts: number;
 };
+
+/** Public pages that count a visit (cookieless daily totals; see lib/beacon.ts). */
+export type MetricEvent = "landing_view" | "demo_view" | "how_it_works_view" | "pilot_view" | "signup_view";
+
+export type SourceCounts = {
+  /** "direct", "internal", "other", a category such as "search" or "instagram", or "ref:<tag>". */
+  source: string;
+  total: number;
+  events: Partial<Record<MetricEvent, number>>;
+};
+
+export type MetricsSummary = {
+  days: number;
+  since: string;
+  events: Partial<Record<MetricEvent, number>>;
+  sources: SourceCounts[];
+  /** From the app's own tables over the same days, the owner excluded. */
+  funnel: {
+    signups: number;
+    confirmed: number;
+    added_a_piece: number;
+    wardrobe_interest: number;
+    studio_interest: number;
+  };
+};

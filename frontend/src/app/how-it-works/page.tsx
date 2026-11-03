@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { CountView } from "@/components/count-view";
 import { PAGE, PageHeader } from "@/components/page-header";
 import { ButtonLink } from "@/components/ui/button";
 import { shareMetadata } from "@/lib/site";
@@ -53,6 +54,7 @@ const PROMISES = [
 export default function HowItWorksPage() {
   return (
     <div className={PAGE}>
+      <CountView event="how_it_works_view" />
       <PageHeader
         kicker="The method"
         title="How it works"
