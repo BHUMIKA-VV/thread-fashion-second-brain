@@ -10,7 +10,7 @@ import { apiUrl } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
 import { FAMILY_SWATCH } from "@/lib/colour-families";
 
-import { BeforeAfter, ProductTour, WhoFor, WhyThread } from "./story-sections";
+import { BeforeAfter, ProductTour, WhyThread } from "./story-sections";
 import { useLandingPieces, type LandingData, type LandingPiece } from "./use-landing-pieces";
 
 /**
@@ -20,7 +20,7 @@ import { useLandingPieces, type LandingData, type LandingPiece } from "./use-lan
  * how Thread works, and a way in. Every image and colour is real; with nothing to show, the page
  * uses plain brand colour, never stand-in photography.
  */
-export function Hero({ demoInvite }: { demoInvite?: ReactNode }) {
+export function Hero({ demoInvite, audiences }: { demoInvite?: ReactNode; audiences?: ReactNode }) {
   const data = useLandingPieces();
   // The scenes use the first three pieces; the gallery shows the next ones (or repeats, if few).
   const gallery = data.pieces.length > 3 ? data.pieces.slice(3) : data.pieces;
@@ -36,7 +36,8 @@ export function Hero({ demoInvite }: { demoInvite?: ReactNode }) {
       <PieceStrip data={data} />
       <ColourStory data={data} />
       <HowItWorks />
-      {!data.signedIn && <WhoFor />}
+      {/* Server-rendered too (app/page.tsx): it reads the published contact address. */}
+      {!data.signedIn && audiences}
       {!data.signedIn && <WhyThread />}
       <Closing signedIn={data.signedIn} />
     </>
@@ -92,7 +93,12 @@ function CoverScenes({ data }: { data: LandingData }) {
           </span>{" "}
           <span className="block">leaves a trace.</span>
         </Headline>
-        <div className="mt-10 flex flex-wrap items-end justify-between gap-6">
+        {/* What Thread is, in plain words, before any scrolling. */}
+        <p className="mt-6 max-w-xl text-base leading-relaxed text-paper-raised/90 sm:text-lg">
+          A visual archive for fashion and textiles. Photograph a piece: Thread measures its colours, suggests
+          its craft and finds kindred pieces.
+        </p>
+        <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
           <div className="flex flex-wrap gap-3">
             {data.signedIn ? (
               <>
@@ -152,7 +158,7 @@ function CoverScenes({ data }: { data: LandingData }) {
               <span className="block">craft &amp;</span> <span className="block italic">kindred pieces.</span>
             </>
           }
-          aside="Thread names the craft it recognises, from ikat to chikankari, and finds the pieces that belong together: by look, by palette or by fabric."
+          aside="Thread suggests the craft it sees, from ikat to chikankari, labelled as a suggestion you can correct, and finds the pieces that belong together: by look, by palette or by fabric."
         />
         {third && <CoverCaption piece={third} figure="03" note={`from ${data.source}`} className="mt-8" />}
       </Scene>
@@ -268,7 +274,7 @@ function QuietGallery({ data, framed, collage }: { data: LandingData; framed?: L
           Keep what stays with you
         </h2>
         <p className="mt-6 max-w-md leading-relaxed text-ink-muted">
-          Photograph a garment, a fabric or a detail you love. Thread measures its palette, names the craft
+          Photograph a garment, a fabric or a detail you love. Thread measures its palette, suggests the craft
           and finds the pieces in your archive that belong with it.
         </p>
         <Link
@@ -394,7 +400,7 @@ function ColourStory({ data }: { data: LandingData }) {
 
 const STEPS = [
   { title: "Palette", body: "Dominant colours measured in CIELAB, named, and kept with every piece." },
-  { title: "Craft & form", body: "Garment, silhouette, pattern and textile traditions, from ikat to chikankari." },
+  { title: "Craft & form", body: "Suggested garment, silhouette, pattern and craft, from ikat to chikankari, marked as suggestions you can correct." },
   { title: "Kindred pieces", body: "Visual search across your own archive: by look, by palette, or by fabric." },
 ];
 

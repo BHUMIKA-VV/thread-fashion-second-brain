@@ -42,6 +42,24 @@ test.describe("signed out", () => {
     await expect(page.getByRole("heading", { level: 1, name: "Indian textiles" })).toBeVisible();
   });
 
+  test("the cover says what Thread does, and wardrobe and studio uses are told apart", async ({ page }) => {
+    await page.goto("/");
+    const cover = page.getByRole("region", { name: "Thread" });
+    await expect(cover.getByText(/^A visual archive for fashion and textiles\./)).toBeVisible();
+    // Craft is suggested, never claimed as recognised fact.
+    await expect(page.getByText(/names the craft|recognises the craft|identif(y|ies) (the )?(weave|craft)/i)).toHaveCount(0);
+
+    const who = page.getByRole("region", { name: "Who Thread is for" });
+    await expect(who.getByRole("heading", { level: 3 })).toHaveText(["For your wardrobe", "For your studio or boutique"]);
+    const studio = who.getByRole("region", { name: "For your studio or boutique" });
+    await expect(studio.getByText(/^Not yet: sharing a collection with a client/)).toBeVisible();
+    // Each professional use links to the demo page that shows it.
+    await expect(studio.getByRole("link")).toHaveText([/A sample collection/, /A measured palette/, /A sample outfit/]);
+    await studio.getByRole("link", { name: /A measured palette/ }).click();
+    await expect(page).toHaveURL(/\/demo\/pieces\/bandhani-sari$/);
+    await expect(page.getByRole("img", { name: /^Palette: .*%/ }).first()).toBeVisible();
+  });
+
   test("the product tour shows real screenshots, each one loaded and described", async ({ page }) => {
     await page.goto("/");
     const tour = page.getByRole("region", { name: "What an archive looks like" });

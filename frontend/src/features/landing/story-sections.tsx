@@ -132,43 +132,6 @@ export function ProductTour() {
   );
 }
 
-const AUDIENCES = [
-  {
-    title: "Fashion enthusiasts",
-    body: "Keep the pieces you own and the ones you love in one place, and find them again by colour.",
-  },
-  {
-    title: "Stylists",
-    body: "Gather references into collections and try combinations in the Outfit Studio, with their colours side by side.",
-  },
-  {
-    title: "Designers",
-    body: "Pull exact hex values from a photograph and find pieces with a kindred palette or fabric.",
-  },
-  {
-    title: "Textile collectors",
-    body: "Record weave, craft and notes for each piece, alongside a palette measured from the photograph.",
-  },
-] as const;
-
-export function WhoFor() {
-  return (
-    <section aria-labelledby="who-title" className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-8">
-      <h2 id="who-title" className="font-display text-4xl tracking-tight">
-        Who Thread is for
-      </h2>
-      <ul className="mt-8 grid border-t border-ink sm:grid-cols-2 lg:grid-cols-4">
-        {AUDIENCES.map((a) => (
-          <li key={a.title} className="border-b border-line py-6 sm:pr-6 lg:border-b-0 lg:[&:not(:first-child)]:border-l lg:[&:not(:first-child)]:pl-6">
-            <h3 className="font-display text-2xl">{a.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">{a.body}</p>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 const REASONS = [
   {
     title: "Private by default",

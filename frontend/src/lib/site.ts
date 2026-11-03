@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 export const SITE_URL = new URL(process.env.THREAD_PUBLIC_URL || "http://127.0.0.1:3100");
 
 export const SITE_DESCRIPTION =
-  "Everything you wear leaves a trace. A personal fashion archive for garments, fabrics, colour and craft.";
+  "A visual archive for fashion and textiles. Photograph a piece: Thread measures its colours, suggests its craft and finds kindred pieces.";
 
 /** A real screenshot of a piece and its measured palette (e2e/capture-screenshots.spec.ts). */
 const DEFAULT_IMAGE = {
