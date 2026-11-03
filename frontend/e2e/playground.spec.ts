@@ -55,9 +55,9 @@ test.describe("a visitor", () => {
     expect((await download).suggestedFilename()).toBe("thread-swatch-card.png");
 
     await expect(page.getByRole("link", { name: /Create your archive/ })).toHaveAttribute("href", "/signup");
-    await expect(page.getByRole("region", { name: "Keep pieces like this" }).getByRole("link", { name: "Studio pilot" })).toHaveAttribute(
+    await expect(page.getByRole("region", { name: "Keep pieces like this" }).getByRole("link", { name: /request a 20-minute demo call/ })).toHaveAttribute(
       "href",
-      "/pilot",
+      "/pilot#request",
     );
 
     // The photo went to the playground only, as the body, and no cookie went with it.

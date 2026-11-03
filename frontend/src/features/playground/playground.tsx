@@ -402,19 +402,27 @@ function NextSteps() {
       </h3>
       <p className="mt-3 max-w-2xl leading-relaxed text-ink-muted">
         In your own archive, every piece you add is measured like this and stays private to you, so you can search by
-        colour, compare palettes and compose outfits. For a studio or boutique, the pilot sets it up with you.
+        colour, compare palettes and compose outfits.
       </p>
       <div className="mt-6 flex flex-wrap gap-3">
         <ButtonLink href="/signup">
           Create your archive <ArrowRight aria-hidden className="size-4" />
         </ButtonLink>
-        <ButtonLink href="/pilot" variant="secondary">
-          Studio pilot
-        </ButtonLink>
         <ButtonLink href="/demo" variant="ghost">
           Explore the demo
         </ButtonLink>
       </div>
+      <p className="mt-8 max-w-2xl border-t border-line pt-5 leading-relaxed text-ink-muted">
+        <span className="text-ink">For a studio or boutique:</span> see a{" "}
+        <Link href="/demo/collections/indian-textiles" className="text-ink underline underline-offset-4">
+          sample archive of Indian textiles
+        </Link>
+        , then{" "}
+        <Link href="/pilot#request" className="text-ink underline underline-offset-4">
+          request a 20-minute demo call
+        </Link>{" "}
+        about the studio pilot, which sets Thread up with you.
+      </p>
     </section>
   );
 }

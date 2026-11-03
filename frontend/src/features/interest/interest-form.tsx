@@ -14,7 +14,7 @@ import type { InterestKind, InterestRole } from "@/types/api";
 const CONTROL = "mt-1.5 block w-full rounded-[2px] border border-line bg-paper-raised px-3 py-2.5 text-base text-ink sm:text-sm";
 
 const KINDS: { kind: InterestKind; label: string; hint: string }[] = [
-  { kind: "studio", label: "My studio, label or boutique", hint: "Join the studio pilot" },
+  { kind: "studio", label: "My studio, label or boutique", hint: "A demo call, then the studio pilot" },
   { kind: "wardrobe", label: "My own wardrobe", hint: "Hear when sign-up opens" },
 ];
 
@@ -49,7 +49,7 @@ export function InterestForm() {
       <Notice title="Thank you">
         <p>
           {studio
-            ? "We'll write to you about the studio pilot, usually within a few days, to arrange a short call."
+            ? "We'll write to you, usually within a few days, to find a time for a 20-minute demo call."
             : "We'll write to you once when sign-up opens, and not otherwise."}{" "}
           It goes to <strong className="font-medium text-ink">{email}</strong>.
         </p>
@@ -152,7 +152,7 @@ export function InterestForm() {
           required
         />
         <span>
-          You may email me about {studio ? "the studio pilot" : "early access"}. I have read the{" "}
+          You may email me about {studio ? "a demo call and the studio pilot" : "early access"}. I have read the{" "}
           <Link href="/privacy" className="text-ink underline underline-offset-4">
             privacy notice
           </Link>
@@ -161,7 +161,7 @@ export function InterestForm() {
       </label>
       <FormError>{send.isError && errorText(send.error)}</FormError>
       <Button type="submit" disabled={send.isPending || !consent || (studio && !role)}>
-        {send.isPending ? "Sending…" : studio ? "Join the pilot list" : "Tell me when sign-up opens"}
+        {send.isPending ? "Sending…" : studio ? "Request a demo call" : "Tell me when sign-up opens"}
       </Button>
     </form>
   );

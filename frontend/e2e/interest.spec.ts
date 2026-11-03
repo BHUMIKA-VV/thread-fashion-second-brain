@@ -16,9 +16,16 @@ test.describe("a visitor", () => {
     await page.getByRole("region", { name: "For your studio or boutique" }).getByRole("link", { name: /Join the studio pilot/ }).click();
     await expect(page).toHaveURL(/\/pilot$/);
     await expect(page.getByRole("heading", { level: 1, name: "Your pieces, organised and measured" })).toBeVisible();
-    for (const name of ["What the pilot includes", "Not part of it yet", "Price"]) {
+    for (const name of ["Three steps, at your pace", "What a 20-minute demo call covers", "What the pilot includes", "Not part of it yet", "Price"]) {
       await expect(page.getByRole("heading", { level: 2, name })).toBeVisible();
     }
+    // The journey: try a photo, see a sample archive, then request the call in the form.
+    const steps = page.getByRole("region", { name: "Three steps, at your pace" });
+    await expect(steps.getByRole("link", { name: "Try one of your photos" })).toHaveAttribute("href", "/try");
+    await expect(steps.getByRole("link", { name: "Indian textiles" })).toHaveAttribute("href", "/demo/collections/indian-textiles");
+    await steps.getByRole("link", { name: "Request a 20-minute demo call" }).click();
+    await expect(page).toHaveURL(/\/pilot#request$/);
+    await expect(page.getByRole("form", { name: "Register interest" })).toBeInViewport();
     // No price is invented: without THREAD_PILOT_PRICE it is agreed in person.
     await expect(page.getByText(/^Agreed with you before we start\./)).toBeVisible();
 
@@ -27,9 +34,9 @@ test.describe("a visitor", () => {
     await form.getByLabel("Your name (optional)").fill("E2E Designer");
     await form.getByLabel("Email", { exact: true }).fill(uniqueEmail("pilot"));
     await form.getByLabel(/How do you keep track/).fill("Swatch books and WhatsApp.");
-    const submit = form.getByRole("button", { name: "Join the pilot list" });
+    const submit = form.getByRole("button", { name: "Request a demo call" });
     await expect(submit).toBeDisabled();
-    await form.getByRole("checkbox", { name: /You may email me about the studio pilot/ }).check();
+    await form.getByRole("checkbox", { name: /You may email me about a demo call and the studio pilot/ }).check();
     await submit.click();
     await expect(page.getByRole("status").getByText("Thank you")).toBeVisible();
 

@@ -83,7 +83,9 @@ describe("Playground", () => {
     expect(screen.getByText("Distance 7.4")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Download swatch card/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Create your archive/ })).toHaveAttribute("href", "/signup");
-    expect(screen.getByRole("link", { name: "Studio pilot" })).toHaveAttribute("href", "/pilot");
+    // For studios: a sample archive, then the call.
+    expect(screen.getByRole("link", { name: /sample archive/ })).toHaveAttribute("href", "/demo/collections/indian-textiles");
+    expect(screen.getByRole("link", { name: /request a 20-minute demo call/ })).toHaveAttribute("href", "/pilot#request");
 
     // One anonymous count for a visit that tried a photo.
     const counted = fetch.mock.calls.filter(([u]) => String(u) === "/api/metrics/view");

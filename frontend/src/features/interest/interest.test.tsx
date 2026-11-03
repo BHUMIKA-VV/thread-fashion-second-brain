@@ -24,13 +24,13 @@ describe("InterestForm", () => {
     fill(/What you do/, "boutique");
     fill("Email", "asha@example.com");
     fill(/How do you keep track/, "Saree boutique");
-    const submit = screen.getByRole("button", { name: "Join the pilot list" });
+    const submit = screen.getByRole("button", { name: "Request a demo call" });
     expect(submit).toBeDisabled(); // no consent yet
-    fireEvent.click(screen.getByRole("checkbox", { name: /You may email me about the studio pilot/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /You may email me about a demo call and the studio pilot/ }));
     fireEvent.click(submit);
 
     expect(await screen.findByText("Thank you")).toBeInTheDocument();
-    expect(screen.getByText(/about the studio pilot/)).toBeInTheDocument();
+    expect(screen.getByText(/to find a time for a 20-minute demo call/)).toBeInTheDocument();
     const [, init] = fetch.mock.calls[0];
     expect(JSON.parse(init!.body as string)).toEqual({
       kind: "studio",
@@ -69,7 +69,7 @@ describe("InterestForm", () => {
     fill(/What you do/, "stylist");
     fill("Email", "a@example.com");
     fireEvent.click(screen.getByRole("checkbox"));
-    fireEvent.click(screen.getByRole("button", { name: "Join the pilot list" }));
+    fireEvent.click(screen.getByRole("button", { name: "Request a demo call" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Too many attempts from this network");
   });
 });
