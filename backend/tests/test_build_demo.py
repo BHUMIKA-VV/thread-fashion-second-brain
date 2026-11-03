@@ -77,6 +77,25 @@ def test_builds_palettes_tags_similarity_and_outfits(folder: Path, tmp_path: Pat
     assert written == data
 
 
+def test_writes_the_playground_index_with_vectors_and_palettes_only(
+    folder: Path, tmp_path: Path
+) -> None:
+    manifest = load_manifest(folder / "demo.json")
+    data = build(manifest, tmp_path / "out", load_model(), tmp_path / "index.json")
+    index = json.loads((tmp_path / "index.json").read_text(encoding="utf-8"))
+    assert index["model"] == data["model"] == "fake/colour-layout/pp1"
+    assert [p["id"] for p in index["pieces"]] == [p["id"] for p in data["pieces"]]
+    for entry, built in zip(index["pieces"], data["pieces"], strict=True):
+        assert set(entry) == {"id", "title", "type", "thumbnail", "palette", "vector"}
+        assert entry["palette"] == built["palette"]
+        assert len(entry["vector"]) == 512
+
+    build(manifest, tmp_path / "out", None, tmp_path / "index.json")
+    without = json.loads((tmp_path / "index.json").read_text(encoding="utf-8"))
+    assert without["model"] is None
+    assert all(p["vector"] is None for p in without["pieces"])
+
+
 def test_recorded_tags_replace_suggestions_and_guesses_are_marked(
     folder: Path, tmp_path: Path
 ) -> None:

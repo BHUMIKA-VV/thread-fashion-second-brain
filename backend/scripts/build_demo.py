@@ -29,6 +29,9 @@ anything is measured; the published image is the cropped one, so visitors see ex
 was measured.
 
 Output: demo.json, images/<id>.webp (long side 1600) and thumbs/<id>.webp (long side 640).
+It also writes the playground's index (app/playground/demo_index.json, or --index): each
+piece's palette and image vector, so the public playground can compare a visitor's photo
+with the demo without a database. The vectors are tied to the model that made them.
 Images are re-encoded, which drops EXIF and other metadata (camera, location). Rerunning
 with the same inputs gives the same files. Without the image model (--no-model, or no
 weights), tags and look-alike similarity are left out and the output says so.
@@ -57,6 +60,8 @@ from app.ml.tagging import Tagger
 from app.models.enums import ItemType
 
 FORMAT_VERSION = 1
+INDEX_VERSION = 1
+DEFAULT_INDEX = Path(__file__).resolve().parents[1] / "app" / "playground" / "demo_index.json"
 IMAGE_SIDE = 1600
 THUMB_SIDE = 640
 SIMILAR = 6
@@ -179,8 +184,11 @@ def _ai_tags(model: Model, vector: np.ndarray, item_type: str) -> list[dict[str,
     ]
 
 
-def build(manifest: dict[str, Any], out: Path, model: Model | None) -> dict[str, Any]:
-    """Compute everything and write it under `out`. Returns the dataset that was written."""
+def build(
+    manifest: dict[str, Any], out: Path, model: Model | None, index: Path | None = None
+) -> dict[str, Any]:
+    """Compute everything and write it under `out` (and the playground index to `index`, if
+    given). Returns the dataset that was written."""
     settings = get_settings()
     (out / "images").mkdir(parents=True, exist_ok=True)
     (out / "thumbs").mkdir(parents=True, exist_ok=True)
@@ -303,7 +311,32 @@ def build(manifest: dict[str, Any], out: Path, model: Model | None) -> dict[str,
     (out / "demo.json").write_text(
         json.dumps(dataset, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n"
     )
+    if index is not None:
+        write_index(index, dataset, vectors)
     return dataset
+
+
+def write_index(path: Path, dataset: dict[str, Any], vectors: dict[str, np.ndarray]) -> None:
+    """The playground's view of the demo: what it needs to compare a photo, and no more."""
+    pieces = [
+        {
+            "id": p["id"],
+            "title": p["title"],
+            "type": p["type"],
+            "thumbnail": p["thumbnail"],
+            "palette": p["palette"],
+            # Six decimals keep cosine similarity exact to well under the 0.001 shown.
+            "vector": [round(float(v), 6) for v in vectors[p["id"]]] if vectors else None,
+        }
+        for p in dataset["pieces"]
+    ]
+    index = {"version": INDEX_VERSION, "model": dataset["model"], "pieces": pieces}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(index, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
 
 
 def load_model() -> Model | None:
@@ -326,6 +359,7 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=Path(__file__).resolve().parents[2] / "frontend" / "public" / "demo",
     )
+    parser.add_argument("--index", type=Path, default=DEFAULT_INDEX, help="playground index")
     parser.add_argument("--no-model", action="store_true", help="palettes only")
     args = parser.parse_args(argv)
     try:
@@ -334,7 +368,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Manifest problem: {exc}", file=sys.stderr)
         return 2
     model = None if args.no_model else load_model()
-    dataset = build(manifest, args.out, model)
+    dataset = build(manifest, args.out, model, args.index)
     print(
         f"Wrote {len(dataset['pieces'])} pieces, {len(dataset['collections'])} collections and "
         f"{len(dataset['outfits'])} outfits to {args.out} (model: {dataset['model'] or 'none'})."

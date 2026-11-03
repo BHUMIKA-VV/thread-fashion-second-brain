@@ -64,6 +64,31 @@ def _open(data: bytes, limits: ImageLimits) -> Image.Image:
 
 
 def process_upload(data: bytes, limits: ImageLimits, thumbnail_side: int) -> ProcessedImage:
+    image, upright = _validated(data, limits)
+    image_format = image.format or ""
+    mime_type, extension = SUPPORTED_FORMATS[image_format]
+    icc_profile = image.info.get("icc_profile")
+    original = _encode(upright, image_format, icc_profile)
+    return ProcessedImage(
+        format=image_format,
+        mime_type=mime_type,
+        extension=extension,
+        width=upright.width,
+        height=upright.height,
+        original=original,
+        thumbnail=make_thumbnail(upright, thumbnail_side, icc_profile),
+    )
+
+
+def decode_for_analysis(data: bytes, limits: ImageLimits) -> Image.Image:
+    """Validate exactly as an upload is validated and return the upright image, in memory
+    only: nothing is re-encoded or kept (the public playground). Transparency is kept, as in a
+    stored original, so the palette ignores transparent pixels."""
+    return _validated(data, limits)[1]
+
+
+def _validated(data: bytes, limits: ImageLimits) -> tuple[Image.Image, Image.Image]:
+    """The decoded image and its upright copy (camera orientation applied, CMYK as RGB)."""
     if len(data) > limits.max_bytes:
         raise ImageValidationError(
             "too_large", f"The file is larger than {limits.max_bytes // (1024 * 1024)} MB."
@@ -76,8 +101,6 @@ def process_upload(data: bytes, limits: ImageLimits, thumbnail_side: int) -> Pro
         raise ImageValidationError(
             "unsupported_format", "Only JPEG, PNG and WebP images are supported."
         )
-    image_format = image.format
-    mime_type, extension = SUPPORTED_FORMATS[image_format]
 
     # Header dimensions are checked BEFORE decoding pixels.
     width, height = image.size
@@ -99,22 +122,11 @@ def process_upload(data: bytes, limits: ImageLimits, thumbnail_side: int) -> Pro
             "invalid_image", "The image file is damaged or incomplete."
         ) from exc
 
-    icc_profile = image.info.get("icc_profile")
     # Apply the camera's orientation flag, then drop EXIF entirely (it can contain GPS data).
     upright = ImageOps.exif_transpose(image)
     if upright.mode == "CMYK":
         upright = upright.convert("RGB")
-
-    original = _encode(upright, image_format, icc_profile)
-    return ProcessedImage(
-        format=image_format,
-        mime_type=mime_type,
-        extension=extension,
-        width=upright.width,
-        height=upright.height,
-        original=original,
-        thumbnail=make_thumbnail(upright, thumbnail_side, icc_profile),
-    )
+    return image, upright
 
 
 def _encode(image: Image.Image, image_format: str, icc_profile: bytes | None) -> bytes:
