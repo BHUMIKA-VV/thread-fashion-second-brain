@@ -44,6 +44,11 @@ export function DemoPalette({ colours }: { colours: DemoColour[] }) {
       </ul>
       <p className="mt-4 text-xs text-ink-muted">
         Measured from the photograph in CIELAB. The museum&apos;s backdrop can take a share, as it would in any photo.
+        Names come from{" "}
+        <Link href="/colours" className="underline underline-offset-4">
+          Thread&apos;s colour names
+        </Link>
+        .
       </p>
     </section>
   );

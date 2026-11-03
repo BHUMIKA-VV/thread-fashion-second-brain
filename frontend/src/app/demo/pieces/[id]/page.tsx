@@ -4,10 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { JsonLd } from "@/components/json-ld";
 import { DEMO, demoAsset, demoPiece, pieceAlt } from "@/features/demo/demo-data";
 import { DemoNotice } from "@/features/demo/demo-notice";
 import { DemoCredit, DemoKindred, DemoPalette, DemoTags } from "@/features/demo/demo-sections";
 import { shareMetadata } from "@/lib/site";
+import { demoPieceData } from "@/lib/structured-data";
 
 // Every piece is prerendered; any other id renders notFound() (a 404).
 export function generateStaticParams() {
@@ -31,6 +33,7 @@ export default async function DemoPiecePage({ params }: PageProps<"/demo/pieces/
   if (!piece) notFound();
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-8 sm:py-16">
+      <JsonLd data={demoPieceData(piece)} />
       <Link href="/demo" className="inline-flex items-center gap-2 text-sm text-ink-muted hover:text-ink">
         <ArrowLeft aria-hidden className="size-4" /> Demo
       </Link>

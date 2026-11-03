@@ -3,10 +3,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { JsonLd } from "@/components/json-ld";
 import { PAGE, PageHeader } from "@/components/page-header";
 import { DEMO, demoAsset, demoCollection, demoPiece, demoPieces, pieceAlt } from "@/features/demo/demo-data";
 import { DemoTile } from "@/features/demo/demo-tile";
 import { shareMetadata } from "@/lib/site";
+import { demoCollectionData } from "@/lib/structured-data";
 
 export function generateStaticParams() {
   return DEMO.collections.map((c) => ({ id: c.id }));
@@ -28,6 +30,7 @@ export default async function DemoCollectionPage({ params }: PageProps<"/demo/co
   const pieces = demoPieces(collection.pieces);
   return (
     <div className={PAGE}>
+      <JsonLd data={demoCollectionData(collection)} />
       <Link href="/demo" className="mb-6 inline-flex items-center gap-2 text-sm text-ink-muted hover:text-ink">
         <ArrowLeft aria-hidden className="size-4" /> Demo
       </Link>
