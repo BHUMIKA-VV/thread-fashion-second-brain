@@ -19,6 +19,11 @@ test.describe("signed out", () => {
     await expect(page.getByRole("heading", { level: 1, name: "Thread" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Begin your archive" })).toHaveAttribute("href", "/signup");
     await expect(page.getByRole("link", { name: "See the showcase" })).toHaveAttribute("href", "/showcase");
+    // Each cover scene and the quiet gallery say what Thread does, with or without pieces to show.
+    for (const name of ["every colour, measured.", "craft & kindred pieces.", "Keep what stays with you"]) {
+      await expect(page.getByRole("heading", { level: 2, name })).toBeVisible();
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
     // Signed out, the header offers the public showcase, not an archive.
     const nav = page.getByRole("navigation", { name: "Main" });
     await expect(nav.getByRole("link", { name: "Archive" })).toHaveCount(0);
