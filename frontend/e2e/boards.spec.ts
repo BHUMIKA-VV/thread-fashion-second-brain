@@ -88,6 +88,14 @@ test("a board starts from a collection, takes text and colours, keeps its order,
     await aside.getByRole("button", { name: "Add colour" }).click();
     await expect(page.getByRole("article", { name: "neel indigo #263B5E" })).toBeVisible();
 
+    // The colour story follows: the measured colour taken from a piece matches it exactly.
+    const story = page.getByRole("region", { name: "Colour story" });
+    await expect(story).toContainText("Harmony:");
+    const chosenList = story.getByRole("list", { name: "Chosen colours and their nearest measured colour" });
+    await expect(chosenList.getByRole("listitem")).toHaveCount(2);
+    await expect(chosenList.getByRole("listitem").first()).toContainText(/Matches .+ on (Silk|Cotton) e2e.+ \(difference 0\.0\)\./);
+    await expect(story.getByRole("heading", { name: "Colour relationships" })).toBeVisible();
+
     // Move the heading to the top, one step at a time; each move is saved before the next.
     for (const index of [2, 1, 0]) {
       await page.getByRole("button", { name: "Move Heading: Colour story earlier" }).click();

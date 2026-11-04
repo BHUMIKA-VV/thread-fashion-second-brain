@@ -15,6 +15,8 @@ import { cn } from "@/lib/cn";
 import { addBlock, deleteBoard, getBoard, removeBlock, updateBlock, updateBoard, type NewBlock } from "@/services/boards";
 import type { BoardBlock, BoardDetail } from "@/types/api";
 
+import { ColourStoryView } from "./colour-story";
+
 /** The API's limit; the editor stops offering to add once a board is full. */
 export const MAX_BLOCKS = 120;
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -130,6 +132,10 @@ export function BoardEditor({ id }: { id: string }) {
             </>
           )}
         </aside>
+      </div>
+
+      <div className="mt-14">
+        <ColourStoryView board={board} />
       </div>
 
       <DeleteBoard board={board} />

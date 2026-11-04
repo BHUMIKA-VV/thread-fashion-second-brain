@@ -11,7 +11,7 @@ import { copyText } from "@/lib/clipboard";
 import { extractPalette } from "@/services/items";
 import type { Harmony, Item, Palette, PaletteColor } from "@/types/api";
 
-const HARMONY_TEXT: Record<Harmony, string> = {
+export const HARMONY_TEXT: Record<Harmony, string> = {
   monochromatic: "Monochromatic — shades of a single hue",
   analogous: "Analogous — neighbouring hues",
   complementary: "Complementary — opposite hues",

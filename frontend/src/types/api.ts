@@ -231,6 +231,24 @@ export type BoardSummary = {
   updated_at: string;
 };
 
+/** A chosen colour, with the nearest colour measured on the board's pieces (CIEDE2000). */
+export type ChosenColour = {
+  block_id: string;
+  hex: string;
+  name: string;
+  family: string;
+  nearest: { hex: string; name: string; item_id: string; distance: number } | null;
+  /** Whether the nearest measured colour is close enough to count as the same. */
+  on_pieces: boolean;
+};
+
+/** Calculated from the pieces' stored palettes and the chosen colours; never by a model. */
+export type ColourStory = {
+  measured: OutfitColours;
+  chosen: ChosenColour[];
+  harmony: Harmony | null;
+};
+
 export type BoardDetail = {
   id: string;
   name: string;
@@ -238,6 +256,7 @@ export type BoardDetail = {
   created_at: string;
   updated_at: string;
   blocks: BoardBlock[];
+  colour_story: ColourStory;
 };
 
 export type OutfitLayout = "feature" | "grid" | "column";

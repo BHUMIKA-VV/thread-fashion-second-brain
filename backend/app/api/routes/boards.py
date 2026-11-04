@@ -1,6 +1,7 @@
 """Moodboards: pieces, colours, headings and notes in order. Private to their owner; deleting a
 board never deletes pieces."""
 
+from dataclasses import asdict
 from functools import lru_cache
 from typing import Annotated
 from uuid import UUID
@@ -10,6 +11,7 @@ from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import CurrentUserId
+from app.color.board import colour_story
 from app.color.lab import from_hex, srgb_to_lab
 from app.color.naming import family_for_lab, name_for_lab
 from app.db.session import get_db
@@ -23,6 +25,7 @@ from app.schemas.boards import (
     BoardDetail,
     BoardSummary,
     BoardUpdate,
+    ColourStoryRead,
 )
 from app.schemas.items import ItemRead
 from app.services.boards import BoardService
@@ -57,14 +60,28 @@ def _block(block: BoardBlock) -> BlockRead:
     )
 
 
+def _story(blocks: list[BoardBlock]) -> ColourStoryRead:
+    story = colour_story(
+        [
+            (b.item_id, b.item.palette.colors if b.item.palette else None)
+            for b in blocks
+            if b.item is not None
+        ],
+        [(b.id, b.hex) for b in blocks if b.hex is not None],
+    )
+    return ColourStoryRead.model_validate(asdict(story))
+
+
 def _detail(service: BoardService, board: Board) -> BoardDetail:
+    blocks = service.repo.blocks(board.id)
     return BoardDetail(
         id=board.id,
         name=board.name,
         description=board.description,
         created_at=board.created_at,
         updated_at=board.updated_at,
-        blocks=[_block(b) for b in service.repo.blocks(board.id)],
+        blocks=[_block(b) for b in blocks],
+        colour_story=_story(blocks),
     )
 
 

@@ -4,7 +4,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
+from app.models.enums import Harmony
 from app.schemas.items import ItemRead
+from app.schemas.outfits import OutfitColoursRead
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
 Description = Annotated[str, StringConstraints(strip_whitespace=True, max_length=2000)]
@@ -93,6 +95,32 @@ class BlockRead(BaseModel):
     created_at: datetime
 
 
+class NearestSwatchRead(BaseModel):
+    hex: str
+    name: str
+    item_id: UUID
+    distance: float = Field(description="CIEDE2000 distance from the chosen colour")
+
+
+class ChosenColourRead(BaseModel):
+    block_id: UUID
+    hex: str
+    name: str
+    family: str
+    nearest: NearestSwatchRead | None = Field(
+        description="The closest colour measured on the board's pieces, if it has any"
+    )
+    on_pieces: bool = Field(description="Whether that colour is close enough to count as the same")
+
+
+class ColourStoryRead(BaseModel):
+    """Calculated from the pieces' stored palettes and the colours chosen; never by a model."""
+
+    measured: OutfitColoursRead
+    chosen: list[ChosenColourRead]
+    harmony: Harmony | None
+
+
 class BoardSummary(BaseModel):
     id: UUID
     name: str
@@ -112,3 +140,4 @@ class BoardDetail(BaseModel):
     created_at: datetime
     updated_at: datetime
     blocks: list[BlockRead]
+    colour_story: ColourStoryRead

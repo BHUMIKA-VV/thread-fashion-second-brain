@@ -299,3 +299,48 @@ def test_other_users_boards_pieces_and_collections_are_invisible(
     assert theirs.name == "Private"
     assert db.get(BoardBlock, their_block.id).body == "secret"  # type: ignore[union-attr]
     assert len(api.get("/boards").json()) == 1
+
+
+# --- colour story ------------------------------------------------------------------------------
+
+
+def test_the_colour_story_follows_the_blocks(api: TestClient) -> None:
+    board = create(api)
+    assert board["colour_story"] == {
+        "measured": {
+            "dominant": [],
+            "shared": [],
+            "complementary": [],
+            "contrasting": [],
+            "pieces_with_palette": 0,
+            "pieces_without_palette": 0,
+        },
+        "chosen": [],
+        "harmony": None,
+    }
+
+    item = add_item(api, 200)  # mostly (200, 40, 80), a deep pink-red
+    body = add(api, board["id"], kind="piece", item_id=item)
+    measured = body["colour_story"]["measured"]
+    assert measured["pieces_with_palette"] == 1 and measured["dominant"]
+    assert measured["dominant"][0]["item_ids"] == [item]
+
+    piece_hex = body["blocks"][0]["item"]["palette"]["colors"][0]["hex"]
+    body = add(api, board["id"], kind="colour", hex=piece_hex)
+    body = add(api, board["id"], kind="colour", hex="#1f8a8a")
+    near, far = body["colour_story"]["chosen"]
+    assert (near["block_id"], near["on_pieces"]) == (body["blocks"][1]["id"], True)
+    assert near["nearest"] == {
+        "hex": piece_hex,
+        "name": near["nearest"]["name"],
+        "item_id": item,
+        "distance": 0.0,
+    }
+    assert far["on_pieces"] is False and far["family"] == "teal"
+    assert body["colour_story"]["harmony"] in {"complementary", "mixed"}
+
+    # Removing the piece leaves the chosen colours, now with nothing measured to match.
+    removed = api.delete(f"/boards/{board['id']}/blocks/{body['blocks'][0]['id']}").json()
+    story = removed["colour_story"]
+    assert story["measured"]["pieces_with_palette"] == 0
+    assert [c["nearest"] for c in story["chosen"]] == [None, None]

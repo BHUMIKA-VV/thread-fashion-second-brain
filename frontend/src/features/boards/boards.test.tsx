@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { apiErrorResponse, routeFetch } from "@/test/fetch-router";
 import { makeItem, renderWithQuery } from "@/test/render";
-import type { BoardBlock, BoardDetail, BoardSummary, CollectionSummary, ItemList } from "@/types/api";
+import type { BoardBlock, BoardDetail, BoardSummary, ChosenColour, CollectionSummary, ColourStory, ItemList } from "@/types/api";
 import { BoardEditor, MAX_BLOCKS, blockLabel } from "./board-editor";
 import { BoardsList } from "./boards-list";
+import { ColourStoryView, matchText } from "./colour-story";
 
 vi.mock("next/navigation", async () => (await import("@/test/navigation-mock")).navigationMock);
 const nav = await import("@/test/navigation-mock");
@@ -37,8 +38,48 @@ const BLOCKS: BoardBlock[] = [
   block({ id: "b4", kind: "note", position: 3, body: "Keep the gold to the borders." }),
 ];
 
+const EMPTY_STORY: ColourStory = {
+  measured: { dominant: [], shared: [], complementary: [], contrasting: [], pieces_with_palette: 0, pieces_without_palette: 0 },
+  chosen: [],
+  harmony: null,
+};
+
+const STORY: ColourStory = {
+  measured: {
+    dominant: [
+      { hex: "#d1291c", name: "sindoor red", share: 70, item_ids: [LINEN.id] },
+      { hex: "#263b5e", name: "neel indigo", share: 30, item_ids: [LINEN.id] },
+    ],
+    shared: [],
+    complementary: [],
+    contrasting: [],
+    pieces_with_palette: 1,
+    pieces_without_palette: 0,
+  },
+  chosen: [
+    {
+      block_id: "b3",
+      hex: "#263b5e",
+      name: "neel indigo",
+      family: "blue",
+      nearest: { hex: "#263b5e", name: "neel indigo", item_id: LINEN.id, distance: 0 },
+      on_pieces: true,
+    },
+  ],
+  harmony: "complementary",
+};
+
 function board(blocks = BLOCKS, overrides: Partial<BoardDetail> = {}): BoardDetail {
-  return { id: "bd1", name: "Meera, sangeet", description: "Indigo and gold", created_at: NOW, updated_at: NOW, blocks, ...overrides };
+  return {
+    id: "bd1",
+    name: "Meera, sangeet",
+    description: "Indigo and gold",
+    created_at: NOW,
+    updated_at: NOW,
+    blocks,
+    colour_story: blocks.length ? STORY : EMPTY_STORY,
+    ...overrides,
+  };
 }
 
 const emptyArchive = (): Response =>
@@ -239,5 +280,41 @@ describe("BoardEditor", () => {
     renderWithQuery(<BoardEditor id="nope" />);
     expect(await screen.findByText("This board doesn't exist")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "All boards" })).toHaveAttribute("href", "/boards");
+  });
+});
+
+describe("the colour story", () => {
+  const chosen = (overrides: Partial<ChosenColour>): ChosenColour => ({ ...STORY.chosen[0], ...overrides });
+  const name = (id: string) => (id === LINEN.id ? "Linen dupatta" : "a piece");
+
+  it("says in words how a chosen colour relates to what was measured", () => {
+    expect(matchText(STORY.chosen[0], name)).toBe("Matches neel indigo on Linen dupatta (difference 0.0).");
+    const far = chosen({ hex: "#1f7a3a", name: "green", on_pieces: false, nearest: { hex: "#263b5e", name: "neel indigo", item_id: LINEN.id, distance: 31.24 } });
+    expect(matchText(far, name)).toBe("Not on the pieces yet; nearest is neel indigo on Linen dupatta (difference 31.2).");
+    expect(matchText(chosen({ nearest: null, on_pieces: false }), name)).toBe("No measured pieces on this board to compare with.");
+  });
+
+  it("shows the harmony, the measured relationships and each chosen colour", () => {
+    renderWithQuery(<ColourStoryView board={board()} />);
+    const section = screen.getByRole("region", { name: "Colour story" });
+    expect(section).toHaveTextContent("Harmony: Complementary — opposite hues");
+    expect(within(section).getByRole("heading", { name: "Colour relationships" })).toBeInTheDocument();
+    const list = within(section).getByRole("list", { name: "Chosen colours and their nearest measured colour" });
+    expect(list).toHaveTextContent("neel indigo #263B5E");
+    expect(list).toHaveTextContent("Matches neel indigo on Linen dupatta (difference 0.0).");
+  });
+
+  it("invites colours on an empty board instead of inventing a story", () => {
+    renderWithQuery(<ColourStoryView board={board([])} />);
+    const section = screen.getByRole("region", { name: "Colour story" });
+    expect(section).toHaveTextContent("Add pieces or colours and the board's colour story appears here.");
+    expect(section).not.toHaveTextContent("Harmony:");
+    expect(section).toHaveTextContent("No colours chosen yet.");
+  });
+
+  it("is part of the board editor", async () => {
+    routeFetch({ "GET /api/boards/bd1": () => Response.json(board()), "GET /api/items?": emptyArchive });
+    renderWithQuery(<BoardEditor id="bd1" />);
+    expect(await screen.findByRole("region", { name: "Colour story" })).toHaveTextContent("Matches neel indigo on Linen dupatta");
   });
 });
