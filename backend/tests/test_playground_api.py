@@ -101,7 +101,7 @@ def test_measures_the_palette_and_suggests_tags(client: TestClient) -> None:
     assert {"hex", "name", "family", "percentage"} == set(body["palette"][0])
     assert body["harmony"] in {"monochromatic", "analogous", "complementary", "neutral", "mixed"}
     assert body["tags"] and all(0 <= t["score"] <= 1 for t in body["tags"])
-    # Palette matches come from the 20 public demo pieces, closest first.
+    # Palette matches come from the 30 public demo pieces, closest first.
     distances = [m["distance"] for m in body["similar_palette"]]
     assert len(distances) == playground.SIMILAR and distances == sorted(distances)
     assert {m["id"] for m in body["similar_palette"]} <= {p.id for p in demo_index().pieces}

@@ -11,15 +11,23 @@ import { DemoTags } from "./demo-sections";
 const PUBLIC = path.resolve(import.meta.dirname, "../../../public");
 
 describe("the demo dataset", () => {
-  it("holds 12 to 20 pieces, each with its files, a credit and a public-domain licence", () => {
+  it("holds 12 to 30 pieces, each with its files, a credit and a public-domain licence", () => {
     expect(DEMO.pieces.length).toBeGreaterThanOrEqual(12);
-    expect(DEMO.pieces.length).toBeLessThanOrEqual(20);
+    expect(DEMO.pieces.length).toBeLessThanOrEqual(30);
     for (const piece of DEMO.pieces) {
       expect(existsSync(path.join(PUBLIC, "demo", piece.image)), piece.image).toBe(true);
       expect(existsSync(path.join(PUBLIC, "demo", piece.thumbnail)), piece.thumbnail).toBe(true);
       expect(piece.licence).toMatch(/public domain \(CC0\)/i);
       expect(creditParts(piece.credit).url).toMatch(/^https:\/\/(www\.metmuseum\.org|clevelandart\.org)\//);
       expect(piece.palette.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("keeps each piece's museum object number in its note and its credit", () => {
+    for (const piece of DEMO.pieces) {
+      const record = piece.note?.match(/Museum record (.+)\.$/)?.[1];
+      expect(record, piece.id).toBeTruthy();
+      expect(creditParts(piece.credit).text.endsWith(record!), piece.id).toBe(true);
     }
   });
 
@@ -90,7 +98,7 @@ describe("DemoBrowse", () => {
     fireEvent.change(screen.getByRole("searchbox", { name: "Search the demo" }), { target: { value: "bandhani" } });
     fireEvent.click(screen.getByRole("button", { name: "Search" }));
     expect(within(grid).getAllByRole("listitem")).toHaveLength(filterDemo(DEMO.pieces, { ...NO_FILTERS, q: "bandhani" }).length);
-    expect(screen.getByText(/of 20 pieces/)).toHaveTextContent(`2 of ${DEMO.pieces.length} pieces`);
+    expect(screen.getByText(/of 30 pieces/)).toHaveTextContent(`2 of ${DEMO.pieces.length} pieces`);
 
     fireEvent.click(screen.getByRole("button", { name: "Clear search and filters" }));
     expect(within(screen.getByRole("list", { name: "Demo pieces" })).getAllByRole("listitem")).toHaveLength(DEMO.pieces.length);

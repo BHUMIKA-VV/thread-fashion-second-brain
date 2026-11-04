@@ -36,7 +36,7 @@ test.describe("signed out", () => {
     await expect(page.getByRole("heading", { level: 1, name: "Explore Thread" })).toBeVisible();
     await expect(page.getByRole("complementary", { name: "About this demo" })).toContainText("read-only demo");
     const grid = page.getByRole("list", { name: "Demo pieces" });
-    await expect(grid.getByRole("listitem")).toHaveCount(20);
+    await expect(grid.getByRole("listitem")).toHaveCount(30);
 
     await page.getByRole("searchbox", { name: "Search the demo" }).fill("bandhani");
     await page.getByRole("button", { name: "Search", exact: true }).click();
@@ -45,7 +45,7 @@ test.describe("signed out", () => {
     await page.getByRole("button", { name: "Search", exact: true }).click();
     await expect(page.getByText("No demo pieces match")).toBeVisible();
     await page.getByRole("button", { name: "Clear search and filters" }).click();
-    await expect(page.getByRole("list", { name: "Demo pieces" }).getByRole("listitem")).toHaveCount(20);
+    await expect(page.getByRole("list", { name: "Demo pieces" }).getByRole("listitem")).toHaveCount(30);
 
     await page.getByRole("list", { name: "Demo pieces" }).getByRole("link", { name: /Bandhani odhani/ }).click();
     await expect(page).toHaveURL(/\/demo\/pieces\/bandhani-odhani$/);
@@ -68,6 +68,12 @@ test.describe("signed out", () => {
     await expect(page.getByRole("heading", { level: 1, name: "Indian textiles" })).toBeVisible();
     await expect(page.getByRole("list", { name: "Indian textiles pieces" }).getByRole("listitem")).toHaveCount(8);
 
+    await page.goto("/demo/collections/silk-and-gold");
+    await expect(page.getByRole("heading", { level: 1, name: "Silk and gold" })).toBeVisible();
+    await page.getByRole("list", { name: "Silk and gold pieces" }).getByRole("link", { name: /Kimkhwab brocade, Benares/ }).click();
+    await expect(page).toHaveURL(/\/demo\/pieces\/kimkhwab-benares$/);
+    await expect(page.getByRole("link", { name: /View the museum record/ })).toHaveAttribute("href", "https://clevelandart.org/art/1925.720");
+
     expect(apiCalls(requests)).toEqual([]);
     // Nothing is written for the visitor; the visit count adds to an anonymous daily total only.
     const writes = requests.filter((r) => r.method() !== "GET" && new URL(r.url()).pathname !== "/api/metrics/view");
@@ -75,7 +81,7 @@ test.describe("signed out", () => {
   });
 
   test("every kind of demo page passes WCAG checks and fits a phone", async ({ page }) => {
-    for (const path of ["/demo", "/demo/pieces/kashmir-shawl-boteh", "/demo/outfits/ochre-afternoon", "/demo/collections/colour-reds"]) {
+    for (const path of ["/demo", "/demo/pieces/kashmir-shawl-boteh", "/demo/outfits/ochre-afternoon", "/demo/collections/colour-reds", "/demo/pieces/jama-with-poppies", "/demo/collections/painted-printed-cotton"]) {
       await page.goto(path);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
       const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();

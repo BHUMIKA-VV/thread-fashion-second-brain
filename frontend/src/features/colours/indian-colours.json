@@ -72,6 +72,13 @@
      "name": "carmine",
      "share": 10.1,
      "distance": 7.2
+    },
+    {
+     "piece": "kimkhwab-benares",
+     "hex": "#89373c",
+     "name": "rouge",
+     "share": 22.5,
+     "distance": 9.2
     }
    ]
   },
@@ -94,6 +101,13 @@
      "name": "rouge",
      "share": 13.4,
      "distance": 6.7
+    },
+    {
+     "piece": "kimkhwab-benares",
+     "hex": "#89373c",
+     "name": "rouge",
+     "share": 22.5,
+     "distance": 7.8
     },
     {
      "piece": "wool-jacket-1855",
@@ -159,6 +173,13 @@
    "hex": "#263b5e",
    "family": "blue",
    "pieces": [
+    {
+     "piece": "striped-kimkhwab",
+     "hex": "#132b3f",
+     "name": "dark",
+     "share": 18.8,
+     "distance": 8.1
+    },
     {
      "piece": "kashmir-shawl-boteh",
      "hex": "#1f4d6a",
@@ -240,11 +261,46 @@
    "family": "brown",
    "pieces": [
     {
+     "piece": "tapis-hip-wrapper",
+     "hex": "#5f3530",
+     "name": "purple brown",
+     "share": 14.9,
+     "distance": 5.5
+    },
+    {
+     "piece": "resist-dyed-fragment",
+     "hex": "#7e4a36",
+     "name": "kattha brown",
+     "share": 19.8,
+     "distance": 5.7
+    },
+    {
+     "piece": "chintz-bed-cover",
+     "hex": "#612f2b",
+     "name": "purple brown",
+     "share": 16.9,
+     "distance": 6.0
+    },
+    {
      "piece": "trousers-1800",
      "hex": "#593b29",
      "name": "kattha brown",
      "share": 24.2,
      "distance": 6.5
+    },
+    {
+     "piece": "jama-with-poppies",
+     "hex": "#634738",
+     "name": "kattha brown",
+     "share": 9.5,
+     "distance": 7.3
+    },
+    {
+     "piece": "silk-choga-1800s",
+     "hex": "#6f4e39",
+     "name": "cocoa",
+     "share": 18.1,
+     "distance": 8.0
     },
     {
      "piece": "wool-shawl-1800s",
@@ -259,34 +315,6 @@
      "name": "rust brown",
      "share": 5.6,
      "distance": 9.2
-    },
-    {
-     "piece": "cotton-blouse-1800s",
-     "hex": "#4c3425",
-     "name": "dark brown",
-     "share": 6.1,
-     "distance": 9.2
-    },
-    {
-     "piece": "silk-dress-1883",
-     "hex": "#4a2925",
-     "name": "purple brown",
-     "share": 7.3,
-     "distance": 9.4
-    },
-    {
-     "piece": "wool-jacket-1855",
-     "hex": "#8b2a25",
-     "name": "carmine",
-     "share": 10.1,
-     "distance": 9.4
-    },
-    {
-     "piece": "bandhani-sari",
-     "hex": "#793138",
-     "name": "purple brown",
-     "share": 55.0,
-     "distance": 10.0
     }
    ]
   },
@@ -296,6 +324,13 @@
    "hex": "#b5603f",
    "family": "brown",
    "pieces": [
+    {
+     "piece": "striped-kimkhwab",
+     "hex": "#9d543d",
+     "name": "mitti terracotta",
+     "share": 9.3,
+     "distance": 6.8
+    },
     {
      "piece": "bandhani-sari",
      "hex": "#9a6946",
@@ -326,6 +361,20 @@
      "distance": 3.4
     },
     {
+     "piece": "gold-cloth-1800s",
+     "hex": "#c7a57a",
+     "name": "toupe",
+     "share": 17.8,
+     "distance": 3.4
+    },
+    {
+     "piece": "silk-angarkha-1800s",
+     "hex": "#b18c62",
+     "name": "pale brown",
+     "share": 10.3,
+     "distance": 4.7
+    },
+    {
      "piece": "kashmir-shawl-border",
      "hex": "#b49b80",
      "name": "mushroom",
@@ -340,11 +389,25 @@
      "distance": 6.4
     },
     {
+     "piece": "resist-dyed-fragment",
+     "hex": "#ac8e72",
+     "name": "pale brown",
+     "share": 15.6,
+     "distance": 6.8
+    },
+    {
      "piece": "wool-dress-1896",
      "hex": "#a78e5c",
      "name": "dark sand",
      "share": 18.4,
      "distance": 7.0
+    },
+    {
+     "piece": "kimkhwab-benares",
+     "hex": "#a98d71",
+     "name": "pale brown",
+     "share": 24.1,
+     "distance": 7.2
     }
    ]
   },
@@ -355,6 +418,13 @@
    "family": "orange",
    "pieces": [
     {
+     "piece": "gold-cloth-1800s",
+     "hex": "#c7a57a",
+     "name": "toupe",
+     "share": 17.8,
+     "distance": 4.7
+    },
+    {
      "piece": "cotton-blouse-1800s",
      "hex": "#c6a27c",
      "name": "badami almond",
@@ -362,11 +432,32 @@
      "distance": 4.8
     },
     {
+     "piece": "kimkhwab-benares",
+     "hex": "#dcc7ac",
+     "name": "chandan sandalwood",
+     "share": 13.3,
+     "distance": 7.3
+    },
+    {
+     "piece": "jama-with-poppies",
+     "hex": "#d2beaa",
+     "name": "chandan sandalwood",
+     "share": 7.1,
+     "distance": 7.4
+    },
+    {
      "piece": "wool-jacket-1855",
      "hex": "#dbc7a7",
      "name": "very light brown",
      "share": 15.8,
      "distance": 7.4
+    },
+    {
+     "piece": "striped-kimkhwab",
+     "hex": "#c6b896",
+     "name": "putty",
+     "share": 19.3,
+     "distance": 8.6
     },
     {
      "piece": "kashmir-shawl-border",
@@ -391,11 +482,39 @@
    "family": "beige",
    "pieces": [
     {
+     "piece": "quilted-angarkha-1700s",
+     "hex": "#e6e3d3",
+     "name": "malai cream",
+     "share": 15.6,
+     "distance": 3.8
+    },
+    {
      "piece": "kashmir-shawl-border",
      "hex": "#dacbb3",
      "name": "malai cream",
      "share": 24.8,
      "distance": 7.0
+    },
+    {
+     "piece": "silk-angarkha-1800s",
+     "hex": "#efede8",
+     "name": "white",
+     "share": 31.9,
+     "distance": 7.3
+    },
+    {
+     "piece": "silk-choga-1800s",
+     "hex": "#e6ede4",
+     "name": "light grey",
+     "share": 30.3,
+     "distance": 8.4
+    },
+    {
+     "piece": "kimkhwab-benares",
+     "hex": "#dcc7ac",
+     "name": "chandan sandalwood",
+     "share": 13.3,
+     "distance": 8.7
     },
     {
      "piece": "wool-jacket-1855",
@@ -417,20 +536,6 @@
      "name": "chandi silver",
      "share": 12.6,
      "distance": 9.6
-    },
-    {
-     "piece": "leather-boots-1780",
-     "hex": "#e3e2e2",
-     "name": "light grey",
-     "share": 29.1,
-     "distance": 9.8
-    },
-    {
-     "piece": "cotton-blouse-1800s",
-     "hex": "#e4c8a8",
-     "name": "light peach",
-     "share": 22.8,
-     "distance": 9.9
     }
    ]
   },
@@ -469,6 +574,13 @@
      "distance": 3.3
     },
     {
+     "piece": "quilted-angarkha-1700s",
+     "hex": "#d0d1d2",
+     "name": "silver",
+     "share": 26.1,
+     "distance": 3.6
+    },
+    {
      "piece": "cotton-dress-1872",
      "hex": "#cfced4",
      "name": "chandi silver",
@@ -483,25 +595,18 @@
      "distance": 5.5
     },
     {
+     "piece": "gold-cloth-1800s",
+     "hex": "#b5b0ab",
+     "name": "chandi silver",
+     "share": 7.5,
+     "distance": 5.7
+    },
+    {
      "piece": "kashmir-shawl-boteh",
      "hex": "#d2cdd4",
      "name": "chandi silver",
      "share": 5.6,
      "distance": 6.5
-    },
-    {
-     "piece": "leather-boots-1780",
-     "hex": "#abacae",
-     "name": "cool grey",
-     "share": 43.2,
-     "distance": 6.8
-    },
-    {
-     "piece": "bandhani-sari",
-     "hex": "#aaaaa3",
-     "name": "greyish",
-     "share": 5.4,
-     "distance": 7.6
     }
    ]
   },
@@ -590,11 +695,25 @@
      "distance": 2.5
     },
     {
+     "piece": "kimkhwab-benares",
+     "hex": "#151514",
+     "name": "kajal black",
+     "share": 14.1,
+     "distance": 2.5
+    },
+    {
      "piece": "silk-dress-1883",
      "hex": "#161110",
      "name": "kajal black",
      "share": 13.5,
      "distance": 2.9
+    },
+    {
+     "piece": "jama-with-poppies",
+     "hex": "#101010",
+     "name": "almost black",
+     "share": 31.7,
+     "distance": 3.3
     },
     {
      "piece": "kashmir-shawl-border",
@@ -616,20 +735,6 @@
      "name": "kajal black",
      "share": 47.5,
      "distance": 4.5
-    },
-    {
-     "piece": "gold-block-print",
-     "hex": "#07060f",
-     "name": "black",
-     "share": 51.1,
-     "distance": 5.9
-    },
-    {
-     "piece": "trousers-1800",
-     "hex": "#2b2b2f",
-     "name": "dark grey",
-     "share": 12.4,
-     "distance": 6.0
     }
    ]
   }

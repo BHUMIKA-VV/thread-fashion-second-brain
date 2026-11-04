@@ -147,20 +147,20 @@
      "similarity": 0.753
     },
     {
+     "id": "jama-with-poppies",
+     "similarity": 0.734
+    },
+    {
      "id": "silk-coat-1882",
      "similarity": 0.641
     },
     {
-     "id": "wool-shawl-1800s",
-     "similarity": 0.584
+     "id": "silk-angarkha-1800s",
+     "similarity": 0.63
     },
     {
-     "id": "silk-coat-1900",
-     "similarity": 0.579
-    },
-    {
-     "id": "leather-boots-1780",
-     "similarity": 0.549
+     "id": "quilted-angarkha-1700s",
+     "similarity": 0.605
     }
    ]
   },
@@ -285,6 +285,10 @@
    ],
    "similar_palette": [
     {
+     "id": "quilted-angarkha-1700s",
+     "distance": 6.33
+    },
+    {
      "id": "silk-dress-1883",
      "distance": 6.77
     },
@@ -303,16 +307,16 @@
     {
      "id": "resist-dyed-cotton",
      "distance": 8.23
-    },
-    {
-     "id": "cotton-coat-1845",
-     "distance": 9.13
     }
    ],
    "similar_look": [
     {
      "id": "silk-dress-1883",
      "similarity": 0.768
+    },
+    {
+     "id": "jama-with-poppies",
+     "similarity": 0.761
     },
     {
      "id": "cotton-dress-1872",
@@ -329,10 +333,6 @@
     {
      "id": "silk-coat-1882",
      "similarity": 0.632
-    },
-    {
-     "id": "leather-boots-1795",
-     "similarity": 0.586
     }
    ]
   },
@@ -483,6 +483,10 @@
    ],
    "similar_look": [
     {
+     "id": "jama-with-poppies",
+     "similarity": 0.773
+    },
+    {
      "id": "silk-dress-1883",
      "similarity": 0.753
     },
@@ -495,16 +499,12 @@
      "similarity": 0.622
     },
     {
+     "id": "quilted-angarkha-1700s",
+     "similarity": 0.621
+    },
+    {
      "id": "silk-coat-1882",
      "similarity": 0.611
-    },
-    {
-     "id": "leather-boots-1780",
-     "similarity": 0.528
-    },
-    {
-     "id": "cotton-coat-1845",
-     "similarity": 0.518
     }
    ]
   },
@@ -641,16 +641,16 @@
      "distance": 10.44
     },
     {
+     "id": "kimkhwab-benares",
+     "distance": 10.51
+    },
+    {
+     "id": "tapis-hip-wrapper",
+     "distance": 11.11
+    },
+    {
      "id": "bandhani-sari",
      "distance": 11.74
-    },
-    {
-     "id": "cotton-blouse-1800s",
-     "distance": 12.83
-    },
-    {
-     "id": "leather-boots-1795",
-     "distance": 13.14
     }
    ],
    "similar_look": [
@@ -671,12 +671,12 @@
      "similarity": 0.56
     },
     {
-     "id": "wool-dress-1896",
-     "similarity": 0.485
+     "id": "silk-angarkha-1800s",
+     "similarity": 0.527
     },
     {
-     "id": "cotton-dress-1872",
-     "similarity": 0.465
+     "id": "quilted-angarkha-1700s",
+     "similarity": 0.518
     }
    ]
   },
@@ -794,6 +794,10 @@
      "distance": 3.79
     },
     {
+     "id": "jama-with-poppies",
+     "distance": 6.63
+    },
+    {
      "id": "bandhani-odhani",
      "distance": 8.62
     },
@@ -806,12 +810,8 @@
      "distance": 9.33
     },
     {
-     "id": "wool-shawl-1800s",
-     "distance": 10.25
-    },
-    {
-     "id": "resist-dyed-cotton",
-     "distance": 10.36
+     "id": "kimkhwab-benares",
+     "distance": 10.03
     }
    ],
    "similar_look": [
@@ -828,16 +828,16 @@
      "similarity": 0.632
     },
     {
+     "id": "silk-angarkha-1800s",
+     "similarity": 0.628
+    },
+    {
+     "id": "quilted-angarkha-1700s",
+     "similarity": 0.617
+    },
+    {
      "id": "cotton-dress-1872",
      "similarity": 0.611
-    },
-    {
-     "id": "wool-jacket-1855",
-     "similarity": 0.61
-    },
-    {
-     "id": "silk-coat-1900",
-     "similarity": 0.594
     }
    ]
   },
@@ -982,34 +982,34 @@
      "distance": 8.17
     },
     {
-     "id": "silk-dress-1883",
-     "distance": 8.92
+     "id": "quilted-angarkha-1700s",
+     "distance": 8.63
     }
    ],
    "similar_look": [
+    {
+     "id": "silk-angarkha-1800s",
+     "similarity": 0.737
+    },
+    {
+     "id": "quilted-angarkha-1700s",
+     "similarity": 0.714
+    },
+    {
+     "id": "silk-choga-1800s",
+     "similarity": 0.688
+    },
     {
      "id": "wool-shawl-1800s",
      "similarity": 0.678
     },
     {
+     "id": "jama-with-poppies",
+     "similarity": 0.664
+    },
+    {
      "id": "wool-dress-1896",
      "similarity": 0.649
-    },
-    {
-     "id": "cotton-dress-1872",
-     "similarity": 0.622
-    },
-    {
-     "id": "silk-coat-1882",
-     "similarity": 0.594
-    },
-    {
-     "id": "silk-dress-1883",
-     "similarity": 0.579
-    },
-    {
-     "id": "wool-jacket-1855",
-     "similarity": 0.56
     }
    ]
   },
@@ -1142,8 +1142,8 @@
      "distance": 6.92
     },
     {
-     "id": "trousers-1800",
-     "distance": 7.91
+     "id": "quilted-angarkha-1700s",
+     "distance": 7.23
     }
    ],
    "similar_look": [
@@ -1156,20 +1156,20 @@
      "similarity": 0.693
     },
     {
+     "id": "quilted-angarkha-1700s",
+     "similarity": 0.688
+    },
+    {
+     "id": "silk-angarkha-1800s",
+     "similarity": 0.612
+    },
+    {
      "id": "wool-jacket-1855",
      "similarity": 0.582
     },
     {
-     "id": "silk-coat-1900",
-     "similarity": 0.553
-    },
-    {
-     "id": "cotton-dress-1872",
-     "similarity": 0.518
-    },
-    {
-     "id": "wool-dress-1896",
-     "similarity": 0.5
+     "id": "silk-choga-1800s",
+     "similarity": 0.569
     }
    ]
   },
@@ -1294,16 +1294,16 @@
      "distance": 10.9
     },
     {
+     "id": "silk-angarkha-1800s",
+     "distance": 11.21
+    },
+    {
+     "id": "silk-choga-1800s",
+     "distance": 11.45
+    },
+    {
      "id": "cotton-dress-1872",
      "distance": 12.15
-    },
-    {
-     "id": "resist-dyed-cotton",
-     "distance": 13.89
-    },
-    {
-     "id": "kashmir-shawl-boteh",
-     "distance": 14.23
     }
    ],
    "similar_look": [
@@ -1324,12 +1324,12 @@
      "similarity": 0.489
     },
     {
-     "id": "wool-dress-1896",
-     "similarity": 0.474
+     "id": "jama-with-poppies",
+     "similarity": 0.483
     },
     {
-     "id": "wool-shawl-1800s",
-     "similarity": 0.465
+     "id": "wool-dress-1896",
+     "similarity": 0.474
     }
    ]
   },
@@ -1460,16 +1460,16 @@
      "distance": 6.51
     },
     {
+     "id": "quilted-angarkha-1700s",
+     "distance": 7.33
+    },
+    {
      "id": "resist-dyed-cotton",
      "distance": 7.43
     },
     {
      "id": "wool-dress-1896",
      "distance": 8.06
-    },
-    {
-     "id": "silk-coat-1900",
-     "distance": 9.28
     }
    ],
    "similar_look": [
@@ -1486,16 +1486,16 @@
      "similarity": 0.542
     },
     {
+     "id": "jama-with-poppies",
+     "similarity": 0.526
+    },
+    {
+     "id": "silk-angarkha-1800s",
+     "similarity": 0.518
+    },
+    {
      "id": "silk-dress-1883",
      "similarity": 0.511
-    },
-    {
-     "id": "silk-slippers-1865",
-     "similarity": 0.503
-    },
-    {
-     "id": "silk-coat-1900",
-     "similarity": 0.498
     }
    ]
   },
@@ -1638,8 +1638,8 @@
      "similarity": 0.546
     },
     {
-     "id": "cotton-dress-1872",
-     "similarity": 0.528
+     "id": "silk-angarkha-1800s",
+     "similarity": 0.541
     }
    ]
   },
@@ -1774,30 +1774,34 @@
      "distance": 7.25
     },
     {
+     "id": "jama-with-poppies",
+     "distance": 8.8
+    },
+    {
      "id": "bandhani-odhani",
      "distance": 9.03
     },
     {
-     "id": "cotton-blouse-1800s",
-     "distance": 10.22
+     "id": "chintz-bed-cover",
+     "distance": 9.2
     },
     {
-     "id": "silk-coat-1882",
-     "distance": 10.25
+     "id": "kimkhwab-benares",
+     "distance": 9.5
     },
     {
-     "id": "bandhani-sari",
-     "distance": 10.7
-    },
-    {
-     "id": "trousers-1800",
-     "distance": 11.13
+     "id": "tapis-hip-wrapper",
+     "distance": 9.76
     }
    ],
    "similar_look": [
     {
      "id": "silk-coat-1900",
      "similarity": 0.678
+    },
+    {
+     "id": "silk-choga-1800s",
+     "similarity": 0.627
     },
     {
      "id": "silk-dress-1883",
@@ -1808,16 +1812,12 @@
      "similarity": 0.582
     },
     {
-     "id": "wool-dress-1896",
-     "similarity": 0.569
+     "id": "silk-angarkha-1800s",
+     "similarity": 0.575
     },
     {
-     "id": "bandhani-sari",
-     "similarity": 0.552
-    },
-    {
-     "id": "silk-coat-1882",
-     "similarity": 0.55
+     "id": "jama-with-poppies",
+     "similarity": 0.574
     }
    ]
   },
@@ -1931,6 +1931,10 @@
    ],
    "similar_palette": [
     {
+     "id": "jama-with-poppies",
+     "distance": 6.48
+    },
+    {
      "id": "bandhani-odhani",
      "distance": 7.12
     },
@@ -1943,16 +1947,12 @@
      "distance": 8.06
     },
     {
+     "id": "kimkhwab-benares",
+     "distance": 8.07
+    },
+    {
      "id": "silk-coat-1882",
      "distance": 8.99
-    },
-    {
-     "id": "kashmir-shawl-border",
-     "distance": 9.07
-    },
-    {
-     "id": "resist-dyed-cotton",
-     "distance": 10.21
     }
    ],
    "similar_look": [
@@ -1961,24 +1961,24 @@
      "similarity": 0.646
     },
     {
+     "id": "striped-kimkhwab",
+     "similarity": 0.632
+    },
+    {
      "id": "trousers-1800",
      "similarity": 0.614
+    },
+    {
+     "id": "kimkhwab-benares",
+     "similarity": 0.607
     },
     {
      "id": "ikat-striped-panel",
      "similarity": 0.596
     },
     {
-     "id": "gold-block-print",
-     "similarity": 0.587
-    },
-    {
-     "id": "kashmir-shawl-border",
-     "similarity": 0.569
-    },
-    {
-     "id": "bandhani-sari",
-     "similarity": 0.56
+     "id": "tapis-hip-wrapper",
+     "similarity": 0.594
     }
    ]
   },
@@ -2085,6 +2085,10 @@
    ],
    "similar_palette": [
     {
+     "id": "jama-with-poppies",
+     "distance": 7.16
+    },
+    {
      "id": "silk-dress-1883",
      "distance": 7.79
     },
@@ -2103,10 +2107,6 @@
     {
      "id": "resist-dyed-cotton",
      "distance": 8.36
-    },
-    {
-     "id": "cotton-dress-1872",
-     "distance": 8.64
     }
    ],
    "similar_look": [
@@ -2115,8 +2115,16 @@
      "similarity": 0.699
     },
     {
+     "id": "quilted-angarkha-1700s",
+     "similarity": 0.625
+    },
+    {
      "id": "cotton-blouse-1800s",
      "similarity": 0.614
+    },
+    {
+     "id": "silk-angarkha-1800s",
+     "similarity": 0.611
     },
     {
      "id": "ikat-striped-panel",
@@ -2125,14 +2133,6 @@
     {
      "id": "resist-dyed-cotton",
      "similarity": 0.598
-    },
-    {
-     "id": "gold-block-print",
-     "similarity": 0.555
-    },
-    {
-     "id": "bandhani-odhani",
-     "similarity": 0.55
     }
    ]
   },
@@ -2267,12 +2267,12 @@
      "distance": 9.03
     },
     {
-     "id": "gold-block-print",
-     "distance": 9.55
+     "id": "chintz-bed-cover",
+     "distance": 9.44
     },
     {
-     "id": "silk-dress-1883",
-     "distance": 9.86
+     "id": "gold-block-print",
+     "distance": 9.55
     }
    ],
    "similar_look": [
@@ -2281,24 +2281,24 @@
      "similarity": 0.791
     },
     {
+     "id": "gold-cloth-1800s",
+     "similarity": 0.775
+    },
+    {
      "id": "kashmir-shawl-boteh",
      "similarity": 0.768
+    },
+    {
+     "id": "tapis-hip-wrapper",
+     "similarity": 0.76
     },
     {
      "id": "gold-block-print",
      "similarity": 0.713
     },
     {
-     "id": "ikat-striped-panel",
-     "similarity": 0.702
-    },
-    {
-     "id": "resist-dyed-cotton",
-     "similarity": 0.66
-    },
-    {
-     "id": "kashmir-shawl-border",
-     "similarity": 0.608
+     "id": "striped-kimkhwab",
+     "similarity": 0.709
     }
    ]
   },
@@ -2431,23 +2431,31 @@
      "distance": 9.83
     },
     {
-     "id": "wool-shawl-1800s",
-     "distance": 12.43
+     "id": "gold-cloth-1800s",
+     "distance": 10.49
     },
     {
-     "id": "kashmir-shawl-border",
-     "distance": 12.76
+     "id": "chintz-bed-cover",
+     "distance": 10.69
     },
     {
-     "id": "leather-boots-1795",
-     "distance": 15.33
+     "id": "tapis-hip-wrapper",
+     "distance": 11.12
     },
     {
-     "id": "silk-dress-1883",
-     "distance": 15.59
+     "id": "kimkhwab-benares",
+     "distance": 11.54
     }
    ],
    "similar_look": [
+    {
+     "id": "striped-kimkhwab",
+     "similarity": 0.81
+    },
+    {
+     "id": "tapis-hip-wrapper",
+     "similarity": 0.722
+    },
     {
      "id": "bandhani-odhani",
      "similarity": 0.702
@@ -2463,14 +2471,6 @@
     {
      "id": "gold-block-print",
      "similarity": 0.642
-    },
-    {
-     "id": "trousers-1800",
-     "similarity": 0.607
-    },
-    {
-     "id": "kashmir-shawl-border",
-     "similarity": 0.6
     }
    ]
   },
@@ -2594,12 +2594,12 @@
      "distance": 7.43
     },
     {
-     "id": "wool-dress-1896",
-     "distance": 8.23
+     "id": "jama-with-poppies",
+     "distance": 8.05
     },
     {
-     "id": "trousers-1800",
-     "distance": 8.36
+     "id": "wool-dress-1896",
+     "distance": 8.23
     }
    ],
    "similar_look": [
@@ -2608,24 +2608,24 @@
      "similarity": 0.754
     },
     {
+     "id": "kimkhwab-benares",
+     "similarity": 0.72
+    },
+    {
+     "id": "resist-dyed-fragment",
+     "similarity": 0.699
+    },
+    {
+     "id": "tapis-hip-wrapper",
+     "similarity": 0.672
+    },
+    {
      "id": "bandhani-odhani",
      "similarity": 0.66
     },
     {
      "id": "bandhani-sari",
      "similarity": 0.657
-    },
-    {
-     "id": "cotton-blouse-1800s",
-     "similarity": 0.646
-    },
-    {
-     "id": "kashmir-shawl-boteh",
-     "similarity": 0.622
-    },
-    {
-     "id": "kashmir-shawl-border",
-     "similarity": 0.599
     }
    ]
   },
@@ -2754,6 +2754,10 @@
      "distance": 3.79
     },
     {
+     "id": "jama-with-poppies",
+     "distance": 7.28
+    },
+    {
      "id": "cotton-blouse-1800s",
      "distance": 7.62
     },
@@ -2768,10 +2772,6 @@
     {
      "id": "bandhani-odhani",
      "distance": 9.55
-    },
-    {
-     "id": "kashmir-shawl-border",
-     "distance": 10.37
     }
    ],
    "similar_look": [
@@ -2792,12 +2792,12 @@
      "similarity": 0.713
     },
     {
-     "id": "ikat-striped-panel",
-     "similarity": 0.642
+     "id": "striped-kimkhwab",
+     "similarity": 0.708
     },
     {
-     "id": "cotton-blouse-1800s",
-     "similarity": 0.587
+     "id": "kimkhwab-benares",
+     "similarity": 0.679
     }
    ]
   },
@@ -2928,6 +2928,14 @@
    ],
    "similar_palette": [
     {
+     "id": "kimkhwab-benares",
+     "distance": 5.57
+    },
+    {
+     "id": "jama-with-poppies",
+     "distance": 7.45
+    },
+    {
      "id": "silk-coat-1900",
      "distance": 8.17
     },
@@ -2940,42 +2948,34 @@
      "distance": 9.07
     },
     {
-     "id": "cotton-dress-1872",
-     "distance": 9.7
-    },
-    {
-     "id": "leather-boots-1795",
-     "distance": 9.88
-    },
-    {
-     "id": "cotton-coat-1845",
-     "distance": 10.03
+     "id": "striped-kimkhwab",
+     "distance": 9.43
     }
    ],
    "similar_look": [
+    {
+     "id": "chintz-bed-cover",
+     "similarity": 0.737
+    },
+    {
+     "id": "tapis-hip-wrapper",
+     "similarity": 0.73
+    },
+    {
+     "id": "kimkhwab-benares",
+     "similarity": 0.721
+    },
+    {
+     "id": "striped-kimkhwab",
+     "similarity": 0.708
+    },
     {
      "id": "bandhani-sari",
      "similarity": 0.679
     },
     {
-     "id": "bandhani-odhani",
-     "similarity": 0.608
-    },
-    {
-     "id": "ikat-striped-panel",
-     "similarity": 0.6
-    },
-    {
-     "id": "resist-dyed-cotton",
-     "similarity": 0.599
-    },
-    {
-     "id": "kashmir-shawl-boteh",
-     "similarity": 0.577
-    },
-    {
-     "id": "gold-block-print",
-     "similarity": 0.57
+     "id": "gold-cloth-1800s",
+     "similarity": 0.633
     }
    ]
   },
@@ -3083,31 +3083,35 @@
    ],
    "similar_palette": [
     {
+     "id": "chintz-bed-cover",
+     "distance": 6.43
+    },
+    {
+     "id": "tapis-hip-wrapper",
+     "distance": 7.51
+    },
+    {
+     "id": "kimkhwab-benares",
+     "distance": 8.17
+    },
+    {
+     "id": "silk-choga-1800s",
+     "distance": 8.56
+    },
+    {
      "id": "silk-dress-1883",
      "distance": 8.87
     },
     {
      "id": "bandhani-odhani",
      "distance": 8.93
-    },
-    {
-     "id": "ikat-striped-panel",
-     "distance": 9.83
-    },
-    {
-     "id": "kashmir-shawl-border",
-     "distance": 10.54
-    },
-    {
-     "id": "wool-shawl-1800s",
-     "distance": 10.7
-    },
-    {
-     "id": "cotton-blouse-1800s",
-     "distance": 10.96
     }
    ],
    "similar_look": [
+    {
+     "id": "gold-cloth-1800s",
+     "similarity": 0.807
+    },
     {
      "id": "bandhani-odhani",
      "similarity": 0.791
@@ -3117,20 +3121,16 @@
      "similarity": 0.761
     },
     {
-     "id": "gold-block-print",
-     "similarity": 0.721
+     "id": "chintz-bed-cover",
+     "similarity": 0.751
     },
     {
-     "id": "kashmir-shawl-border",
-     "similarity": 0.679
+     "id": "kimkhwab-benares",
+     "similarity": 0.745
     },
     {
-     "id": "ikat-striped-panel",
-     "similarity": 0.678
-    },
-    {
-     "id": "resist-dyed-cotton",
-     "similarity": 0.657
+     "id": "striped-kimkhwab",
+     "similarity": 0.729
     }
    ]
   },
@@ -3255,6 +3255,14 @@
    ],
    "similar_palette": [
     {
+     "id": "tapis-hip-wrapper",
+     "distance": 8.72
+    },
+    {
+     "id": "striped-kimkhwab",
+     "distance": 10.84
+    },
+    {
      "id": "cotton-dress-1872",
      "distance": 11.73
     },
@@ -3269,14 +3277,6 @@
     {
      "id": "resist-dyed-cotton",
      "distance": 12.89
-    },
-    {
-     "id": "kashmir-shawl-border",
-     "distance": 13.04
-    },
-    {
-     "id": "trousers-1800",
-     "distance": 13.4
     }
    ],
    "similar_look": [
@@ -3289,20 +3289,1734 @@
      "similarity": 0.761
     },
     {
+     "id": "gold-cloth-1800s",
+     "similarity": 0.757
+    },
+    {
      "id": "gold-block-print",
      "similarity": 0.725
     },
     {
-     "id": "ikat-striped-panel",
-     "similarity": 0.692
+     "id": "striped-kimkhwab",
+     "similarity": 0.709
     },
     {
-     "id": "resist-dyed-cotton",
-     "similarity": 0.622
+     "id": "ikat-striped-panel",
+     "similarity": 0.692
+    }
+   ]
+  },
+  {
+   "id": "silk-angarkha-1800s",
+   "title": "Silk and gold angarkha, India, 1800s",
+   "type": "garment",
+   "note": "Silk, metal wrapped thread; woven. Museum record C.I.64.78.2.",
+   "credit": "The Metropolitan Museum of Art, Purchase, Irene Lewisohn Bequest, 1964, C.I.64.78.2. https://www.metmuseum.org/art/collection/search/86136",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/silk-angarkha-1800s.webp",
+   "thumbnail": "thumbs/silk-angarkha-1800s.webp",
+   "width": 951,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#efede8",
+     "name": "white",
+     "family": "white",
+     "percentage": 31.9,
+     "lab": [
+      93.77,
+      -0.2,
+      2.65
+     ]
+    },
+    {
+     "hex": "#bcb5a2",
+     "name": "greyish",
+     "family": "beige",
+     "percentage": 19.9,
+     "lab": [
+      73.77,
+      -0.79,
+      10.57
+     ]
+    },
+    {
+     "hex": "#75573b",
+     "name": "cocoa",
+     "family": "brown",
+     "percentage": 18.8,
+     "lab": [
+      39.44,
+      8.59,
+      21.04
+     ]
+    },
+    {
+     "hex": "#907e69",
+     "name": "brownish grey",
+     "family": "brown",
+     "percentage": 10.8,
+     "lab": [
+      53.89,
+      3.46,
+      13.98
+     ]
+    },
+    {
+     "hex": "#b18c62",
+     "name": "pale brown",
+     "family": "orange",
+     "percentage": 10.3,
+     "lab": [
+      60.77,
+      8.45,
+      27.75
+     ]
+    },
+    {
+     "hex": "#443023",
+     "name": "dark brown",
+     "family": "brown",
+     "percentage": 8.3,
+     "lab": [
+      21.82,
+      7.13,
+      11.9
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "white",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "banarasi brocade",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "silk",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "kurta",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "festive",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "embroidery",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "silhouette",
+     "tag": "draped",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "silk-choga-1800s",
+     "distance": 5.48
+    },
+    {
+     "id": "quilted-angarkha-1700s",
+     "distance": 7.35
+    },
+    {
+     "id": "leather-boots-1795",
+     "distance": 8.39
+    },
+    {
+     "id": "wool-dress-1896",
+     "distance": 8.49
+    },
+    {
+     "id": "cotton-coat-1845",
+     "distance": 8.91
+    },
+    {
+     "id": "leather-boots-1780",
+     "distance": 8.91
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "silk-choga-1800s",
+     "similarity": 0.85
+    },
+    {
+     "id": "quilted-angarkha-1700s",
+     "similarity": 0.821
+    },
+    {
+     "id": "jama-with-poppies",
+     "similarity": 0.789
+    },
+    {
+     "id": "silk-coat-1900",
+     "similarity": 0.737
+    },
+    {
+     "id": "kimkhwab-benares",
+     "similarity": 0.643
+    },
+    {
+     "id": "silk-dress-1883",
+     "similarity": 0.63
+    }
+   ]
+  },
+  {
+   "id": "silk-choga-1800s",
+   "title": "Silk and gold choga, India, late 1800s",
+   "type": "garment",
+   "note": "Silk, metal wrapped thread. Museum record C.I.50.17.9.",
+   "credit": "The Metropolitan Museum of Art, Gift of Aline Bernstein, 1950, C.I.50.17.9. https://www.metmuseum.org/art/collection/search/86171",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/silk-choga-1800s.webp",
+   "thumbnail": "thumbs/silk-choga-1800s.webp",
+   "width": 1036,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#e6ede4",
+     "name": "light grey",
+     "family": "white",
+     "percentage": 30.3,
+     "lab": [
+      93.01,
+      -3.93,
+      3.54
+     ]
+    },
+    {
+     "hex": "#b9b9a8",
+     "name": "greyish",
+     "family": "beige",
+     "percentage": 19.3,
+     "lab": [
+      74.72,
+      -3.02,
+      8.63
+     ]
+    },
+    {
+     "hex": "#6f4e39",
+     "name": "cocoa",
+     "family": "brown",
+     "percentage": 18.1,
+     "lab": [
+      36.22,
+      11.09,
+      17.93
+     ]
+    },
+    {
+     "hex": "#9e8164",
+     "name": "puce",
+     "family": "orange",
+     "percentage": 12.2,
+     "lab": [
+      55.98,
+      6.88,
+      19.92
+     ]
+    },
+    {
+     "hex": "#46251f",
+     "name": "chocolate brown",
+     "family": "brown",
+     "percentage": 11.0,
+     "lab": [
+      18.9,
+      14.86,
+      10.78
+     ]
+    },
+    {
+     "hex": "#7f3a42",
+     "name": "brownish purple",
+     "family": "pink",
+     "percentage": 9.1,
+     "lab": [
+      33.84,
+      30.65,
+      9.44
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "white",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "banarasi brocade",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "silk",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "kurta",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "paisley",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "silhouette",
+     "tag": "draped",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "silk-angarkha-1800s",
+     "distance": 5.48
+    },
+    {
+     "id": "resist-dyed-fragment",
+     "distance": 7.89
+    },
+    {
+     "id": "bandhani-sari",
+     "distance": 8.56
+    },
+    {
+     "id": "gold-cloth-1800s",
+     "distance": 8.72
+    },
+    {
+     "id": "kimkhwab-benares",
+     "distance": 9.31
+    },
+    {
+     "id": "quilted-angarkha-1700s",
+     "distance": 10.08
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "silk-angarkha-1800s",
+     "similarity": 0.85
+    },
+    {
+     "id": "quilted-angarkha-1700s",
+     "similarity": 0.754
+    },
+    {
+     "id": "silk-coat-1900",
+     "similarity": 0.688
+    },
+    {
+     "id": "jama-with-poppies",
+     "similarity": 0.656
+    },
+    {
+     "id": "wool-shawl-1800s",
+     "similarity": 0.627
+    },
+    {
+     "id": "kimkhwab-benares",
+     "similarity": 0.594
+    }
+   ]
+  },
+  {
+   "id": "kimkhwab-benares",
+   "title": "Kimkhwab brocade, Benares, 1800s",
+   "type": "fabric",
+   "note": "Brocade, \"kimkhwab\"; silk with gold and silver. Museum record 1925.720.",
+   "credit": "The Cleveland Museum of Art, Purchase from the J. H. Wade Fund, 1925.720. https://clevelandart.org/art/1925.720",
+   "licence": "Public domain (CC0), Cleveland Museum of Art Open Access",
+   "image": "images/kimkhwab-benares.webp",
+   "thumbnail": "thumbs/kimkhwab-benares.webp",
+   "width": 1060,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#a98d71",
+     "name": "pale brown",
+     "family": "orange",
+     "percentage": 24.1,
+     "lab": [
+      60.5,
+      6.37,
+      18.9
+     ]
+    },
+    {
+     "hex": "#89373c",
+     "name": "rouge",
+     "family": "red",
+     "percentage": 22.5,
+     "lab": [
+      34.76,
+      35.48,
+      14.8
+     ]
+    },
+    {
+     "hex": "#8a5d46",
+     "name": "cocoa",
+     "family": "brown",
+     "percentage": 17.3,
+     "lab": [
+      43.76,
+      15.58,
+      20.63
+     ]
+    },
+    {
+     "hex": "#151514",
+     "name": "kajal black",
+     "family": "black",
+     "percentage": 14.1,
+     "lab": [
+      6.74,
+      -0.23,
+      0.63
+     ]
+    },
+    {
+     "hex": "#dcc7ac",
+     "name": "chandan sandalwood",
+     "family": "beige",
+     "percentage": 13.3,
+     "lab": [
+      81.31,
+      3.13,
+      16.21
+     ]
+    },
+    {
+     "hex": "#4d4a44",
+     "name": "charcoal grey",
+     "family": "grey",
+     "percentage": 8.7,
+     "lab": [
+      31.56,
+      0.01,
+      4.03
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "orange",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "boho",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "banarasi brocade",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "silk",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "bridal",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "embroidery",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "jama-with-poppies",
+     "distance": 5.46
     },
     {
      "id": "kashmir-shawl-border",
-     "similarity": 0.577
+     "distance": 5.57
+    },
+    {
+     "id": "chintz-bed-cover",
+     "distance": 6.25
+    },
+    {
+     "id": "cotton-blouse-1800s",
+     "distance": 8.07
+    },
+    {
+     "id": "bandhani-sari",
+     "distance": 8.17
+    },
+    {
+     "id": "tapis-hip-wrapper",
+     "distance": 8.87
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "resist-dyed-fragment",
+     "similarity": 0.765
+    },
+    {
+     "id": "bandhani-sari",
+     "similarity": 0.745
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "similarity": 0.721
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "similarity": 0.72
+    },
+    {
+     "id": "chintz-bed-cover",
+     "similarity": 0.699
+    },
+    {
+     "id": "gold-block-print",
+     "similarity": 0.679
+    }
+   ]
+  },
+  {
+   "id": "gold-cloth-1800s",
+   "title": "Fragment of gold cloth, India, 1800s",
+   "type": "fabric",
+   "note": "Brocade; silk, gold and silver threads. Museum record 1916.1213.",
+   "credit": "The Cleveland Museum of Art, Gift of Mr. and Mrs. J. H. Wade, 1916.1213. https://clevelandart.org/art/1916.1213",
+   "licence": "Public domain (CC0), Cleveland Museum of Art Open Access",
+   "image": "images/gold-cloth-1800s.webp",
+   "thumbnail": "thumbs/gold-cloth-1800s.webp",
+   "width": 1248,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#811544",
+     "name": "wine",
+     "family": "pink",
+     "percentage": 30.2,
+     "lab": [
+      28.44,
+      47.34,
+      0.48
+     ]
+    },
+    {
+     "hex": "#a37d5e",
+     "name": "mocha",
+     "family": "orange",
+     "percentage": 24.1,
+     "lab": [
+      55.34,
+      10.52,
+      22.57
+     ]
+    },
+    {
+     "hex": "#c7a57a",
+     "name": "toupe",
+     "family": "orange",
+     "percentage": 17.8,
+     "lab": [
+      69.8,
+      6.51,
+      26.97
+     ]
+    },
+    {
+     "hex": "#884748",
+     "name": "light maroon",
+     "family": "red",
+     "percentage": 12.6,
+     "lab": [
+      38.22,
+      27.68,
+      11.91
+     ]
+    },
+    {
+     "hex": "#76604c",
+     "name": "dark taupe",
+     "family": "brown",
+     "percentage": 7.8,
+     "lab": [
+      42.37,
+      5.76,
+      14.78
+     ]
+    },
+    {
+     "hex": "#b5b0ab",
+     "name": "chandi silver",
+     "family": "grey",
+     "percentage": 7.5,
+     "lab": [
+      72.1,
+      0.87,
+      3.19
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "pink",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "banarasi brocade",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "silk",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "festive",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "embroidery",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "geometric",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "silk-choga-1800s",
+     "distance": 8.72
+    },
+    {
+     "id": "chintz-bed-cover",
+     "distance": 8.81
+    },
+    {
+     "id": "kimkhwab-benares",
+     "distance": 9.38
+    },
+    {
+     "id": "resist-dyed-fragment",
+     "distance": 9.88
+    },
+    {
+     "id": "bandhani-sari",
+     "distance": 9.92
+    },
+    {
+     "id": "ikat-striped-panel",
+     "distance": 10.49
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "bandhani-sari",
+     "similarity": 0.807
+    },
+    {
+     "id": "bandhani-odhani",
+     "similarity": 0.775
+    },
+    {
+     "id": "kashmir-shawl-boteh",
+     "similarity": 0.757
+    },
+    {
+     "id": "kimkhwab-benares",
+     "similarity": 0.676
+    },
+    {
+     "id": "gold-block-print",
+     "similarity": 0.663
+    },
+    {
+     "id": "striped-kimkhwab",
+     "similarity": 0.638
+    }
+   ]
+  },
+  {
+   "id": "striped-kimkhwab",
+   "title": "Striped kimkhwab with flowering vine, Western India, 1700s–1800s",
+   "type": "fabric",
+   "note": "Cotton and silk: brocade, “kimkhwab”. Museum record 1925.676.",
+   "credit": "The Cleveland Museum of Art, Purchase from the J. H. Wade Fund, 1925.676. https://clevelandart.org/art/1925.676",
+   "licence": "Public domain (CC0), Cleveland Museum of Art Open Access",
+   "image": "images/striped-kimkhwab.webp",
+   "thumbnail": "thumbs/striped-kimkhwab.webp",
+   "width": 1600,
+   "height": 1030,
+   "palette": [
+    {
+     "hex": "#907e56",
+     "name": "brown grey",
+     "family": "brown",
+     "percentage": 22.3,
+     "lab": [
+      53.52,
+      0.9,
+      24.32
+     ]
+    },
+    {
+     "hex": "#c6b896",
+     "name": "putty",
+     "family": "beige",
+     "percentage": 19.3,
+     "lab": [
+      75.13,
+      -0.44,
+      19.1
+     ]
+    },
+    {
+     "hex": "#132b3f",
+     "name": "dark",
+     "family": "blue",
+     "percentage": 18.8,
+     "lab": [
+      16.63,
+      -1.92,
+      -15.48
+     ]
+    },
+    {
+     "hex": "#365063",
+     "name": "dark grey blue",
+     "family": "blue",
+     "percentage": 17.9,
+     "lab": [
+      32.75,
+      -4.18,
+      -14.14
+     ]
+    },
+    {
+     "hex": "#6a7267",
+     "name": "medium grey",
+     "family": "grey",
+     "percentage": 12.4,
+     "lab": [
+      47.08,
+      -5.28,
+      5.06
+     ]
+    },
+    {
+     "hex": "#9d543d",
+     "name": "mitti terracotta",
+     "family": "brown",
+     "percentage": 9.3,
+     "lab": [
+      44.01,
+      28.02,
+      26.76
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "brown",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "ajrakh",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "silk",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "festive",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "striped",
+     "source": "recorded",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "kashmir-shawl-border",
+     "distance": 9.43
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "distance": 9.92
+    },
+    {
+     "id": "kimkhwab-benares",
+     "distance": 10.76
+    },
+    {
+     "id": "kashmir-shawl-boteh",
+     "distance": 10.84
+    },
+    {
+     "id": "silk-coat-1900",
+     "distance": 10.94
+    },
+    {
+     "id": "gold-block-print",
+     "distance": 12.02
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "ikat-striped-panel",
+     "similarity": 0.81
+    },
+    {
+     "id": "tapis-hip-wrapper",
+     "similarity": 0.79
+    },
+    {
+     "id": "bandhani-sari",
+     "similarity": 0.729
+    },
+    {
+     "id": "chintz-bed-cover",
+     "similarity": 0.718
+    },
+    {
+     "id": "bandhani-odhani",
+     "similarity": 0.709
+    },
+    {
+     "id": "kashmir-shawl-boteh",
+     "similarity": 0.709
+    }
+   ]
+  },
+  {
+   "id": "jama-with-poppies",
+   "title": "Man's robe (jama) with poppies, India, 1600s",
+   "type": "garment",
+   "note": "Cotton; painted, with applied gold leaf. Museum record 29.135.",
+   "credit": "The Metropolitan Museum of Art, Rogers Fund, 1929, 29.135. https://www.metmuseum.org/art/collection/search/448247",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/jama-with-poppies.webp",
+   "thumbnail": "thumbs/jama-with-poppies.webp",
+   "width": 845,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#101010",
+     "name": "almost black",
+     "family": "black",
+     "percentage": 31.7,
+     "lab": [
+      4.68,
+      -0.0,
+      0.0
+     ]
+    },
+    {
+     "hex": "#282827",
+     "name": "kajal black",
+     "family": "black",
+     "percentage": 22.8,
+     "lab": [
+      16.08,
+      -0.24,
+      0.66
+     ]
+    },
+    {
+     "hex": "#a9927d",
+     "name": "mushroom",
+     "family": "orange",
+     "percentage": 15.4,
+     "lab": [
+      62.06,
+      5.25,
+      14.31
+     ]
+    },
+    {
+     "hex": "#906b57",
+     "name": "brownish",
+     "family": "brown",
+     "percentage": 13.5,
+     "lab": [
+      48.43,
+      11.95,
+      16.96
+     ]
+    },
+    {
+     "hex": "#634738",
+     "name": "kattha brown",
+     "family": "brown",
+     "percentage": 9.5,
+     "lab": [
+      32.8,
+      9.81,
+      13.73
+     ]
+    },
+    {
+     "hex": "#d2beaa",
+     "name": "chandan sandalwood",
+     "family": "beige",
+     "percentage": 7.1,
+     "lab": [
+      78.13,
+      3.86,
+      12.68
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "black",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "banarasi brocade",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "cotton",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "kurta",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "occasionwear",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "floral",
+     "source": "recorded",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "kimkhwab-benares",
+     "distance": 5.46
+    },
+    {
+     "id": "cotton-blouse-1800s",
+     "distance": 6.48
+    },
+    {
+     "id": "silk-coat-1882",
+     "distance": 6.63
+    },
+    {
+     "id": "trousers-1800",
+     "distance": 7.16
+    },
+    {
+     "id": "gold-block-print",
+     "distance": 7.28
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "distance": 7.45
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "silk-angarkha-1800s",
+     "similarity": 0.789
+    },
+    {
+     "id": "cotton-dress-1872",
+     "similarity": 0.773
+    },
+    {
+     "id": "wool-dress-1896",
+     "similarity": 0.761
+    },
+    {
+     "id": "silk-dress-1883",
+     "similarity": 0.734
+    },
+    {
+     "id": "quilted-angarkha-1700s",
+     "similarity": 0.733
+    },
+    {
+     "id": "silk-coat-1900",
+     "similarity": 0.664
+    }
+   ]
+  },
+  {
+   "id": "quilted-angarkha-1700s",
+   "title": "Quilted cotton angarkha, India, 1700s",
+   "type": "garment",
+   "note": "Cotton; quilted. Museum record 1976.149.4.",
+   "credit": "The Metropolitan Museum of Art, Purchase, Irene Lewisohn and Alice L. Crowley Bequests, 1976, 1976.149.4. https://www.metmuseum.org/art/collection/search/86167",
+   "licence": "Public domain (CC0), The Met Open Access",
+   "image": "images/quilted-angarkha-1700s.webp",
+   "thumbnail": "thumbs/quilted-angarkha-1700s.webp",
+   "width": 836,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#d0d1d2",
+     "name": "silver",
+     "family": "grey",
+     "percentage": 26.1,
+     "lab": [
+      83.79,
+      -0.16,
+      -0.61
+     ]
+    },
+    {
+     "hex": "#c6bda5",
+     "name": "putty",
+     "family": "beige",
+     "percentage": 19.2,
+     "lab": [
+      76.75,
+      -0.85,
+      13.28
+     ]
+    },
+    {
+     "hex": "#969284",
+     "name": "grey",
+     "family": "beige",
+     "percentage": 15.9,
+     "lab": [
+      60.52,
+      -1.07,
+      7.95
+     ]
+    },
+    {
+     "hex": "#e6e3d3",
+     "name": "malai cream",
+     "family": "white",
+     "percentage": 15.6,
+     "lab": [
+      90.07,
+      -1.72,
+      8.17
+     ]
+    },
+    {
+     "hex": "#a19170",
+     "name": "dust",
+     "family": "yellow",
+     "percentage": 11.7,
+     "lab": [
+      60.78,
+      0.74,
+      19.72
+     ]
+    },
+    {
+     "hex": "#6f6851",
+     "name": "greyish brown",
+     "family": "yellow",
+     "percentage": 11.5,
+     "lab": [
+      44.05,
+      -1.29,
+      13.98
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "grey",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "classic",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "aesthetic",
+     "tag": "minimalist",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "cotton",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "garment",
+     "tag": "kurta",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "occasionwear",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "solid",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "silhouette",
+     "tag": "draped",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "wool-dress-1896",
+     "distance": 6.33
+    },
+    {
+     "id": "cotton-coat-1845",
+     "distance": 7.23
+    },
+    {
+     "id": "leather-boots-1795",
+     "distance": 7.33
+    },
+    {
+     "id": "silk-angarkha-1800s",
+     "distance": 7.35
+    },
+    {
+     "id": "silk-coat-1900",
+     "distance": 8.63
+    },
+    {
+     "id": "leather-boots-1780",
+     "distance": 10.07
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "silk-angarkha-1800s",
+     "similarity": 0.821
+    },
+    {
+     "id": "silk-choga-1800s",
+     "similarity": 0.754
+    },
+    {
+     "id": "jama-with-poppies",
+     "similarity": 0.733
+    },
+    {
+     "id": "silk-coat-1900",
+     "similarity": 0.714
+    },
+    {
+     "id": "cotton-coat-1845",
+     "similarity": 0.688
+    },
+    {
+     "id": "wool-dress-1896",
+     "similarity": 0.627
+    }
+   ]
+  },
+  {
+   "id": "chintz-bed-cover",
+   "title": "Chintz bed cover, Coromandel Coast, 1700–1750",
+   "type": "fabric",
+   "note": "Cotton: drawn resist, painted mordants, dyed. Right half of a bed cover or hanging with a Japanese-inspired pattern. Museum record 2003.43.",
+   "credit": "The Cleveland Museum of Art, John L. Severance Fund, 2003.43. https://clevelandart.org/art/2003.43",
+   "licence": "Public domain (CC0), Cleveland Museum of Art Open Access",
+   "image": "images/chintz-bed-cover.webp",
+   "thumbnail": "thumbs/chintz-bed-cover.webp",
+   "width": 741,
+   "height": 1600,
+   "palette": [
+    {
+     "hex": "#7b2e30",
+     "name": "wine red",
+     "family": "red",
+     "percentage": 24.4,
+     "lab": [
+      30.35,
+      33.71,
+      16.22
+     ]
+    },
+    {
+     "hex": "#612f2b",
+     "name": "purple brown",
+     "family": "brown",
+     "percentage": 16.9,
+     "lab": [
+      26.01,
+      22.16,
+      12.94
+     ]
+    },
+    {
+     "hex": "#3f3531",
+     "name": "dark grey",
+     "family": "grey",
+     "percentage": 15.6,
+     "lab": [
+      23.08,
+      3.66,
+      4.16
+     ]
+    },
+    {
+     "hex": "#aa876d",
+     "name": "pale brown",
+     "family": "orange",
+     "percentage": 15.0,
+     "lab": [
+      58.96,
+      9.62,
+      19.07
+     ]
+    },
+    {
+     "hex": "#835946",
+     "name": "cocoa",
+     "family": "brown",
+     "percentage": 14.1,
+     "lab": [
+      41.87,
+      14.88,
+      17.97
+     ]
+    },
+    {
+     "hex": "#64594d",
+     "name": "greyish brown",
+     "family": "grey",
+     "percentage": 14.0,
+     "lab": [
+      38.53,
+      2.29,
+      8.58
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "red",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "boho",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "cotton",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "paisley",
+     "source": "ai",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "tapis-hip-wrapper",
+     "distance": 6.23
+    },
+    {
+     "id": "kimkhwab-benares",
+     "distance": 6.25
+    },
+    {
+     "id": "bandhani-sari",
+     "distance": 6.43
+    },
+    {
+     "id": "resist-dyed-fragment",
+     "distance": 7.54
+    },
+    {
+     "id": "gold-cloth-1800s",
+     "distance": 8.81
+    },
+    {
+     "id": "wool-shawl-1800s",
+     "distance": 9.2
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "bandhani-sari",
+     "similarity": 0.751
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "similarity": 0.737
+    },
+    {
+     "id": "tapis-hip-wrapper",
+     "similarity": 0.731
+    },
+    {
+     "id": "striped-kimkhwab",
+     "similarity": 0.718
+    },
+    {
+     "id": "resist-dyed-fragment",
+     "similarity": 0.701
+    },
+    {
+     "id": "kimkhwab-benares",
+     "similarity": 0.699
+    }
+   ]
+  },
+  {
+   "id": "tapis-hip-wrapper",
+   "title": "Printed hip wrapper (tapis), Coromandel Coast, 1800–1850",
+   "type": "fabric",
+   "note": "Cotton; plain weave; block printed, drawn resist, painted mordants, dyed. Made on the Coromandel Coast for the Indonesian market. Museum record 2000.32.",
+   "credit": "The Cleveland Museum of Art, John L. Severance Fund, 2000.32. https://clevelandart.org/art/2000.32",
+   "licence": "Public domain (CC0), Cleveland Museum of Art Open Access",
+   "image": "images/tapis-hip-wrapper.webp",
+   "thumbnail": "thumbs/tapis-hip-wrapper.webp",
+   "width": 1600,
+   "height": 630,
+   "palette": [
+    {
+     "hex": "#7a2b29",
+     "name": "wine red",
+     "family": "red",
+     "percentage": 25.6,
+     "lab": [
+      29.48,
+      34.29,
+      19.58
+     ]
+    },
+    {
+     "hex": "#37363d",
+     "name": "dark grey",
+     "family": "grey",
+     "percentage": 20.3,
+     "lab": [
+      22.96,
+      2.1,
+      -4.21
+     ]
+    },
+    {
+     "hex": "#46535f",
+     "name": "slate",
+     "family": "grey",
+     "percentage": 16.2,
+     "lab": [
+      34.63,
+      -2.03,
+      -8.66
+     ]
+    },
+    {
+     "hex": "#5f3530",
+     "name": "purple brown",
+     "family": "brown",
+     "percentage": 14.9,
+     "lab": [
+      27.28,
+      18.2,
+      11.3
+     ]
+    },
+    {
+     "hex": "#905b52",
+     "name": "brownish",
+     "family": "brown",
+     "percentage": 13.2,
+     "lab": [
+      44.26,
+      20.66,
+      14.26
+     ]
+    },
+    {
+     "hex": "#b88f7e",
+     "name": "mushroom",
+     "family": "red",
+     "percentage": 9.8,
+     "lab": [
+      62.8,
+      13.04,
+      15.0
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "red",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "block print",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "cotton",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "festive",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "geometric",
+     "source": "recorded",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "chintz-bed-cover",
+     "distance": 6.23
+    },
+    {
+     "id": "bandhani-sari",
+     "distance": 7.51
+    },
+    {
+     "id": "kashmir-shawl-boteh",
+     "distance": 8.72
+    },
+    {
+     "id": "kimkhwab-benares",
+     "distance": 8.87
+    },
+    {
+     "id": "trousers-1800",
+     "distance": 9.34
+    },
+    {
+     "id": "wool-shawl-1800s",
+     "distance": 9.76
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "striped-kimkhwab",
+     "similarity": 0.79
+    },
+    {
+     "id": "bandhani-odhani",
+     "similarity": 0.76
+    },
+    {
+     "id": "chintz-bed-cover",
+     "similarity": 0.731
+    },
+    {
+     "id": "kashmir-shawl-border",
+     "similarity": 0.73
+    },
+    {
+     "id": "ikat-striped-panel",
+     "similarity": 0.722
+    },
+    {
+     "id": "bandhani-sari",
+     "similarity": 0.698
+    }
+   ]
+  },
+  {
+   "id": "resist-dyed-fragment",
+   "title": "Resist-dyed cotton fragment, India, 1100s–1300s",
+   "type": "fabric",
+   "note": "Cotton: plain cloth, resist dyed. Museum record 1951.510.",
+   "credit": "The Cleveland Museum of Art, Purchase from the J. H. Wade Fund, 1951.510. https://clevelandart.org/art/1951.510",
+   "licence": "Public domain (CC0), Cleveland Museum of Art Open Access",
+   "image": "images/resist-dyed-fragment.webp",
+   "thumbnail": "thumbs/resist-dyed-fragment.webp",
+   "width": 1600,
+   "height": 829,
+   "palette": [
+    {
+     "hex": "#8f6c51",
+     "name": "cocoa",
+     "family": "brown",
+     "percentage": 24.6,
+     "lab": [
+      48.46,
+      10.22,
+      20.49
+     ]
+    },
+    {
+     "hex": "#7e4a36",
+     "name": "kattha brown",
+     "family": "brown",
+     "percentage": 19.8,
+     "lab": [
+      37.12,
+      19.92,
+      21.3
+     ]
+    },
+    {
+     "hex": "#562919",
+     "name": "chocolate brown",
+     "family": "brown",
+     "percentage": 17.9,
+     "lab": [
+      22.43,
+      19.27,
+      19.76
+     ]
+    },
+    {
+     "hex": "#6e4c36",
+     "name": "kattha brown",
+     "family": "brown",
+     "percentage": 16.3,
+     "lab": [
+      35.5,
+      11.52,
+      18.79
+     ]
+    },
+    {
+     "hex": "#ac8e72",
+     "name": "pale brown",
+     "family": "orange",
+     "percentage": 15.6,
+     "lab": [
+      61.07,
+      7.17,
+      19.17
+     ]
+    },
+    {
+     "hex": "#a8a5a5",
+     "name": "grey",
+     "family": "grey",
+     "percentage": 5.8,
+     "lab": [
+      67.99,
+      1.07,
+      0.38
+     ]
+    }
+   ],
+   "palette_source": "original",
+   "family": "brown",
+   "tags": [
+    {
+     "category": "aesthetic",
+     "tag": "boho",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "aesthetic",
+     "tag": "traditional",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "craft",
+     "tag": "ikat",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "fabric",
+     "tag": "cotton",
+     "source": "recorded",
+     "is_guess": false
+    },
+    {
+     "category": "occasion",
+     "tag": "bridal",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "pattern",
+     "tag": "paisley",
+     "source": "ai",
+     "is_guess": false
+    },
+    {
+     "category": "weave",
+     "tag": "plain weave",
+     "source": "recorded",
+     "is_guess": false
+    }
+   ],
+   "similar_palette": [
+    {
+     "id": "chintz-bed-cover",
+     "distance": 7.54
+    },
+    {
+     "id": "silk-choga-1800s",
+     "distance": 7.89
+    },
+    {
+     "id": "trousers-1800",
+     "distance": 8.59
+    },
+    {
+     "id": "kimkhwab-benares",
+     "distance": 8.93
+    },
+    {
+     "id": "silk-angarkha-1800s",
+     "distance": 9.08
+    },
+    {
+     "id": "gold-cloth-1800s",
+     "distance": 9.88
+    }
+   ],
+   "similar_look": [
+    {
+     "id": "kimkhwab-benares",
+     "similarity": 0.765
+    },
+    {
+     "id": "chintz-bed-cover",
+     "similarity": 0.701
+    },
+    {
+     "id": "resist-dyed-cotton",
+     "similarity": 0.699
+    },
+    {
+     "id": "bandhani-odhani",
+     "similarity": 0.678
+    },
+    {
+     "id": "bandhani-sari",
+     "similarity": 0.673
+    },
+    {
+     "id": "gold-block-print",
+     "similarity": 0.67
     }
    ]
   }
@@ -3314,7 +5028,7 @@
   },
   {
    "family": "black",
-   "pieces": 6
+   "pieces": 7
   },
   {
    "family": "blue",
@@ -3322,23 +5036,27 @@
   },
   {
    "family": "brown",
-   "pieces": 1
+   "pieces": 3
   },
   {
    "family": "grey",
-   "pieces": 5
+   "pieces": 6
   },
   {
-   "family": "pink",
+   "family": "orange",
    "pieces": 1
   },
   {
-   "family": "red",
+   "family": "pink",
    "pieces": 2
   },
   {
+   "family": "red",
+   "pieces": 4
+  },
+  {
    "family": "white",
-   "pieces": 2
+   "pieces": 4
   }
  ],
  "collections": [
@@ -3390,6 +5108,32 @@
     "cotton-dress-1872",
     "cotton-coat-1845",
     "trousers-1800"
+   ]
+  },
+  {
+   "id": "silk-and-gold",
+   "title": "Silk and gold",
+   "description": "Kimkhwab brocade, gold cloth and coats woven with metal-wrapped thread, India, 1700s to 1800s.",
+   "pieces": [
+    "silk-angarkha-1800s",
+    "silk-choga-1800s",
+    "kimkhwab-benares",
+    "gold-cloth-1800s",
+    "striped-kimkhwab",
+    "gold-block-print"
+   ]
+  },
+  {
+   "id": "painted-printed-cotton",
+   "title": "Painted, printed and quilted cotton",
+   "description": "Chintz, block print, resist dyeing and quilting on Indian cotton, from the 1100s to the 1800s.",
+   "pieces": [
+    "jama-with-poppies",
+    "quilted-angarkha-1700s",
+    "chintz-bed-cover",
+    "tapis-hip-wrapper",
+    "resist-dyed-fragment",
+    "resist-dyed-cotton"
    ]
   }
  ],
