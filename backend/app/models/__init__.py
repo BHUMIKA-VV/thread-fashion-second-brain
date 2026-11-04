@@ -1,6 +1,7 @@
 """Importing this package registers every model on Base.metadata (needed by Alembic)."""
 
 from app.models.auth import AuthToken, UserSession
+from app.models.board import Board, BoardBlock
 from app.models.collection import Collection, CollectionItem
 from app.models.deep_analysis import DeepAnalysis, DeepAnalysisUsage
 from app.models.embedding import EMBEDDING_DIM, Embedding
@@ -15,6 +16,8 @@ from app.models.user import User
 __all__ = [
     "EMBEDDING_DIM",
     "AuthToken",
+    "Board",
+    "BoardBlock",
     "Collection",
     "CollectionItem",
     "CollectionOutfit",

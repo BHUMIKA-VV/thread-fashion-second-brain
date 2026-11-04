@@ -10,6 +10,7 @@ from app.api.errors import error_body, register_error_handlers
 from app.api.routes import (
     admin,
     auth,
+    boards,
     collections,
     deep_analysis,
     dev,
@@ -108,6 +109,7 @@ def create_app() -> FastAPI:
     app.include_router(tags.router)
     app.include_router(collections.router)
     app.include_router(outfits.router)
+    app.include_router(boards.router)
     app.include_router(deep_analysis.router)
     if settings.app_env != "production" and settings.mail_provider == "log":
         app.include_router(dev.router)

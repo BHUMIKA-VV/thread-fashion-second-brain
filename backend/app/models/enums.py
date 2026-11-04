@@ -108,6 +108,13 @@ class OutfitPieceRole(StrEnum):
     INSPIRATION = "inspiration"
 
 
+class BoardBlockKind(StrEnum):
+    PIECE = "piece"  # a piece from the owner's archive
+    COLOUR = "colour"  # a swatch, as a hex
+    HEADING = "heading"
+    NOTE = "note"
+
+
 class OutfitSeason(StrEnum):
     SPRING = "spring"
     SUMMER = "summer"

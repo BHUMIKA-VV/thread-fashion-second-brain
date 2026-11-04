@@ -27,6 +27,8 @@ APP_TABLES = {
     "collection_outfits",
     "interest",
     "metric_counts",
+    "boards",
+    "board_blocks",
 }
 
 
@@ -421,5 +423,60 @@ def test_outfits_database_with_tags_upgrades_to_weave_and_back(empty_db_url: str
     migrations.downgrade(empty_db_url, OUTFITS_REVISION)
     with engine.begin() as conn:
         assert conn.execute(text("SELECT category, tag FROM tags")).one() == ("craft", "ikat")
+    migrations.upgrade(empty_db_url)
+    engine.dispose()
+
+
+METRICS_REVISION = "d8a4f6b2c9e7"
+
+
+def test_metrics_database_upgrades_to_boards_and_back(empty_db_url: str) -> None:
+    """M13-1 only adds the board tables: pieces are untouched, a board can't hold another
+    owner's piece or a malformed block, and downgrading drops boards but keeps pieces."""
+    migrations.upgrade(empty_db_url, METRICS_REVISION)
+    engine = create_engine(empty_db_url)
+    new_item = text(
+        "INSERT INTO items (user_id, original_key, content_hash, mime_type, width,"
+        " height, file_size) VALUES (:u, 'a/original.jpg', :h, 'image/jpeg', 10, 10, 10)"
+        " RETURNING id"
+    )
+    with engine.begin() as conn:
+        owner, other = (
+            conn.execute(
+                text("INSERT INTO users (display_name) VALUES (:n) RETURNING id"), {"n": n}
+            ).scalar_one()
+            for n in ("owner", "other")
+        )
+        item = conn.execute(new_item, {"u": owner, "h": "a" * 64}).scalar_one()
+        their_item = conn.execute(new_item, {"u": other, "h": "b" * 64}).scalar_one()
+
+    migrations.upgrade(empty_db_url)  # -> head
+    insert_block = text(
+        "INSERT INTO board_blocks (board_id, user_id, position, kind, item_id, hex, body)"
+        " VALUES (:b, :u, 0, :k, :i, :h, :t)"
+    )
+    with engine.begin() as conn:
+        board = conn.execute(
+            text("INSERT INTO boards (user_id, name) VALUES (:u, 'Client') RETURNING id"),
+            {"u": owner},
+        ).scalar_one()
+        good = {"b": board, "u": owner, "k": "piece", "i": item, "h": None, "t": None}
+        conn.execute(insert_block, good)
+        conn.execute(insert_block, {**good, "k": "colour", "i": None, "h": "#263b5e"})
+        for bad, constraint in [
+            ({"i": their_item}, "fk_board_blocks_item_owner"),
+            ({"k": "colour", "h": "#263b5e"}, "ck_board_blocks_piece_has_item"),
+            ({"k": "colour", "i": None, "h": "#ZZZ"}, "ck_board_blocks_hex_format"),
+            ({"k": "note", "i": None, "t": "  "}, "ck_board_blocks_body_not_blank"),
+            ({"k": "sketch", "i": None}, "ck_board_blocks_kind"),
+        ]:
+            with pytest.raises(Exception, match=constraint), conn.begin_nested():
+                conn.execute(insert_block, {**good, **bad})
+        assert conn.execute(text("SELECT count(*) FROM board_blocks")).scalar_one() == 2
+
+    migrations.downgrade(empty_db_url, METRICS_REVISION)
+    assert "boards" not in table_names(empty_db_url)
+    with engine.begin() as conn:
+        assert conn.execute(text("SELECT count(*) FROM items")).scalar_one() == 2
     migrations.upgrade(empty_db_url)
     engine.dispose()
