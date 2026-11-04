@@ -158,3 +158,62 @@ test("the boards pages pass WCAG checks and fit a phone", async ({ page, request
     await request.delete(`/api/items/${id}`);
   }
 });
+
+test("a board saves as an image and prints as an A4 landscape sheet", async ({ page, request }, testInfo) => {
+  test.setTimeout(90_000);
+  const token = `e2e${testInfo.project.name}${Date.now().toString(36)}`;
+  const silk = await uploadVia(request, swatch([190, 30, 40]), `Silk ${token}. Museum record X.1.`);
+  const cotton = await uploadVia(request, swatch([30, 60, 150]), `Cotton ${token}`);
+  const board = await (await request.post("/api/boards", { data: { name: `Export ${token}`, description: "For the client" } })).json();
+  try {
+    await request.post(`/api/boards/${board.id}/blocks`, { data: { kind: "heading", body: "Colour story" } });
+    await request.post(`/api/boards/${board.id}/blocks`, { data: { kind: "piece", item_id: silk, body: "For the lining" } });
+    await request.post(`/api/boards/${board.id}/blocks`, { data: { kind: "piece", item_id: cotton } });
+    await request.post(`/api/boards/${board.id}/blocks`, { data: { kind: "colour", hex: "#263b5e" } });
+    await request.post(`/api/boards/${board.id}/blocks`, { data: { kind: "note", body: "Gold only at the borders. ".repeat(30).trim() } });
+
+    // Blocked from the start, so no copy of the photograph is in the browser's image cache.
+    await page.route(new RegExp(`/api/items/${cotton}/`), (route) => route.abort());
+    await page.goto(`/boards/${board.id}`);
+    await expect(page.getByRole("article", { name: "Heading: Colour story" })).toBeVisible();
+    const toolbar = page.getByRole("toolbar", { name: "Export this board" });
+
+    const downloadPromise = page.waitForEvent("download");
+    await toolbar.getByRole("button", { name: "Save as image" }).click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`thread-board-export-${token}.png`);
+    const { readFile } = await import("node:fs/promises");
+    const bytes = await readFile(await download.path());
+    expect(bytes.subarray(1, 4).toString()).toBe("PNG");
+    expect(bytes.readUInt32BE(16)).toBe(1080);
+    expect(bytes.readUInt32BE(20)).toBeLessThanOrEqual(7200);
+    await expect(page.getByText(/1 photograph could not be loaded and shows as a blank tile/)).toBeVisible();
+
+    // In print, only the sheet shows: no site header, no editing controls, every word of the note.
+    await page.emulateMedia({ media: "print" });
+    const sheet = page.getByTestId("board-sheet");
+    await expect(sheet).toBeVisible();
+    await expect(sheet).toContainText("Gold only at the borders. ".repeat(30).trim());
+    await expect(sheet).toContainText("Museum record X.1.");
+    await expect(sheet).toContainText("Harmony:");
+    await expect(page.getByRole("banner")).toBeHidden();
+    await expect(page.getByRole("complementary", { name: "Add to this board" })).toBeHidden();
+    await expect(toolbar).toBeHidden();
+
+    // Chromium honours the sheet's own page size: A4 landscape, about 842 x 595 points.
+    const pdf = (await page.pdf({ preferCSSPageSize: true, printBackground: true })).toString("latin1");
+    expect(pdf.startsWith("%PDF")).toBe(true);
+    const boxes = [...pdf.matchAll(/\/MediaBox \[0 0 ([\d.]+) ([\d.]+)\]/g)].map((m) => [Number(m[1]), Number(m[2])]);
+    expect(boxes.length).toBeGreaterThan(0);
+    for (const [w, h] of boxes) {
+      expect(w).toBeCloseTo(842, -1);
+      expect(h).toBeCloseTo(595, -1);
+    }
+
+    await page.emulateMedia({ media: "screen" });
+    await expect(sheet).toBeHidden();
+  } finally {
+    await request.delete(`/api/boards/${board.id}`);
+    for (const id of [silk, cotton]) await request.delete(`/api/items/${id}`);
+  }
+});

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowLeft, ArrowUp, Heading, Plus, StickyNote, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Download, Heading, Plus, Printer, StickyNote, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
@@ -10,11 +10,14 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { PiecePicker } from "@/features/outfit-studio/piece-picker";
 import { pieceLabel } from "@/features/outfit-studio/names";
 import { PaletteStrip } from "@/features/palette/palette-strip";
+import { HARMONY_TEXT } from "@/features/palette/palette-view";
 import { ApiError, apiUrl } from "@/lib/api-client";
+import { boardCardFilename, renderBoardCard } from "@/lib/board-card";
 import { cn } from "@/lib/cn";
 import { addBlock, deleteBoard, getBoard, removeBlock, updateBlock, updateBoard, type NewBlock } from "@/services/boards";
 import type { BoardBlock, BoardDetail } from "@/types/api";
 
+import { BoardSheet } from "./board-sheet";
 import { ColourStoryView } from "./colour-story";
 
 /** The API's limit; the editor stops offering to add once a board is full. */
@@ -65,80 +68,164 @@ export function BoardEditor({ id }: { id: string }) {
   const full = board.blocks.length >= MAX_BLOCKS;
   const failed = add.isError ? add.error : change.isError ? change.error : null;
   return (
-    <div>
-      <Link href="/boards" className="inline-flex items-center gap-2 text-sm text-ink-muted hover:text-ink">
-        <ArrowLeft aria-hidden className="size-4" /> Boards
-      </Link>
-      <DetailsForm board={board} onUpdated={onUpdated} />
+    <>
+      <div className="print:hidden">
+        <Link href="/boards" className="inline-flex items-center gap-2 text-sm text-ink-muted hover:text-ink">
+          <ArrowLeft aria-hidden className="size-4" /> Boards
+        </Link>
+        <DetailsForm board={board} onUpdated={onUpdated} />
+        <ExportBar board={board} />
 
-      <div aria-live="polite">
-        {failed && (
-          <p role="alert" className="mt-4 text-sm text-danger">
-            {failed instanceof ApiError ? failed.message : "That change could not be saved."}
+        <div aria-live="polite">
+          {failed && (
+            <p role="alert" className="mt-4 text-sm text-danger">
+              {failed instanceof ApiError ? failed.message : "That change could not be saved."}
+            </p>
+          )}
+        </div>
+
+        <div className="mt-10 grid gap-12 lg:grid-cols-12">
+          <section aria-labelledby="board-blocks" className="min-w-0 lg:col-span-8">
+            <h2 id="board-blocks" className="sr-only">
+              The board
+            </h2>
+            {board.blocks.length === 0 ? (
+              <p className="rounded-[2px] border border-dashed border-ink/20 px-6 py-14 text-center text-sm text-ink-muted">
+                This board is empty. Add pieces from your archive, colours and notes.
+              </p>
+            ) : (
+              <ol aria-label="Blocks on this board" className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                {board.blocks.map((block, index) => (
+                  <li
+                    key={block.id}
+                    className={cn(
+                      block.kind === "heading" && "col-span-full",
+                      block.kind === "note" && "col-span-2",
+                    )}
+                  >
+                    <BlockCard
+                      block={block}
+                      isFirst={index === 0}
+                      isLast={index === board.blocks.length - 1}
+                      busy={change.isPending}
+                      onMove={(position) => change.mutate({ blockId: block.id, position })}
+                      onBody={(body) => change.mutate({ blockId: block.id, body })}
+                      onRemove={() => change.mutate({ blockId: block.id, remove: true })}
+                    />
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+
+          <aside aria-label="Add to this board" className="space-y-10 lg:sticky lg:top-8 lg:col-span-4 lg:self-start">
+            {full ? (
+              <p role="status" className="border-l-2 border-clay pl-3 text-sm">
+                This board is full ({MAX_BLOCKS} blocks). Remove a block to add another.
+              </p>
+            ) : (
+              <>
+                <AddText busy={add.isPending} onAdd={(block) => add.mutate(block)} />
+                <AddColour board={board} busy={add.isPending} onAdd={(block) => add.mutate(block)} />
+                <PiecePicker
+                  chosen={new Set(board.blocks.flatMap((b) => (b.item ? [b.item.id] : [])))}
+                  full={false}
+                  replacing={null}
+                  chosenLabel="on this board"
+                  onChoose={(item) => add.mutate({ kind: "piece", itemId: item.id })}
+                />
+              </>
+            )}
+          </aside>
+        </div>
+
+        <div className="mt-14">
+          <ColourStoryView board={board} />
+        </div>
+
+        <DeleteBoard board={board} />
+      </div>
+      <BoardSheet board={board} />
+    </>
+  );
+}
+
+type ExportState = { state: "idle" | "busy" } | { state: "done"; failed: number } | { state: "error" };
+
+/** The board as an image (drawn in the browser) or as a PDF (the browser's own print dialog). */
+function ExportBar({ board }: { board: BoardDetail }) {
+  const [exporting, setExporting] = useState<ExportState>({ state: "idle" });
+  const empty = board.blocks.length === 0;
+  const busy = exporting.state === "busy";
+
+  const saveImage = async () => {
+    if (empty || busy) return;
+    setExporting({ state: "busy" });
+    try {
+      const { harmony, measured } = board.colour_story;
+      const { blob, failed } = await renderBoardCard({
+        name: board.name,
+        description: board.description,
+        blocks: board.blocks.map((block) => ({
+          kind: block.kind,
+          text: block.kind === "heading" || block.kind === "note" ? (block.body ?? "") : blockLabel(block),
+          caption: block.kind === "piece" || block.kind === "colour" ? block.body : null,
+          hex: block.colour?.hex,
+          thumbnailUrl: block.item ? apiUrl(block.item.thumbnail_url) : undefined,
+        })),
+        story: {
+          harmony: harmony ? HARMONY_TEXT[harmony] : null,
+          colours: measured.dominant.map((c) => ({ hex: c.hex, name: c.name, share: c.share })),
+        },
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = boardCardFilename(board.name);
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setExporting({ state: "done", failed });
+    } catch {
+      setExporting({ state: "error" });
+    }
+  };
+
+  return (
+    <div className="mt-6">
+      <div role="toolbar" aria-label="Export this board" className="flex flex-wrap items-center gap-2">
+        {/* aria-disabled, not disabled, so focus stays on the button while the image is made. */}
+        <Button
+          variant="secondary"
+          onClick={() => void saveImage()}
+          aria-disabled={empty || busy}
+          className="aria-disabled:cursor-default aria-disabled:opacity-50"
+        >
+          <Download aria-hidden className="size-4" /> {busy ? "Making the image…" : "Save as image"}
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={() => !empty && window.print()}
+          aria-disabled={empty}
+          className="aria-disabled:cursor-default aria-disabled:opacity-50"
+        >
+          <Printer aria-hidden className="size-4" /> Print or save as PDF
+        </Button>
+      </div>
+      <div aria-live="polite" className="mt-2 min-h-5 text-sm">
+        {empty && <p className="text-ink-muted">Add something to the board to export it.</p>}
+        {exporting.state === "error" && (
+          <p role="alert" className="text-danger">
+            The image could not be made in this browser. Try printing to PDF instead.
+          </p>
+        )}
+        {exporting.state === "done" && (
+          <p role="status" className={exporting.failed > 0 ? "text-danger" : "text-ink-muted"}>
+            {exporting.failed > 0
+              ? `Image downloaded, but ${exporting.failed} ${exporting.failed === 1 ? "photograph" : "photographs"} could not be loaded and ${exporting.failed === 1 ? "shows" : "show"} as a blank tile.`
+              : "Image downloaded."}
           </p>
         )}
       </div>
-
-      <div className="mt-10 grid gap-12 lg:grid-cols-12">
-        <section aria-labelledby="board-blocks" className="min-w-0 lg:col-span-8">
-          <h2 id="board-blocks" className="sr-only">
-            The board
-          </h2>
-          {board.blocks.length === 0 ? (
-            <p className="rounded-[2px] border border-dashed border-ink/20 px-6 py-14 text-center text-sm text-ink-muted">
-              This board is empty. Add pieces from your archive, colours and notes.
-            </p>
-          ) : (
-            <ol aria-label="Blocks on this board" className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {board.blocks.map((block, index) => (
-                <li
-                  key={block.id}
-                  className={cn(
-                    block.kind === "heading" && "col-span-full",
-                    block.kind === "note" && "col-span-2",
-                  )}
-                >
-                  <BlockCard
-                    block={block}
-                    isFirst={index === 0}
-                    isLast={index === board.blocks.length - 1}
-                    busy={change.isPending}
-                    onMove={(position) => change.mutate({ blockId: block.id, position })}
-                    onBody={(body) => change.mutate({ blockId: block.id, body })}
-                    onRemove={() => change.mutate({ blockId: block.id, remove: true })}
-                  />
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
-
-        <aside aria-label="Add to this board" className="space-y-10 lg:sticky lg:top-8 lg:col-span-4 lg:self-start">
-          {full ? (
-            <p role="status" className="border-l-2 border-clay pl-3 text-sm">
-              This board is full ({MAX_BLOCKS} blocks). Remove a block to add another.
-            </p>
-          ) : (
-            <>
-              <AddText busy={add.isPending} onAdd={(block) => add.mutate(block)} />
-              <AddColour board={board} busy={add.isPending} onAdd={(block) => add.mutate(block)} />
-              <PiecePicker
-                chosen={new Set(board.blocks.flatMap((b) => (b.item ? [b.item.id] : [])))}
-                full={false}
-                replacing={null}
-                chosenLabel="on this board"
-                onChoose={(item) => add.mutate({ kind: "piece", itemId: item.id })}
-              />
-            </>
-          )}
-        </aside>
-      </div>
-
-      <div className="mt-14">
-        <ColourStoryView board={board} />
-      </div>
-
-      <DeleteBoard board={board} />
     </div>
   );
 }

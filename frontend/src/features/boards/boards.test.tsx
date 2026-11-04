@@ -7,6 +7,10 @@ import type { BoardBlock, BoardDetail, BoardSummary, ChosenColour, CollectionSum
 import { BoardEditor, MAX_BLOCKS, blockLabel } from "./board-editor";
 import { BoardsList } from "./boards-list";
 import { ColourStoryView, matchText } from "./colour-story";
+import { BoardSheet } from "./board-sheet";
+
+const render = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/board-card", async (importActual) => ({ ...(await importActual<typeof import("@/lib/board-card")>()), renderBoardCard: render }));
 
 vi.mock("next/navigation", async () => (await import("@/test/navigation-mock")).navigationMock);
 const nav = await import("@/test/navigation-mock");
@@ -316,5 +320,119 @@ describe("the colour story", () => {
     routeFetch({ "GET /api/boards/bd1": () => Response.json(board()), "GET /api/items?": emptyArchive });
     renderWithQuery(<BoardEditor id="bd1" />);
     expect(await screen.findByRole("region", { name: "Colour story" })).toHaveTextContent("Matches neel indigo on Linen dupatta");
+  });
+});
+
+describe("exporting a board", () => {
+  beforeEach(() => {
+    render.mockReset();
+    URL.createObjectURL = vi.fn(() => "blob:board");
+    URL.revokeObjectURL = vi.fn();
+  });
+
+  function open(detail = board()) {
+    routeFetch({ "GET /api/boards/bd1": () => Response.json(detail), "GET /api/items?": emptyArchive });
+    renderWithQuery(<BoardEditor id="bd1" />);
+    return screen.findByRole("toolbar", { name: "Export this board" });
+  }
+
+  it("draws the image from the board's own blocks and colour story, then downloads it", async () => {
+    render.mockResolvedValue({ blob: new Blob(["png"]), failed: 0 });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const toolbar = await open();
+    fireEvent.click(within(toolbar).getByRole("button", { name: "Save as image" }));
+    expect(await screen.findByText("Image downloaded.")).toBeInTheDocument();
+    expect(render).toHaveBeenCalledWith({
+      name: "Meera, sangeet",
+      description: "Indigo and gold",
+      blocks: [
+        { kind: "heading", text: "Colour story", caption: null, hex: undefined, thumbnailUrl: undefined },
+        {
+          kind: "piece",
+          text: "Linen dupatta",
+          caption: "For the lining",
+          hex: undefined,
+          thumbnailUrl: expect.stringContaining(`/items/${LINEN.id}/image?variant=thumbnail`),
+        },
+        { kind: "colour", text: "neel indigo #263B5E", caption: null, hex: "#263b5e", thumbnailUrl: undefined },
+        { kind: "note", text: "Keep the gold to the borders.", caption: null, hex: undefined, thumbnailUrl: undefined },
+      ],
+      story: {
+        harmony: "Complementary — opposite hues",
+        colours: [
+          { hex: "#d1291c", name: "sindoor red", share: 70 },
+          { hex: "#263b5e", name: "neel indigo", share: 30 },
+        ],
+      },
+    });
+    const link = click.mock.contexts[0] as HTMLAnchorElement;
+    expect(link.download).toBe("thread-board-meera-sangeet.png");
+    click.mockRestore();
+  });
+
+  it("says how many photographs could not be drawn", async () => {
+    render.mockResolvedValue({ blob: new Blob(["png"]), failed: 2 });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const toolbar = await open();
+    fireEvent.click(within(toolbar).getByRole("button", { name: "Save as image" }));
+    const message = await screen.findByText(/^Image downloaded, but 2 photographs could not be loaded and show as a blank tile\.$/);
+    expect(message).toHaveAttribute("role", "status");
+    click.mockRestore();
+  });
+
+  it("offers printing when the browser can't draw the image", async () => {
+    render.mockRejectedValue(new Error("no canvas"));
+    const toolbar = await open();
+    fireEvent.click(within(toolbar).getByRole("button", { name: "Save as image" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Try printing to PDF instead.");
+  });
+
+  it("prints with the browser's own dialog", async () => {
+    const print = vi.spyOn(window, "print").mockImplementation(() => {});
+    const toolbar = await open();
+    fireEvent.click(within(toolbar).getByRole("button", { name: "Print or save as PDF" }));
+    expect(print).toHaveBeenCalledTimes(1);
+    print.mockRestore();
+  });
+
+  it("does nothing for an empty board, and says why", async () => {
+    const print = vi.spyOn(window, "print").mockImplementation(() => {});
+    const toolbar = await open(board([]));
+    for (const name of ["Save as image", "Print or save as PDF"]) {
+      const button = within(toolbar).getByRole("button", { name });
+      expect(button).toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(button);
+    }
+    expect(render).not.toHaveBeenCalled();
+    expect(print).not.toHaveBeenCalled();
+    expect(screen.getByText("Add something to the board to export it.")).toBeInTheDocument();
+    print.mockRestore();
+  });
+});
+
+describe("the printed sheet", () => {
+  it("prints every note whole, with each piece's full note and source for its credit", () => {
+    const museum = makeItem({
+      id: "aaaaaaaa-0000-4000-8000-000000000002",
+      notes: "Silk dress, French, 1883–85. The Metropolitan Museum of Art, Gift of Mr. and Mrs. Leonard Shepley, 1953. Museum record C.I.53.63a, b.",
+      source_url: "https://www.metmuseum.org/art/collection/search/105336",
+    });
+    const long = "Keep the gold to the borders. ".repeat(20).trim();
+    const detail = board([
+      ...BLOCKS.slice(0, 3),
+      block({ id: "b4", kind: "note", position: 3, body: long }),
+      block({ id: "b5", kind: "piece", position: 4, item: museum }),
+    ]);
+    renderWithQuery(<BoardSheet board={detail} />);
+    const sheet = screen.getByTestId("board-sheet");
+    expect(sheet).toHaveClass("hidden", "print:block");
+    expect(within(sheet).getByRole("heading", { name: "Meera, sangeet" })).toBeInTheDocument();
+    expect(sheet).toHaveTextContent(long);
+    expect(sheet).toHaveTextContent("Museum record C.I.53.63a, b.");
+    expect(sheet).toHaveTextContent("https://www.metmuseum.org/art/collection/search/105336");
+    expect(sheet).toHaveTextContent("For the lining");
+    expect(sheet).toHaveTextContent("Harmony: Complementary — opposite hues");
+    expect(sheet).toHaveTextContent("Measured: sindoor red 70% · neel indigo 30%");
+    expect(sheet).toHaveTextContent("Matches neel indigo on Linen dupatta (difference 0.0).");
   });
 });

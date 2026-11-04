@@ -72,3 +72,40 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+ * Printing a board (Save as PDF): A4 landscape, only the board sheet, colours kept. Scoped with
+ * :has() and a named page so printing any other page is unchanged.
+ */
+@page board {
+  size: A4 landscape;
+  margin: 12mm;
+}
+
+@media print {
+  body:has(.board-sheet) {
+    background: #fff;
+  }
+  body:has(.board-sheet) > a,
+  body:has(.board-sheet) > header,
+  body:has(.board-sheet) > footer {
+    display: none !important;
+  }
+  body:has(.board-sheet) main > div {
+    padding: 0;
+    max-width: none;
+  }
+  .board-sheet {
+    page: board;
+  }
+  .board-sheet-keep {
+    break-inside: avoid;
+  }
+  .board-sheet-heading {
+    break-after: avoid;
+  }
+  .board-sheet-ink {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
