@@ -1,0 +1,22 @@
+import type { Metadata } from "next";
+import { Suspense } from "react";
+
+import { AuthGate } from "@/features/auth/auth-gate";
+import { BoardEditor } from "@/features/boards/board-editor";
+
+export const metadata: Metadata = { title: "Board" };
+
+export default function BoardPage({ params }: PageProps<"/boards/[id]">) {
+  return (
+    <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-8 sm:py-16">
+      {/* Params are runtime data with Cache Components, so they are read inside Suspense. */}
+      <Suspense fallback={<div className="h-[50vh] animate-pulse bg-ink/[0.05]" />}>
+        {params.then(({ id }) => (
+          <AuthGate what="this board">
+            <BoardEditor id={id} />
+          </AuthGate>
+        ))}
+      </Suspense>
+    </div>
+  );
+}

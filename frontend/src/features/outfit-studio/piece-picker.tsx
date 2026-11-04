@@ -20,11 +20,14 @@ export function PiecePicker({
   full,
   replacing,
   onChoose,
+  chosenLabel = "in this outfit",
 }: {
   chosen: ReadonlySet<string>;
   full: boolean;
   replacing: string | null;
   onChoose: (item: Item) => void;
+  /** Read out for a piece that is already chosen. */
+  chosenLabel?: string;
 }) {
   const [search, setSearch] = useState("");
   const [type, setType] = useState<ItemType | "">("");
@@ -121,7 +124,7 @@ export function PiecePicker({
                     type="button"
                     onClick={() => !unavailable && onChoose(item)}
                     aria-disabled={unavailable}
-                    aria-label={inOutfit ? `${label}, in this outfit` : `${replacing ? "Use" : "Add"} ${label}`}
+                    aria-label={inOutfit ? `${label}, ${chosenLabel}` : `${replacing ? "Use" : "Add"} ${label}`}
                     className="group relative block w-full overflow-hidden bg-paper-raised aria-disabled:cursor-default"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element -- private image served by the API */}

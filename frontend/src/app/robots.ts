@@ -13,6 +13,7 @@ const PRIVATE = [
   "/items/",
   "/upload",
   "/collections",
+  "/boards",
   "/outfit-studio",
   "/colour-lab",
   "/dashboard",

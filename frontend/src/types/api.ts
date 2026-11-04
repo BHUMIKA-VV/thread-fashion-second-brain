@@ -204,6 +204,42 @@ export type CollectionDetail = {
   outfits: OutfitSummary[];
 };
 
+export type BoardBlockKind = "piece" | "colour" | "heading" | "note";
+
+/** A chosen colour, named the way measured palettes are (never by a model). */
+export type BlockColour = { hex: string; name: string; family: string };
+
+export type BoardBlock = {
+  id: string;
+  kind: BoardBlockKind;
+  position: number;
+  item: Item | null;
+  colour: BlockColour | null;
+  /** The text of a heading or a note; the caption of a piece or a colour. */
+  body: string | null;
+  created_at: string;
+};
+
+export type BoardSummary = {
+  id: string;
+  name: string;
+  description: string | null;
+  block_count: number;
+  /** API-relative thumbnail URLs of the first four pieces. */
+  cover_thumbnails: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type BoardDetail = {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  blocks: BoardBlock[];
+};
+
 export type OutfitLayout = "feature" | "grid" | "column";
 export type OutfitPieceRole = "piece" | "accessory" | "inspiration";
 export type OutfitSeason = "spring" | "summer" | "monsoon" | "autumn" | "winter" | "all_season";
