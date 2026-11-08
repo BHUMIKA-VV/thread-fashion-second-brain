@@ -333,7 +333,7 @@ describe("exporting a board", () => {
   function open(detail = board()) {
     routeFetch({ "GET /api/boards/bd1": () => Response.json(detail), "GET /api/items?": emptyArchive });
     renderWithQuery(<BoardEditor id="bd1" />);
-    return screen.findByRole("toolbar", { name: "Export this board" });
+    return screen.findByRole("toolbar", { name: "Present or export this board" });
   }
 
   it("draws the image from the board's own blocks and colour story, then downloads it", async () => {

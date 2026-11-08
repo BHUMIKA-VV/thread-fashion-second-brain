@@ -176,7 +176,7 @@ test("a board saves as an image and prints as an A4 landscape sheet", async ({ p
     await page.route(new RegExp(`/api/items/${cotton}/`), (route) => route.abort());
     await page.goto(`/boards/${board.id}`);
     await expect(page.getByRole("article", { name: "Heading: Colour story" })).toBeVisible();
-    const toolbar = page.getByRole("toolbar", { name: "Export this board" });
+    const toolbar = page.getByRole("toolbar", { name: "Present or export this board" });
 
     const downloadPromise = page.waitForEvent("download");
     await toolbar.getByRole("button", { name: "Save as image" }).click();

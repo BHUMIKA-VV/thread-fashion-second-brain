@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowLeft, ArrowUp, Download, Heading, Plus, Printer, StickyNote, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Download, Heading, Plus, Presentation, Printer, StickyNote, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
@@ -152,7 +152,7 @@ export function BoardEditor({ id }: { id: string }) {
 
 type ExportState = { state: "idle" | "busy" } | { state: "done"; failed: number } | { state: "error" };
 
-/** The board as an image (drawn in the browser) or as a PDF (the browser's own print dialog). */
+/** Present the board full screen, or export it as an image (drawn in the browser) or a PDF (the print dialog). */
 function ExportBar({ board }: { board: BoardDetail }) {
   const [exporting, setExporting] = useState<ExportState>({ state: "idle" });
   const empty = board.blocks.length === 0;
@@ -192,7 +192,10 @@ function ExportBar({ board }: { board: BoardDetail }) {
 
   return (
     <div className="mt-6">
-      <div role="toolbar" aria-label="Export this board" className="flex flex-wrap items-center gap-2">
+      <div role="toolbar" aria-label="Present or export this board" className="flex flex-wrap items-center gap-2">
+        <ButtonLink href={`/boards/${board.id}/present`}>
+          <Presentation aria-hidden className="size-4" /> Present
+        </ButtonLink>
         {/* aria-disabled, not disabled, so focus stays on the button while the image is made. */}
         <Button
           variant="secondary"

@@ -89,7 +89,8 @@ describe("creditParts", () => {
 describe("DemoBrowse", () => {
   const families = DEMO.families.map((f) => f.family);
 
-  it("searches and filters in the browser without any request", () => {
+  // Renders all 30 demo pieces several times; under a full parallel run that nears the 5 s default.
+  it("searches and filters in the browser without any request", { timeout: 15_000 }, () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     render(<DemoBrowse pieces={DEMO.pieces} families={families} />);
     const grid = screen.getByRole("list", { name: "Demo pieces" });

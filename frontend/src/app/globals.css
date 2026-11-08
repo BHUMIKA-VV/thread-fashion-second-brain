@@ -109,3 +109,17 @@ body {
     -webkit-print-color-adjust: exact;
   }
 }
+
+/* Present mode: each slide fades in (the reduced-motion rule above makes this instant). */
+@keyframes present-slide-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.present-slide {
+  animation: present-slide-in 180ms ease-out;
+}

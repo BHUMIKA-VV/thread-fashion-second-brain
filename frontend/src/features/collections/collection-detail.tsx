@@ -64,9 +64,12 @@ export function CollectionDetailView({ id }: { id: string }) {
       <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
         <PublishSwitch kind="collection" id={detail.id} isPublic={detail.is_public} />
         {detail.items.length > 0 && (
-          <ButtonLink href={`/boards?from=${detail.id}`} variant="secondary">
-            Make a board from this collection
-          </ButtonLink>
+          <>
+            <ButtonLink href={`/collections/${detail.id}/present`}>Present this collection</ButtonLink>
+            <ButtonLink href={`/boards?from=${detail.id}`} variant="secondary">
+              Make a board from this collection
+            </ButtonLink>
+          </>
         )}
       </div>
 
