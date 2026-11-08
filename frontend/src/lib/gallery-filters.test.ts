@@ -34,6 +34,15 @@ describe("gallery filters in the URL", () => {
     expect(hasActiveFilters(parse("color=red"))).toBe(true);
   });
 
+  it("can hide inspiration images, but never while showing only them", () => {
+    expect(parse("hide=other")).toEqual({ ...EMPTY_FILTERS, hideOther: true });
+    expect(filtersToSearch(parse("hide=other&type=fabric"))).toBe("type=fabric&hide=other");
+    expect(parse("hide=other&type=other").hideOther).toBeUndefined();
+    expect(parse("hide=fabric").hideOther).toBeUndefined();
+    expect(filtersToSearch({ ...EMPTY_FILTERS, type: "other", hideOther: true })).toBe("type=other");
+    expect(hasActiveFilters(parse("hide=other"))).toBe(true);
+  });
+
   it("labels tags readably", () => {
     expect(tagLabel("craft:ikat")).toBe("ikat (craft)");
     expect(tagLabel("ikat")).toBe("ikat");

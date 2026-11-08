@@ -103,6 +103,23 @@ describe("Gallery", () => {
     expect(await screen.findByText("No pieces match these filters")).toBeInTheDocument();
   });
 
+  it("hides inspiration images on request, and the two type choices never contradict", async () => {
+    const fetchMock = routes(() => list([]));
+    renderWithQuery(<Gallery />);
+    await screen.findByText("Your library is empty");
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide other inspiration" }));
+    expect(nav.currentSearch()).toBe("hide=other");
+    await waitFor(() => expect(itemCalls(fetchMock).at(-1)).toBe("/api/items?exclude_type=other&limit=24&offset=0"));
+    expect(within(screen.getByLabelText("Active filters")).getByText("Hiding other inspiration")).toBeInTheDocument();
+
+    // Asking for "Other" only turns hiding off, and hiding again clears the type.
+    fireEvent.click(screen.getByRole("button", { name: "Other" }));
+    expect(nav.currentSearch()).toBe("type=other");
+    fireEvent.click(screen.getByRole("button", { name: "Hide other inspiration" }));
+    expect(nav.currentSearch()).toBe("hide=other");
+  });
+
   it("debounces the search box into the URL", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     routes(() => list([]));

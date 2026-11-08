@@ -186,6 +186,23 @@ def test_list_and_filter_by_type(api: TestClient) -> None:
     assert api.get("/items", params={"limit": 0}).status_code == 422
 
 
+def test_list_can_leave_out_one_type(api: TestClient) -> None:
+    """The gallery can hide inspiration images (type "other") and still page correctly."""
+    upload(api, image_bytes(), item_type="fabric")
+    upload(api, image_bytes(), item_type="other")
+    upload(api, image_bytes(), item_type="garment")
+    upload(api, image_bytes(), item_type="other")
+
+    rest = api.get("/items", params={"exclude_type": "other"}).json()
+    page = api.get("/items", params={"exclude_type": "other", "limit": 1, "offset": 1}).json()
+    both = api.get("/items", params={"exclude_type": "other", "type": "fabric"}).json()
+
+    assert rest["total"] == 2 and {i["type"] for i in rest["items"]} == {"fabric", "garment"}
+    assert page["total"] == 2 and len(page["items"]) == 1
+    assert both["total"] == 1 and both["items"][0]["type"] == "fabric"
+    assert api.get("/items", params={"exclude_type": "nonsense"}).status_code == 422
+
+
 def test_image_variants_are_served_with_safe_headers(api: TestClient) -> None:
     item = upload(api, image_bytes("PNG", (1000, 600))).json()
 

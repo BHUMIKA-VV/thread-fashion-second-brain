@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ApiError } from "@/lib/api-client";
 import { apiErrorResponse, routeFetch } from "@/test/fetch-router";
 import { makeItem, renderWithQuery } from "@/test/render";
 import type { BoardBlock, BoardDetail, BoardSummary, ChosenColour, CollectionSummary, ColourStory, ItemList } from "@/types/api";
@@ -10,6 +11,16 @@ import { ColourStoryView, matchText } from "./colour-story";
 import { BoardSheet } from "./board-sheet";
 
 const render = vi.hoisted(() => vi.fn());
+// A plain function, not vi.fn: this Vitest fails a test when a vi.fn's promise rejects, even if
+// the component catches it, and the upload's refusals are what these tests are about.
+const uploads = vi.hoisted(() => ({ calls: [] as unknown[][], next: (async () => ({})) as (...args: unknown[]) => Promise<unknown> }));
+vi.mock("@/services/items", async (importActual) => ({
+  ...(await importActual<typeof import("@/services/items")>()),
+  uploadItem: (...args: unknown[]) => {
+    uploads.calls.push(args);
+    return uploads.next(...args);
+  },
+}));
 vi.mock("@/lib/board-card", async (importActual) => ({ ...(await importActual<typeof import("@/lib/board-card")>()), renderBoardCard: render }));
 
 vi.mock("next/navigation", async () => (await import("@/test/navigation-mock")).navigationMock);
@@ -434,5 +445,85 @@ describe("the printed sheet", () => {
     expect(sheet).toHaveTextContent("Harmony: Complementary — opposite hues");
     expect(sheet).toHaveTextContent("Measured: sindoor red 70% · neel indigo 30%");
     expect(sheet).toHaveTextContent("Matches neel indigo on Linen dupatta (difference 0.0).");
+  });
+});
+
+describe("inspiration images", () => {
+  beforeEach(() => {
+    uploads.calls = [];
+  });
+
+  const file = (type = "image/png", size = 1000) => new File([new Uint8Array(size)], "street.png", { type });
+  const choose = (f: File) => fireEvent.change(screen.getByLabelText("Upload an inspiration image"), { target: { files: [f] } });
+
+  it("uploads as Other inspiration and puts the image on the board", async () => {
+    const photo = makeItem({ id: "aaaaaaaa-0000-4000-8000-000000000009", type: "other" });
+    uploads.next = async () => photo;
+    const fetchMock = routeFetch({
+      "GET /api/boards/bd1": () => Response.json(board()),
+      "GET /api/items?": emptyArchive,
+      "POST /api/boards/bd1/blocks": () => Response.json(board()),
+    });
+    renderWithQuery(<BoardEditor id="bd1" />);
+    await screen.findByRole("list", { name: "Blocks on this board" });
+    choose(file());
+    expect(await screen.findByText("Added to the board. Its colours appear once Thread has measured them.")).toBeInTheDocument();
+    expect(uploads.calls).toEqual([[expect.any(File), expect.objectContaining({ type: "other" })]]);
+    expect(bodies(fetchMock, "POST")).toEqual([{ url: "/api/boards/bd1/blocks", body: { kind: "piece", item_id: photo.id, body: null } }]);
+  });
+
+  it("adds the copy already in the archive when the image is a duplicate", async () => {
+    uploads.next = async () => {
+      throw new ApiError(409, "duplicate", "This image is already in your library.", { existing_item_id: LINEN.id });
+    };
+    const fetchMock = routeFetch({
+      "GET /api/boards/bd1": () => Response.json(board()),
+      "GET /api/items?": emptyArchive,
+      "POST /api/boards/bd1/blocks": () => Response.json(board()),
+    });
+    renderWithQuery(<BoardEditor id="bd1" />);
+    await screen.findByRole("list", { name: "Blocks on this board" });
+    choose(file());
+    expect(await screen.findByText(/already in your archive, so that copy was added/)).toBeInTheDocument();
+    expect(bodies(fetchMock, "POST")).toEqual([{ url: "/api/boards/bd1/blocks", body: { kind: "piece", item_id: LINEN.id, body: null } }]);
+  });
+
+  it("refuses an unsupported file before uploading, and explains a server refusal", async () => {
+    uploads.next = async () => {
+      throw new ApiError(422, "bad_dimensions", "Images may be at most 8000 px on the longest side.");
+    };
+    routeFetch({ "GET /api/boards/bd1": () => Response.json(board()), "GET /api/items?": emptyArchive });
+    renderWithQuery(<BoardEditor id="bd1" />);
+    await screen.findByRole("list", { name: "Blocks on this board" });
+    choose(file("image/gif"));
+    expect(await screen.findByText("Only JPEG, PNG and WebP images are supported.")).toBeInTheDocument();
+    expect(uploads.calls).toEqual([]);
+    choose(file());
+    expect(await screen.findByText("Images may be at most 8000 px on the longest side.")).toBeInTheDocument();
+  });
+
+  it("checks back while a piece on the board is still being measured", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const measuring = makeItem({ id: "aaaaaaaa-0000-4000-8000-00000000000a", notes: "Street", processing_status: "processing" });
+      const measured = { ...measuring, processing_status: "completed" as const };
+      let calls = 0;
+      routeFetch({
+        "GET /api/boards/bd1": () => {
+          calls++;
+          const item = calls === 1 ? measuring : measured;
+          return Response.json(board([block({ id: "p1", kind: "piece", position: 0, item })]));
+        },
+        "GET /api/items?": emptyArchive,
+      });
+      renderWithQuery(<BoardEditor id="bd1" />);
+      await screen.findByRole("article", { name: "Street" });
+      await vi.advanceTimersByTimeAsync(3_100);
+      await waitFor(() => expect(calls).toBe(2));
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(calls).toBe(2); // measured: no more checks
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

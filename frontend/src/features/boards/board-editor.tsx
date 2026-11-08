@@ -17,11 +17,13 @@ import { cn } from "@/lib/cn";
 import { addBlock, deleteBoard, getBoard, removeBlock, updateBlock, updateBoard, type NewBlock } from "@/services/boards";
 import type { BoardBlock, BoardDetail } from "@/types/api";
 
+import { AddInspiration } from "./add-inspiration";
 import { BoardSheet } from "./board-sheet";
 import { ColourStoryView } from "./colour-story";
 
 /** The API's limit; the editor stops offering to add once a board is full. */
 export const MAX_BLOCKS = 120;
+const MEASURING = new Set(["queued", "processing"]);
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** A short, real name for a block, used for its label and its controls. */
@@ -36,7 +38,13 @@ export function blockLabel(block: BoardBlock): string {
 export function BoardEditor({ id }: { id: string }) {
   const queryClient = useQueryClient();
   const key = ["boards", "detail", id];
-  const query = useQuery({ queryKey: key, queryFn: () => getBoard(id) });
+  const query = useQuery({
+    queryKey: key,
+    queryFn: () => getBoard(id),
+    // A piece just added (an inspiration image above all) may still be measured: check back
+    // until its palette, and so the colour story, is in.
+    refetchInterval: (q) => (q.state.data?.blocks.some((b) => b.item && MEASURING.has(b.item.processing_status)) ? 3000 : false),
+  });
 
   const onUpdated = (detail: BoardDetail) => {
     queryClient.setQueryData(key, detail);
@@ -127,6 +135,7 @@ export function BoardEditor({ id }: { id: string }) {
               <>
                 <AddText busy={add.isPending} onAdd={(block) => add.mutate(block)} />
                 <AddColour board={board} busy={add.isPending} onAdd={(block) => add.mutate(block)} />
+                <AddInspiration busy={add.isPending} onAdd={(block) => add.mutate(block)} />
                 <PiecePicker
                   chosen={new Set(board.blocks.flatMap((b) => (b.item ? [b.item.id] : [])))}
                   full={false}

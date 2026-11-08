@@ -217,3 +217,51 @@ test("a board saves as an image and prints as an A4 landscape sheet", async ({ p
     for (const id of [silk, cotton]) await request.delete(`/api/items/${id}`);
   }
 });
+
+test("an inspiration image goes onto the board, lives in the archive, and can be hidden in the gallery", async ({ page, request }, testInfo) => {
+  test.setTimeout(120_000);
+  const token = `e2e${testInfo.project.name}${Date.now().toString(36)}`;
+  const board = await (await request.post("/api/boards", { data: { name: `Inspiration ${token}` } })).json();
+  const fabric = await uploadVia(request, swatch([30, 60, 150]), `Fabric ${token}`);
+  const png = swatch([200, 160, 40]);
+  let inspiration: string | null = null;
+  try {
+    await page.goto(`/boards/${board.id}`);
+    const aside = page.getByRole("complementary", { name: "Add to this board" });
+    await aside.getByLabel("Upload an inspiration image").setInputFiles({ name: "street.png", mimeType: "image/png", buffer: png });
+    await expect(aside.getByText("Added to the board. Its colours appear once Thread has measured them.")).toBeVisible();
+    const pieces = page.getByRole("list", { name: "Blocks on this board" }).getByRole("article");
+    await expect(pieces).toHaveCount(1);
+
+    // Saved to the archive as Other inspiration.
+    inspiration = (await (await request.get(`/api/boards/${board.id}`)).json()).blocks[0].item.id;
+    const item = await (await request.get(`/api/items/${inspiration}`)).json();
+    expect(item.type).toBe("other");
+
+    // Its colours arrive without a reload, and the colour story follows.
+    await expect(page.getByRole("region", { name: "Colour story" })).toContainText("Harmony:", { timeout: 30_000 });
+
+    // The same image again: the copy already in the archive is added, not a second upload.
+    await aside.getByLabel("Upload an inspiration image").setInputFiles({ name: "again.png", mimeType: "image/png", buffer: png });
+    await expect(aside.getByText(/already in your archive, so that copy was added/)).toBeVisible();
+    await expect(pieces).toHaveCount(2);
+    const blocks = (await (await request.get(`/api/boards/${board.id}`)).json()).blocks;
+    expect(blocks.map((b: { item: { id: string } }) => b.item.id)).toEqual([inspiration, inspiration]);
+
+    // The gallery shows it, and hides it on request while the fabric stays.
+    await page.goto("/gallery");
+    const card = page.locator(`a[href="/items/${inspiration}"]`);
+    await expect(card).toBeVisible();
+    await page.getByRole("button", { name: "Hide other inspiration" }).click();
+    await expect(page).toHaveURL(/hide=other/);
+    await expect(page.getByRole("link", { name: new RegExp(`Fabric ${token}`) })).toBeVisible();
+    await expect(card).toHaveCount(0);
+    const listed = await (await request.get("/api/items?exclude_type=other&limit=100")).json();
+    expect(listed.items.some((i: { id: string }) => i.id === inspiration)).toBe(false);
+    expect(listed.items.some((i: { id: string }) => i.id === fabric)).toBe(true);
+  } finally {
+    await request.delete(`/api/boards/${board.id}`);
+    if (inspiration) await request.delete(`/api/items/${inspiration}`);
+    await request.delete(`/api/items/${fabric}`);
+  }
+});

@@ -47,6 +47,7 @@ class SearchParams:
     tags: Sequence[tuple[str | None, str]] = ()  # (category or None for any, tag)
     colors: Sequence[str] = ()
     item_type: str | None = None
+    exclude_type: str | None = None  # e.g. hide inspiration images ("other") from the gallery
     published: bool | None = None  # the owner's own filter: in the showcase or not
     sort: Sort = "newest"
     limit: int = 48
@@ -110,6 +111,8 @@ class ItemSearch:
             conditions.append(Item.is_public.is_(True))
         if params.item_type:
             conditions.append(Item.type == params.item_type)
+        if params.exclude_type:
+            conditions.append(Item.type != params.exclude_type)
         if params.published is not None:
             conditions.append(Item.is_public.is_(params.published))
         for category, tag in params.tags:  # every requested tag must be visible on the item

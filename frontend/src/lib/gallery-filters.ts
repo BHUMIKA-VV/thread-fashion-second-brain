@@ -6,6 +6,8 @@ export type GalleryFilters = {
   tags: string[]; // "category:tag" or "tag"
   colors: ColorFamily[];
   type?: ItemType;
+  /** Leave out inspiration images (type "other"); never together with type "other". */
+  hideOther?: boolean;
   /** The owner's own filter: in the public showcase (true) or private (false). */
   published?: boolean;
   sort: SortOrder;
@@ -20,13 +22,15 @@ export function parseFilters(params: Pick<URLSearchParams, "get" | "getAll">): G
   const type = params.get("type");
   const sort = params.get("sort");
   const published = params.get("published");
+  const parsedType = type && (ITEM_TYPES as readonly string[]).includes(type) ? (type as ItemType) : undefined;
   return {
     q: (params.get("q") ?? "").slice(0, 100),
     tags: unique(params.getAll("tag").map((t) => t.trim()).filter(Boolean)).slice(0, 10),
     colors: unique(params.getAll("color")).filter((c): c is ColorFamily =>
       (COLOR_FAMILIES as readonly string[]).includes(c),
     ),
-    type: type && (ITEM_TYPES as readonly string[]).includes(type) ? (type as ItemType) : undefined,
+    type: parsedType,
+    hideOther: params.get("hide") === "other" && parsedType !== "other" ? true : undefined,
     published: published === "true" ? true : published === "false" ? false : undefined,
     sort: sort && (SORTS as readonly string[]).includes(sort) ? (sort as SortOrder) : "newest",
   };
@@ -39,6 +43,7 @@ export function filtersToSearch(filters: GalleryFilters): string {
   filters.tags.forEach((tag) => params.append("tag", tag));
   filters.colors.forEach((color) => params.append("color", color));
   if (filters.type) params.set("type", filters.type);
+  if (filters.hideOther && filters.type !== "other") params.set("hide", "other");
   if (filters.published !== undefined) params.set("published", String(filters.published));
   if (filters.sort !== "newest") params.set("sort", filters.sort);
   return params.toString();
@@ -46,7 +51,12 @@ export function filtersToSearch(filters: GalleryFilters): string {
 
 export function hasActiveFilters(filters: GalleryFilters): boolean {
   return Boolean(
-    filters.q.trim() || filters.tags.length || filters.colors.length || filters.type || filters.published !== undefined,
+    filters.q.trim() ||
+      filters.tags.length ||
+      filters.colors.length ||
+      filters.type ||
+      filters.hideOther ||
+      filters.published !== undefined,
   );
 }
 

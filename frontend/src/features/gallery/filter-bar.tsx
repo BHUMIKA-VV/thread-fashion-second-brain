@@ -155,6 +155,9 @@ export function GalleryFilterBar({
           {filters.type && (
             <ActiveChip label={`Type: ${filters.type}`} onRemove={() => onChange({ ...filters, type: undefined })} />
           )}
+          {filters.hideOther && (
+            <ActiveChip label="Hiding other inspiration" onRemove={() => onChange({ ...filters, hideOther: undefined })} />
+          )}
           <button
             type="button"
             className="text-xs text-ink-muted underline underline-offset-2 hover:text-ink"

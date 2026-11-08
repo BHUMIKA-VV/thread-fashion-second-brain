@@ -57,6 +57,7 @@ export function Gallery() {
         tags: filters.tags,
         colors: filters.colors,
         type: filters.type,
+        excludeType: filters.hideOther ? "other" : undefined,
         published: filters.published,
         sort: filters.sort,
         limit: PAGE_SIZE,
@@ -87,11 +88,30 @@ export function Gallery() {
             <FilterChip
               key={value}
               active={filters.type === value}
-              onClick={() => setFilters({ ...filters, type: filters.type === value ? undefined : value })}
+              onClick={() =>
+                setFilters({
+                  ...filters,
+                  type: filters.type === value ? undefined : value,
+                  hideOther: value === "other" ? undefined : filters.hideOther,
+                })
+              }
             >
               {TYPE_NAMES[value]}
             </FilterChip>
           ))}
+          {/* Inspiration images live in the archive (they get palettes and search) but can be hidden here. */}
+          <FilterChip
+            active={filters.hideOther === true}
+            onClick={() =>
+              setFilters({
+                ...filters,
+                hideOther: filters.hideOther ? undefined : true,
+                type: filters.type === "other" ? undefined : filters.type,
+              })
+            }
+          >
+            Hide other inspiration
+          </FilterChip>
         </div>
         <ShowcaseFilter filters={filters} onChange={setFilters} />
         {total !== undefined && (
