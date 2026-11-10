@@ -177,6 +177,98 @@ def test_bad_manifests_are_refused(folder: Path, change: Any, message: str) -> N
         load_manifest(path)
 
 
+BOARD = {
+    "id": "blue-study",
+    "title": "Blue study",
+    "description": "A test board",
+    "blocks": [
+        {"kind": "heading", "body": "Blues"},
+        {"kind": "piece", "piece": "indigo-kurta", "body": "For the base"},
+        {"kind": "piece", "piece": "navy-shirt"},
+        {"kind": "colour", "hex": "#AA4628", "body": "  Accent  "},
+        {"kind": "note", "body": "Keep the rust small."},
+    ],
+}
+
+
+def with_board(folder: Path, board: dict[str, Any]) -> Path:
+    path = folder / "demo.json"
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    manifest["boards"] = [board]
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    return path
+
+
+def test_boards_keep_their_order_and_get_the_apps_colour_story(
+    folder: Path, tmp_path: Path
+) -> None:
+    from app.color.board import colour_story
+
+    with_board(folder, BOARD)
+    data = run(folder, tmp_path / "out", with_model=False)
+    (board,) = data["boards"]
+    assert [b["kind"] for b in board["blocks"]] == ["heading", "piece", "piece", "colour", "note"]
+    assert board["blocks"][1] == {"kind": "piece", "piece": "indigo-kurta", "body": "For the base"}
+    assert board["blocks"][2]["body"] is None
+    colour = board["blocks"][3]
+    assert colour["hex"] == "#aa4628" and colour["body"] == "Accent" and colour["name"]
+
+    # The same calculation the app runs for a saved board, on the same palettes.
+    palettes = {p["id"]: p["palette"] for p in data["pieces"]}
+    expected = colour_story(
+        [("indigo-kurta", palettes["indigo-kurta"]), ("navy-shirt", palettes["navy-shirt"])],
+        [(3, "#aa4628")],
+    )
+    story = board["colour_story"]
+    assert [c["hex"] for c in story["measured"]] == [c.hex for c in expected.measured.dominant]
+    assert story["harmony"] == expected.harmony
+    (chosen,) = story["chosen"]
+    assert chosen["block"] == 3 and chosen["on_pieces"] == expected.chosen[0].on_pieces
+    assert chosen["nearest"]["piece"] in {"indigo-kurta", "navy-shirt"}
+    assert chosen["nearest"]["distance"] == round(expected.chosen[0].nearest.distance, 1)
+    # Written to demo.json as well.
+    written = json.loads((tmp_path / "out" / "demo.json").read_text(encoding="utf-8"))
+    assert written["boards"] == data["boards"]
+
+
+def test_a_dataset_without_boards_has_an_empty_list(folder: Path, tmp_path: Path) -> None:
+    assert run(folder, tmp_path / "out", with_model=False)["boards"] == []
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        (lambda b: b.update(blocks=[]), "between 1 and 120 blocks"),
+        (
+            lambda b: b.update(blocks=[{"kind": "note", "body": "x"}] * 121),
+            "between 1 and 120 blocks",
+        ),
+        (lambda b: b.pop("title"), "'title' is required"),
+        (lambda b: b["blocks"].append({"kind": "image"}), "kind must be one of"),
+        (lambda b: b["blocks"].append({"kind": "piece", "piece": "ghost"}), "unknown piece ghost"),
+        (lambda b: b["blocks"].append({"kind": "colour", "hex": "blue"}), "must look like #263b5e"),
+        (lambda b: b["blocks"].append({"kind": "note"}), "a note needs a 'body'"),
+        (lambda b: b["blocks"].append({"kind": "heading", "body": "   "}), "'body' must be text"),
+        (lambda b: b["blocks"].append({"kind": "heading", "body": "x" * 201}), "longer than 200"),
+        (
+            lambda b: b["blocks"].append({"kind": "note", "body": "x", "hex": "#000000"}),
+            "only a colour",
+        ),
+        (
+            lambda b: b["blocks"].append(
+                {"kind": "colour", "hex": "#000000", "piece": "navy-shirt"}
+            ),
+            "only a piece",
+        ),
+    ],
+)
+def test_bad_boards_are_refused(folder: Path, change: Any, message: str) -> None:
+    board = json.loads(json.dumps(BOARD))
+    change(board)
+    with pytest.raises(ManifestError, match=message):
+        load_manifest(with_board(folder, board))
+
+
 def test_main_reports_manifest_problems(folder: Path, tmp_path: Path) -> None:
     (folder / "demo.json").write_text("{}", encoding="utf-8")
     assert build_demo.main(["--manifest", str(folder / "demo.json"), "--out", str(tmp_path)]) == 2

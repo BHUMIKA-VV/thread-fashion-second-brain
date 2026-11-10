@@ -5738,5 +5738,165 @@
     ]
    }
   }
+ ],
+ "boards": [
+  {
+   "id": "wine-red-and-gold",
+   "title": "Wine red and gold",
+   "description": "A sample board made for this demo from public-domain museum pieces of different eras and makers. It is a study of colour, not a historical ensemble, and nothing on it is for sale.",
+   "blocks": [
+    {
+     "kind": "heading",
+     "body": "Wine reds"
+    },
+    {
+     "kind": "piece",
+     "body": "The reds to build from.",
+     "piece": "ikat-striped-panel"
+    },
+    {
+     "kind": "piece",
+     "body": "A browner red, for depth.",
+     "piece": "chintz-bed-cover"
+    },
+    {
+     "kind": "piece",
+     "body": null,
+     "piece": "tapis-hip-wrapper"
+    },
+    {
+     "kind": "colour",
+     "body": "Main colour, taken from the ikat panel.",
+     "hex": "#8d192c",
+     "name": "wine red",
+     "family": "red"
+    },
+    {
+     "kind": "heading",
+     "body": "Gold and cream"
+    },
+    {
+     "kind": "piece",
+     "body": "Red with warm browns.",
+     "piece": "kimkhwab-benares"
+    },
+    {
+     "kind": "piece",
+     "body": "Wine with warm gold.",
+     "piece": "gold-cloth-1800s"
+    },
+    {
+     "kind": "piece",
+     "body": "Cream, for calm areas.",
+     "piece": "kashmir-shawl-border"
+    },
+    {
+     "kind": "colour",
+     "body": "Gold accent, to try.",
+     "hex": "#c9a24f",
+     "name": "camel",
+     "family": "yellow"
+    },
+    {
+     "kind": "note",
+     "body": "Keep the wine red for large areas and the gold for borders and edges. Cream gives the eye somewhere to rest."
+    }
+   ],
+   "colour_story": {
+    "measured": [
+     {
+      "hex": "#8d192c",
+      "name": "wine red",
+      "share": 26.6,
+      "pieces": [
+       "ikat-striped-panel",
+       "tapis-hip-wrapper",
+       "chintz-bed-cover",
+       "kimkhwab-benares",
+       "kashmir-shawl-border",
+       "gold-cloth-1800s"
+      ]
+     },
+     {
+      "hex": "#a37d5e",
+      "name": "mocha",
+      "share": 12.2,
+      "pieces": [
+       "gold-cloth-1800s",
+       "kimkhwab-benares",
+       "chintz-bed-cover",
+       "tapis-hip-wrapper"
+      ]
+     },
+     {
+      "hex": "#8a5d46",
+      "name": "cocoa",
+      "share": 10.3,
+      "pieces": [
+       "kimkhwab-benares",
+       "chintz-bed-cover",
+       "tapis-hip-wrapper",
+       "ikat-striped-panel",
+       "gold-cloth-1800s"
+      ]
+     },
+     {
+      "hex": "#37363d",
+      "name": "dark grey",
+      "share": 8.5,
+      "pieces": [
+       "tapis-hip-wrapper",
+       "chintz-bed-cover",
+       "kashmir-shawl-border"
+      ]
+     },
+     {
+      "hex": "#dacbb3",
+      "name": "malai cream",
+      "share": 6.4,
+      "pieces": [
+       "kashmir-shawl-border",
+       "kimkhwab-benares"
+      ]
+     },
+     {
+      "hex": "#b49b80",
+      "name": "mushroom",
+      "share": 6.0,
+      "pieces": [
+       "kashmir-shawl-border",
+       "gold-cloth-1800s"
+      ]
+     }
+    ],
+    "chosen": [
+     {
+      "block": 4,
+      "hex": "#8d192c",
+      "name": "wine red",
+      "nearest": {
+       "hex": "#8d192c",
+       "name": "wine red",
+       "piece": "ikat-striped-panel",
+       "distance": 0.0
+      },
+      "on_pieces": true
+     },
+     {
+      "block": 9,
+      "hex": "#c9a24f",
+      "name": "camel",
+      "nearest": {
+       "hex": "#c7a57a",
+       "name": "toupe",
+       "piece": "gold-cloth-1800s",
+       "distance": 8.4
+      },
+      "on_pieces": true
+     }
+    ],
+    "harmony": "analogous"
+   }
+  }
  ]
 }

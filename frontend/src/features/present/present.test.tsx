@@ -3,11 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { routeFetch } from "@/test/fetch-router";
 import { makeItem, renderWithQuery } from "@/test/render";
+import { DEMO, demoBoard } from "@/features/demo/demo-data";
 import type { BoardBlock, BoardDetail, CollectionDetail } from "@/types/api";
 
 import { Presenter, slideFromHash } from "./presenter";
 import { BoardPresentation, CollectionPresentation } from "./presentations";
-import { boardSlides, collectionSlides, slideTitle } from "./slides";
+import { boardSlides, collectionSlides, demoBoardSlides, slideTitle } from "./slides";
 
 vi.mock("next/navigation", async () => (await import("@/test/navigation-mock")).navigationMock);
 const nav = await import("@/test/navigation-mock");
@@ -91,7 +92,7 @@ describe("slides", () => {
     const slides = boardSlides(BOARD);
     expect(slides.map((s) => s.kind)).toEqual(["cover", "section", "piece", "colour", "note", "story", "end"]);
     expect(slides[0]).toEqual({ kind: "cover", title: "Meera, sangeet", description: "Indigo and gold", facts: "1 piece · 1 colour" });
-    expect(slides[2]).toMatchObject({ kind: "piece", item: SILK, caption: "For the lining" });
+    expect(slides[2]).toMatchObject({ kind: "piece", piece: { title: "Silk dress, French, 1883–85. Museum record C.I.53.63a, b." }, caption: "For the lining" });
     // A chosen colour says, in words, how it relates to what was measured.
     expect(slides[3]).toMatchObject({
       kind: "colour",
@@ -262,5 +263,44 @@ describe("presentations", () => {
     });
     renderWithQuery(<BoardPresentation id="nope" />);
     expect(await screen.findByRole("alert")).toHaveTextContent("This board doesn't exist");
+  });
+});
+
+describe("the demo board's slides", () => {
+  const board = demoBoard("wine-red-and-gold")!;
+
+  it("follow the sample board, with every piece credited to its museum", () => {
+    expect(board).toBeDefined();
+    const slides = demoBoardSlides(board);
+    expect(slides.map((s) => s.kind)).toEqual(["cover", ...board.blocks.map((b) => (b.kind === "heading" ? "section" : b.kind)), "story", "end"]);
+    expect(slides[0]).toMatchObject({ kind: "cover", title: "Wine red and gold", facts: "6 pieces · 2 colours" });
+    for (const slide of slides) {
+      if (slide.kind !== "piece") continue;
+      expect(slide.piece.credit, slide.piece.title).toMatch(/Museum of Art.*\. Public domain \(CC0\)/);
+      expect(slide.piece.note, slide.piece.title).toMatch(/Museum record .+\.$/);
+      expect(slide.piece.source).toMatchObject({ label: "Museum record", url: expect.stringMatching(/^https:\/\//) });
+    }
+    // Chosen colours are described against what was measured on the pieces, by the app's words.
+    expect(slides.find((s) => s.kind === "colour")).toMatchObject({ hex: "#8d192c", match: expect.stringMatching(/Warp-ikat striped silk panel/) });
+  });
+
+  it("show the credit and record link on a piece, and keep tags and guesses for the details", () => {
+    const slides = demoBoardSlides(board);
+    const index = slides.findIndex((s) => s.kind === "piece");
+    window.history.replaceState(null, "", `#slide-${index + 1}`);
+    renderWithQuery(<Presenter slides={slides} exitHref="/demo/boards/wine-red-and-gold" name={board.title} />);
+    const slide = screen.getByRole("region");
+    expect(slide).toHaveTextContent("The Cleveland Museum of Art, Purchase from the J. H. Wade Fund, 1925.498.");
+    expect(slide).toHaveTextContent("Public domain (CC0)");
+    expect(within(slide).getByRole("link", { name: "https://clevelandart.org/art/1925.498" })).toBeInTheDocument();
+    expect(slide).not.toHaveTextContent(/for sale|price|buy/i);
+    expect(within(slide).queryByLabelText("Piece details")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show details" }));
+    expect(within(screen.getByRole("region")).getByLabelText("Piece details")).toHaveTextContent("Colour shares:");
+  });
+
+  it("exist for every board in the dataset", () => {
+    expect(DEMO.boards.length).toBeGreaterThan(0);
+    for (const b of DEMO.boards) expect(demoBoardSlides(b).at(-1)).toEqual({ kind: "end", title: b.title });
   });
 });

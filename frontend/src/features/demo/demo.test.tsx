@@ -4,6 +4,7 @@ import path from "node:path";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { DemoBoardView } from "./demo-board";
 import { DemoBrowse } from "./demo-browse";
 import { creditParts, DEMO, demoPieces, filterDemo, NO_FILTERS, tagsByCategory } from "./demo-data";
 import { DemoTags } from "./demo-sections";
@@ -133,5 +134,34 @@ describe("DemoTags", () => {
     expect(screen.getByText("silk").closest("dd")).toHaveTextContent(/^silk$/);
     expect(screen.getByText("floral").closest("dd")).toHaveTextContent("floral (suggested)");
     expect(tagsByCategory(piece.tags).map(([c]) => c)).toEqual(["fabric", "pattern", "craft"]);
+  });
+});
+
+describe("the sample board", () => {
+  const board = DEMO.boards[0];
+
+  it("only refers to pieces the demo holds, and says it is a study, not for sale", () => {
+    const ids = new Set(DEMO.pieces.map((p) => p.id));
+    const missing = DEMO.boards.flatMap((b) => b.blocks.flatMap((x) => (x.kind === "piece" && !ids.has(x.piece) ? [x.piece] : [])));
+    expect(missing).toEqual([]);
+    expect(board.description).toMatch(/not a historical ensemble/);
+    expect(board.description).toMatch(/nothing on it is for sale/);
+    for (const c of board.colour_story.chosen) expect(board.blocks[c.block].kind).toBe("colour");
+  });
+
+  it("shows its blocks in order, a credit under every piece, and the calculated colour story", () => {
+    render(<DemoBoardView board={board} />);
+    expect(screen.getByRole("link", { name: "Present" })).toHaveAttribute("href", "/demo/boards/wine-red-and-gold/present");
+    const blocks = screen.getByRole("list", { name: "Blocks on this board" });
+    expect(within(blocks).getAllByRole("heading").map((h) => h.textContent)).toEqual(["Wine reds", "Gold and cream"]);
+    for (const piece of demoPieces(board.blocks.flatMap((b) => (b.kind === "piece" ? [b.piece] : [])))) {
+      expect(blocks, piece.id).toHaveTextContent(`${creditParts(piece.credit).text}.`);
+    }
+    expect(screen.getByText("Harmony:").parentElement).toHaveTextContent(/Analogous/);
+    expect(screen.getByRole("img", { name: /^Measured colours: wine red/ })).toBeInTheDocument();
+    const chosen = screen.getByRole("list", { name: "Chosen colours and their nearest measured colour" });
+    expect(within(chosen).getAllByRole("listitem")).toHaveLength(2);
+    expect(chosen).toHaveTextContent("camel");
+    expect(screen.getByText(/Nothing here is written by a model/)).toBeInTheDocument();
   });
 });

@@ -18,7 +18,12 @@ The manifest lists the pieces, collections and outfits:
     "collections": [{"id": "everyday", "title": "Everyday wardrobe",
                      "description": "…", "pieces": ["indigo-kurta"]}],
     "outfits": [{"id": "monsoon", "title": "Monsoon office", "note": "…",
-                 "pieces": ["indigo-kurta"]}]
+                 "pieces": ["indigo-kurta"]}],
+    "boards": [{"id": "indigo-study", "title": "Indigo study", "description": "…",
+                "blocks": [{"kind": "heading", "body": "Blues"},
+                           {"kind": "piece", "piece": "indigo-kurta", "body": "optional caption"},
+                           {"kind": "colour", "hex": "#263b5e", "body": "optional caption"},
+                           {"kind": "note", "body": "…"}]}]
   }
 
 Every piece needs a credit and a licence: the demo is public, so only images you have the
@@ -27,6 +32,9 @@ the model's suggestions in that category, as a correction does in the app. An op
 "crop": [left, top, right, bottom] (fractions of the image) trims a studio backdrop before
 anything is measured; the published image is the cropped one, so visitors see exactly what
 was measured.
+
+A board's colour story (measured colours, each chosen colour's nearest measured one, harmony)
+is calculated here by the app's own board code, as the app does for a saved board.
 
 Output: demo.json, images/<id>.webp (long side 1600) and thumbs/<id>.webp (long side 640).
 It also writes the playground's index (app/playground/demo_index.json, or --index): each
@@ -50,6 +58,7 @@ from typing import Any
 import numpy as np
 from PIL import Image, ImageOps
 
+from app.color.board import colour_story
 from app.color.compare import dominant_family, palette_distance
 from app.color.outfit import OutfitColour, outfit_colours
 from app.color.palette import extract_palette
@@ -67,6 +76,10 @@ THUMB_SIDE = 640
 SIMILAR = 6
 ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 REQUIRED = ("id", "file", "type", "title", "credit", "licence")
+HEX = re.compile(r"^#[0-9a-f]{6}$")
+BLOCK_KINDS = ("piece", "colour", "heading", "note")
+MAX_BLOCKS = 120  # as in the app
+TEXT_LIMITS = {"heading": 200, "note": 2000, "piece": 2000, "colour": 2000}
 
 
 class ManifestError(ValueError):
@@ -156,7 +169,44 @@ def load_manifest(path: Path) -> dict[str, Any]:
             missing = [m for m in members if m not in piece_ids]
             if missing:
                 raise ManifestError(f"{where}: unknown pieces {', '.join(missing)}")
+    manifest["boards"] = manifest.get("boards", [])
+    board_seen: set[str] = set()
+    for i, board in enumerate(manifest["boards"]):
+        where = f"board {i + 1}"
+        board["title"] = _require_text(board, "title", where)
+        _check_id(_require_text(board, "id", where), where, board_seen)
+        blocks = board.get("blocks", [])
+        if not blocks or len(blocks) > MAX_BLOCKS:
+            raise ManifestError(f"{where}: needs between 1 and {MAX_BLOCKS} blocks")
+        for j, block in enumerate(blocks):
+            _check_block(block, piece_ids, f"{where}, block {j + 1}")
     return manifest
+
+
+def _check_block(block: dict[str, Any], piece_ids: set[str], where: str) -> None:
+    """The same rules as the app's boards: a piece names a piece, a colour has a hex, a heading
+    or a note has text."""
+    kind = block.get("kind")
+    if kind not in BLOCK_KINDS:
+        raise ManifestError(f"{where}: kind must be one of {', '.join(BLOCK_KINDS)}")
+    body = block.get("body")
+    if body is not None and (not isinstance(body, str) or not body.strip()):
+        raise ManifestError(f"{where}: 'body' must be text")
+    if kind in ("heading", "note") and body is None:
+        raise ManifestError(f"{where}: a {kind} needs a 'body'")
+    if body is not None and len(body.strip()) > TEXT_LIMITS[kind]:
+        raise ManifestError(f"{where}: 'body' is longer than {TEXT_LIMITS[kind]} characters")
+    if kind == "piece" and block.get("piece") not in piece_ids:
+        raise ManifestError(f"{where}: unknown piece {block.get('piece')}")
+    if kind == "colour":
+        hex_value = block.get("hex")
+        if not isinstance(hex_value, str) or not HEX.match(hex_value.lower()):
+            raise ManifestError(f"{where}: 'hex' must look like #263b5e")
+        block["hex"] = hex_value.lower()
+    if kind != "piece" and "piece" in block:
+        raise ManifestError(f"{where}: only a piece block names a piece")
+    if kind != "colour" and "hex" in block:
+        raise ManifestError(f"{where}: only a colour block has a hex")
 
 
 def _encode(image: Image.Image, side: int) -> bytes:
@@ -170,6 +220,55 @@ def _encode(image: Image.Image, side: int) -> bytes:
 
 def _colour(c: OutfitColour) -> dict[str, Any]:
     return {"hex": c.hex, "name": c.name, "share": c.share, "pieces": list(c.item_ids)}
+
+
+def _board(entry: dict[str, Any], by_id: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    """A board as the demo shows it, with its colour story calculated as the app does."""
+    blocks = entry["blocks"]
+    story = colour_story(
+        [(b["piece"], by_id[b["piece"]]["palette"]) for b in blocks if b["kind"] == "piece"],
+        [(index, b["hex"]) for index, b in enumerate(blocks) if b["kind"] == "colour"],
+    )
+    chosen = {c.block_id: c for c in story.chosen}
+    published = []
+    for index, block in enumerate(blocks):
+        body = (block.get("body") or "").strip() or None
+        out: dict[str, Any] = {"kind": block["kind"], "body": body}
+        if block["kind"] == "piece":
+            out["piece"] = block["piece"]
+        if block["kind"] == "colour":
+            c = chosen[index]
+            out.update(hex=c.hex, name=c.name, family=c.family)
+        published.append(out)
+    return {
+        "id": entry["id"],
+        "title": entry["title"],
+        "description": entry.get("description"),
+        "blocks": published,
+        "colour_story": {
+            "measured": [_colour(c) for c in story.measured.dominant],
+            "chosen": [
+                {
+                    "block": c.block_id,
+                    "hex": c.hex,
+                    "name": c.name,
+                    "nearest": (
+                        {
+                            "hex": c.nearest.hex,
+                            "name": c.nearest.name,
+                            "piece": c.nearest.item_id,
+                            "distance": round(c.nearest.distance, 1),
+                        }
+                        if c.nearest
+                        else None
+                    ),
+                    "on_pieces": c.on_pieces,
+                }
+                for c in story.chosen
+            ],
+            "harmony": story.harmony,
+        },
+    }
 
 
 def _ai_tags(model: Model, vector: np.ndarray, item_type: str) -> list[dict[str, Any]]:
@@ -290,6 +389,8 @@ def build(
             }
         )
 
+    boards = [_board(entry, by_id) for entry in manifest["boards"]]
+
     families = Counter(p["family"] for p in pieces if p["family"])
     dataset = {
         "version": FORMAT_VERSION,
@@ -307,6 +408,7 @@ def build(
             for c in manifest["collections"]
         ],
         "outfits": outfits,
+        "boards": boards,
     }
     (out / "demo.json").write_text(
         json.dumps(dataset, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n"
@@ -370,8 +472,9 @@ def main(argv: list[str] | None = None) -> int:
     model = None if args.no_model else load_model()
     dataset = build(manifest, args.out, model, args.index)
     print(
-        f"Wrote {len(dataset['pieces'])} pieces, {len(dataset['collections'])} collections and "
-        f"{len(dataset['outfits'])} outfits to {args.out} (model: {dataset['model'] or 'none'})."
+        f"Wrote {len(dataset['pieces'])} pieces, {len(dataset['collections'])} collections, "
+        f"{len(dataset['outfits'])} outfits and {len(dataset['boards'])} boards to {args.out} "
+        f"(model: {dataset['model'] or 'none'})."
     )
     return 0
 

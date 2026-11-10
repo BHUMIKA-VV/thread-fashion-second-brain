@@ -81,7 +81,7 @@ test.describe("signed out", () => {
   });
 
   test("every kind of demo page passes WCAG checks and fits a phone", async ({ page }) => {
-    for (const path of ["/demo", "/demo/pieces/kashmir-shawl-boteh", "/demo/outfits/ochre-afternoon", "/demo/collections/colour-reds", "/demo/pieces/jama-with-poppies", "/demo/collections/painted-printed-cotton"]) {
+    for (const path of ["/demo", "/demo/pieces/kashmir-shawl-boteh", "/demo/outfits/ochre-afternoon", "/demo/collections/colour-reds", "/demo/pieces/jama-with-poppies", "/demo/collections/painted-printed-cotton", "/demo/boards/wine-red-and-gold"]) {
       await page.goto(path);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
       const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
@@ -92,6 +92,47 @@ test.describe("signed out", () => {
       }
       await page.setViewportSize({ width: 1280, height: 800 });
     }
+  });
+
+  test("a visitor opens the sample board and presents it, with every piece credited", async ({ page }) => {
+    const requests = watchRequests(page);
+    await page.goto("/demo");
+    await page.getByRole("link", { name: /Wine red and gold/ }).click();
+    await expect(page).toHaveURL(/\/demo\/boards\/wine-red-and-gold$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Wine red and gold" })).toBeVisible();
+    await expect(page.getByText(/nothing on it is for sale/)).toBeVisible();
+    const blocks = page.getByRole("list", { name: "Blocks on this board" });
+    await expect(blocks.getByRole("heading", { name: "Wine reds" })).toBeVisible();
+    await expect(blocks).toContainText("The Cleveland Museum of Art, Purchase from the J. H. Wade Fund, 1925.498.");
+    await expect(page.getByRole("heading", { name: "Colour story" })).toBeVisible();
+    await expect(page.getByText(/^Harmony: Analogous/)).toBeVisible();
+
+    await page.getByRole("link", { name: "Present" }).click();
+    await expect(page).toHaveURL(/\/demo\/boards\/wine-red-and-gold\/present$/);
+    const stage = page.getByRole("region", { name: /^Slide 1 of \d+: Wine red and gold$/ });
+    await expect(stage).toBeVisible();
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("ArrowRight");
+    const slide = page.getByRole("region", { name: /^Slide 3 of/ });
+    await expect(slide).toContainText("Public domain (CC0)");
+    await expect(slide.getByRole("link", { name: "https://clevelandart.org/art/1925.498" })).toBeVisible();
+    await expect(page).toHaveURL(/#slide-3$/);
+    // A reload keeps the place, and the page renders without a hydration warning.
+    const errors: string[] = [];
+    page.on("console", (m) => void (m.type() === "error" && errors.push(m.text())));
+    await page.reload();
+    await expect(page.getByRole("region", { name: /^Slide 3 of/ })).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
+    expect(results.violations).toEqual([]);
+    for (const width of [360, 390]) {
+      await page.setViewportSize({ width, height: 800 });
+      await noOverflow(page, `present at ${width}px`);
+    }
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.keyboard.press("Escape");
+    await expect(page).toHaveURL(/\/demo\/boards\/wine-red-and-gold$/);
+    expect(errors).toEqual([]);
+    expect(apiCalls(requests)).toEqual([]);
   });
 
   test("filters work from the keyboard", async ({ page }) => {
@@ -112,7 +153,7 @@ test.describe("signed out", () => {
   test("unknown demo pages show the not-found page and are kept out of search engines", async ({ page }) => {
     // The status can be 200: once the layout has started streaming, Next keeps it and renders
     // the not-found UI with a noindex tag (docs: file-conventions/not-found, "status codes").
-    for (const path of ["/demo/pieces/not-a-piece", "/demo/outfits/nope", "/demo/collections/nope"]) {
+    for (const path of ["/demo/pieces/not-a-piece", "/demo/outfits/nope", "/demo/collections/nope", "/demo/boards/nope", "/demo/boards/nope/present"]) {
       await page.goto(path);
       await expect(page.getByRole("heading", { level: 1, name: "This page doesn't exist" }), path).toBeVisible();
       await expect(page.locator('meta[name="robots"][content*="noindex"]').first(), path).toBeAttached();

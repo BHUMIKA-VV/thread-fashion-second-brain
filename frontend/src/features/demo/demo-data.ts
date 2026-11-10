@@ -1,6 +1,6 @@
 import dataset from "../../../public/demo/demo.json";
 
-import type { ColorFamily, ItemType } from "@/types/api";
+import type { ColorFamily, Harmony, ItemType } from "@/types/api";
 
 /**
  * The public demo's dataset: public-domain museum pieces, computed once, offline, by
@@ -53,6 +53,35 @@ export type DemoOutfit = {
   };
 };
 
+/** A block of the demo's sample board, as build_demo.py publishes it. */
+export type DemoBoardBlock =
+  | { kind: "heading"; body: string }
+  | { kind: "note"; body: string }
+  | { kind: "piece"; piece: string; body: string | null }
+  | { kind: "colour"; hex: string; name: string; family: string; body: string | null };
+
+/** The sample board's colour story, calculated by the app's own board code at build time. */
+export type DemoBoardStory = {
+  measured: OutfitColour[];
+  chosen: {
+    /** Index of the colour block on the board. */
+    block: number;
+    hex: string;
+    name: string;
+    nearest: { hex: string; name: string; piece: string; distance: number } | null;
+    on_pieces: boolean;
+  }[];
+  harmony: Harmony | null;
+};
+
+export type DemoBoard = {
+  id: string;
+  title: string;
+  description: string | null;
+  blocks: DemoBoardBlock[];
+  colour_story: DemoBoardStory;
+};
+
 export type DemoDataset = {
   version: number;
   model: string | null;
@@ -60,6 +89,7 @@ export type DemoDataset = {
   families: { family: ColorFamily; pieces: number }[];
   collections: DemoCollection[];
   outfits: DemoOutfit[];
+  boards: DemoBoard[];
 };
 
 export const DEMO = dataset as unknown as DemoDataset;
@@ -86,6 +116,10 @@ export function demoCollection(id: string): DemoCollection | undefined {
 
 export function demoOutfit(id: string): DemoOutfit | undefined {
   return DEMO.outfits.find((o) => o.id === id);
+}
+
+export function demoBoard(id: string): DemoBoard | undefined {
+  return DEMO.boards.find((b) => b.id === id);
 }
 
 export type DemoFilters = { q: string; families: ColorFamily[]; type: ItemType | null };

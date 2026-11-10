@@ -1,6 +1,6 @@
 import { ColourRelations } from "@/features/outfit-studio/colour-relations";
 import { pieceLabel } from "@/features/outfit-studio/names";
-import { HARMONY_TEXT } from "@/features/palette/palette-view";
+import { HARMONY_TEXT } from "@/features/palette/harmony";
 import type { BoardDetail, ChosenColour } from "@/types/api";
 
 /** The API's threshold: a chosen colour this close to a measured one counts as the same. */

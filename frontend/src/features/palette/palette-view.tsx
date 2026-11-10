@@ -9,15 +9,11 @@ import { Button } from "@/components/ui/button";
 import { ApiError, apiUrl } from "@/lib/api-client";
 import { copyText } from "@/lib/clipboard";
 import { extractPalette } from "@/services/items";
-import type { Harmony, Item, Palette, PaletteColor } from "@/types/api";
+import type { Item, Palette, PaletteColor } from "@/types/api";
 
-export const HARMONY_TEXT: Record<Harmony, string> = {
-  monochromatic: "Monochromatic — shades of a single hue",
-  analogous: "Analogous — neighbouring hues",
-  complementary: "Complementary — opposite hues",
-  neutral: "Neutral — no strong hues",
-  mixed: "Mixed — several unrelated hues",
-};
+import { HARMONY_TEXT } from "./harmony";
+
+export { HARMONY_TEXT };
 
 type PaletteSummary = Pick<Palette, "harmony" | "source"> & {
   colors: Pick<PaletteColor, "hex" | "name" | "percentage">[];

@@ -6,12 +6,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 
 import { Button } from "@/components/ui/button";
-import { pieceLabel } from "@/features/outfit-studio/names";
-import { apiUrl } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
-import type { Item } from "@/types/api";
 
-import { slideTitle, type Slide } from "./slides";
+import { slideTitle, type Slide, type SlidePiece } from "./slides";
 
 const SWIPE_PX = 60;
 
@@ -24,8 +21,8 @@ export function slideFromHash(hash: string, total: number): number {
 
 /**
  * Full-window slides for a client meeting. Arrow keys, Page Up/Down, Home and End move between
- * slides, Escape leaves, a swipe works on touch screens. Internal detail (type, Thread's AI
- * suggestion, processing status, record number) stays hidden unless the presenter turns it on.
+ * slides, Escape leaves, a swipe works on touch screens. Internal detail (type, AI suggestions
+ * and guesses, status, record number) stays hidden unless the presenter turns it on.
  */
 export function Presenter({ slides, exitHref, name }: { slides: Slide[]; exitHref: string; name: string }) {
   const router = useRouter();
@@ -190,7 +187,7 @@ function SlideView({ slide, details }: { slide: Slide; details: boolean }) {
         </p>
       );
     case "piece":
-      return <PieceSlide item={slide.item} caption={slide.caption} details={details} />;
+      return <PieceSlide piece={slide.piece} caption={slide.caption} details={details} />;
     case "colour":
       return (
         <div className="grid w-full max-w-5xl items-center gap-8 md:grid-cols-2">
@@ -254,25 +251,31 @@ function SlideView({ slide, details }: { slide: Slide; details: boolean }) {
   }
 }
 
-function PieceSlide({ item, caption, details }: { item: Item; caption: string | null; details: boolean }) {
-  const colours = item.palette?.colors ?? [];
-  const note = item.notes?.trim();
+function PieceSlide({ piece, caption, details }: { piece: SlidePiece; caption: string | null; details: boolean }) {
   return (
     <div className="grid w-full max-w-6xl items-center gap-8 md:grid-cols-[3fr_2fr]">
-      {/* eslint-disable-next-line @next/next/no-img-element -- private image served by the API */}
-      <img src={apiUrl(item.image_url)} alt={pieceLabel(item)} className="max-h-[72vh] w-full object-contain" />
+      {/* eslint-disable-next-line @next/next/no-img-element -- private (API) or static (demo) image, shown whole */}
+      <img src={piece.image} alt={piece.alt} className="max-h-[72vh] w-full object-contain" />
       <div className="min-w-0">
         {caption && <h2 className="whitespace-pre-line break-words font-display text-3xl leading-tight sm:text-4xl">{caption}</h2>}
-        {note && <p className={cn("whitespace-pre-line break-words text-ink-muted", caption ? "mt-4" : "font-display text-3xl text-ink sm:text-4xl")}>{note}</p>}
-        {!caption && !note && <h2 className="font-display text-3xl capitalize">{pieceLabel(item)}</h2>}
-        {item.source_url && (
-          <p className="mt-3 break-all text-sm text-ink-muted">
-            Source: <a href={item.source_url} className="underline" target="_blank" rel="noreferrer">{item.source_url}</a>
+        {piece.note && (
+          <p className={cn("whitespace-pre-line break-words text-ink-muted", caption ? "mt-4" : "font-display text-3xl text-ink sm:text-4xl")}>
+            {piece.note}
           </p>
         )}
-        {colours.length > 0 && (
+        {!caption && !piece.note && <h2 className="font-display text-3xl">{piece.title}</h2>}
+        {piece.credit && <p className="mt-3 text-sm text-ink-muted">{piece.credit}</p>}
+        {piece.source && (
+          <p className="mt-3 break-all text-sm text-ink-muted">
+            {piece.source.label}:{" "}
+            <a href={piece.source.url} className="underline" target="_blank" rel="noreferrer">
+              {piece.source.url}
+            </a>
+          </p>
+        )}
+        {piece.colours.length > 0 && (
           <ul aria-label="Measured colours" className="mt-6 space-y-2 text-sm">
-            {colours.slice(0, 5).map((c) => (
+            {piece.colours.slice(0, 5).map((c) => (
               <li key={c.hex} className="flex items-center gap-2">
                 <Swatch hex={c.hex} className="size-5" />
                 <span className="capitalize">{c.name}</span>
@@ -281,38 +284,14 @@ function PieceSlide({ item, caption, details }: { item: Item; caption: string | 
             ))}
           </ul>
         )}
-        {details && (
+        {details && piece.details.length > 0 && (
           <dl aria-label="Piece details" className="mt-6 space-y-1 border-t border-line pt-4 text-sm">
-            <div>
-              <dt className="inline text-ink-muted">Type: </dt>
-              <dd className="inline capitalize">{item.type}</dd>
-            </div>
-            <div>
-              <dt className="inline text-ink-muted">Record: </dt>
-              <dd className="inline font-mono">{item.id.slice(0, 8).toUpperCase()}</dd>
-            </div>
-            {item.suggested_type && item.suggested_type !== item.type && (
-              <div>
-                <dt className="inline text-ink-muted">Thread suggested: </dt>
-                <dd className="inline capitalize">{item.suggested_type} (an AI guess, not used)</dd>
+            {piece.details.map(([label, value]) => (
+              <div key={label}>
+                <dt className="inline text-ink-muted">{label}: </dt>
+                <dd className="inline">{value}</dd>
               </div>
-            )}
-            <div>
-              <dt className="inline text-ink-muted">Status: </dt>
-              <dd className="inline">{item.processing_status}</dd>
-            </div>
-            <div>
-              <dt className="inline text-ink-muted">Photograph: </dt>
-              <dd className="inline">
-                {item.width} × {item.height} px
-              </dd>
-            </div>
-            {colours.length > 0 && (
-              <div>
-                <dt className="inline text-ink-muted">Colour shares: </dt>
-                <dd className="inline">{colours.map((c) => `${c.name} ${Math.round(c.percentage)}%`).join(", ")}</dd>
-              </div>
-            )}
+            ))}
           </dl>
         )}
       </div>

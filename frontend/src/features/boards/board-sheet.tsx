@@ -1,5 +1,5 @@
-import { HARMONY_TEXT } from "@/features/palette/palette-view";
 import { pieceLabel } from "@/features/outfit-studio/names";
+import { HARMONY_TEXT } from "@/features/palette/harmony";
 import { apiUrl } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
 import type { BoardDetail } from "@/types/api";
