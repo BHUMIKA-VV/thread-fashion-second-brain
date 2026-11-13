@@ -60,6 +60,18 @@ class Settings(BaseSettings):
     quota_items: int = Field(default=100, ge=1)
     quota_bytes: int = Field(default=250 * 1024**2, ge=1)
 
+    # Plans: proposed pilot pricing, shown by GET /billing/plans and the /pricing page. Nothing
+    # is on sale yet: no account is charged, and these limits are not enforced (the quota
+    # above still applies to every account). Prices are whole paise (99_900 = Rs 999).
+    plan_period_days: int = Field(default=30, ge=1, le=366)
+    plan_free_pieces: int = Field(default=25, ge=1)
+    plan_studio_price_paise: int = Field(default=99_900, gt=0)
+    plan_studio_pieces: int = Field(default=100, ge=1)
+    plan_studio_bytes: int = Field(default=250 * 1024**2, ge=1)
+    plan_studio_pro_price_paise: int = Field(default=249_900, gt=0)
+    plan_studio_pro_pieces: int = Field(default=250, ge=1)
+    plan_studio_pro_bytes: int = Field(default=1024**3, ge=1)
+
     # Email. "log" writes messages (with their links) to the API log instead of sending
     # them, for development and tests; "resend" sends through https://resend.com.
     mail_provider: Literal["log", "resend"] = "log"
@@ -128,6 +140,17 @@ class Settings(BaseSettings):
             problems.append("THREAD_ALLOWED_ORIGINS must list only https:// origins")
         if problems:
             raise ValueError("Unsafe production settings: " + "; ".join(problems))
+        return self
+
+    @model_validator(mode="after")
+    def _plans_in_order(self) -> "Settings":
+        """Each plan gives at least as much as the one below it, for more money."""
+        if not (self.plan_free_pieces <= self.plan_studio_pieces <= self.plan_studio_pro_pieces):
+            raise ValueError("Plan pieces must not shrink from Free to Studio to Studio Pro")
+        if self.plan_studio_bytes > self.plan_studio_pro_bytes:
+            raise ValueError("Studio Pro must not have less storage than Studio")
+        if self.plan_studio_price_paise >= self.plan_studio_pro_price_paise:
+            raise ValueError("Studio Pro must cost more than Studio")
         return self
 
     @property

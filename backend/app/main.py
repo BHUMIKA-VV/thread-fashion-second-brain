@@ -10,6 +10,7 @@ from app.api.errors import error_body, register_error_handlers
 from app.api.routes import (
     admin,
     auth,
+    billing,
     boards,
     collections,
     deep_analysis,
@@ -102,6 +103,7 @@ def create_app() -> FastAPI:
     app.include_router(admin.router)
     app.include_router(interest.router)
     app.include_router(metrics.router)
+    app.include_router(billing.router)
     app.include_router(playground.router)
     app.include_router(showcase.router)
     app.include_router(publishing.router)  # before items: /items/showcase-all is literal

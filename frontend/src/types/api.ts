@@ -572,3 +572,32 @@ export type MetricsSummary = {
     studio_interest: number;
   };
 };
+
+// --- plans (GET /billing/plans) ---------------------------------------------------------------
+
+export type PlanFeature = { key: string; label: string; detail: string };
+
+export type PlanRead = {
+  id: string;
+  name: string;
+  summary: string;
+  /** Whole paise, set by the server: 99900 is ₹999. */
+  price_paise: number;
+  currency: "INR";
+  /** Days one payment covers; null for Free. */
+  period_days: number | null;
+  max_pieces: number;
+  /** Storage for photographs; null when no figure is set. */
+  max_bytes: number | null;
+  /** Keys into PlanCatalogue.features. */
+  features: string[];
+};
+
+export type PlanCatalogue = {
+  /** Proposed pilot pricing, not validated market prices. */
+  status: "proposed";
+  /** False until checkout opens. */
+  on_sale: boolean;
+  features: PlanFeature[];
+  plans: PlanRead[];
+};

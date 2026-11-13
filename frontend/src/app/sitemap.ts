@@ -20,6 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/colours",
     "/how-it-works",
     "/pilot",
+    "/pricing",
     "/showcase",
     "/privacy",
     "/terms",

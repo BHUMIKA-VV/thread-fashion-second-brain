@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/try", label: "Try a photo" },
   { href: "/colours", label: "Colour names" },
   { href: "/pilot", label: "Studio pilot" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/showcase", label: "Showcase" },
   { href: "/dashboard", label: "Overview" },
   { href: "/settings", label: "System" },
