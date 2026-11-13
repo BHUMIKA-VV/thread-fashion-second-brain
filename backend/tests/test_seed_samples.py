@@ -31,9 +31,9 @@ def count(db: Session) -> int:
 
 def test_synthetic_samples_are_deterministic_distinct_and_labelled() -> None:
     first, second = synthetic_samples(), synthetic_samples()
-    assert len(first) == 20
+    assert len(first) == 37
     assert [s.data for s in first] == [s.data for s in second]  # same bytes, same hashes
-    assert len({s.content_hash for s in first}) == 20
+    assert len({s.content_hash for s in first}) == 37
     for sample in first:
         assert sample.item_type == ItemType.FABRIC
         assert "not a photograph" in sample.description

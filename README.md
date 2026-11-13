@@ -36,7 +36,7 @@ bandhani and chikankari) and finds similar pieces in your own library.
 - **Deep analysis** (optional): a user-confirmed Claude vision description of one piece; off
   without an API key.
 - **System page** with live API, database, pgvector, model and migration status.
-- **Sample data**: 20 generated textile swatches, or your own photos, via a rerun-safe script.
+- **Sample data**: 37 generated textile swatches, or your own photos, via a rerun-safe script.
 
 ## Architecture
 
@@ -174,7 +174,7 @@ Open <http://127.0.0.1:3100>. The **System** page shows live API, PostgreSQL and
 
 ```bash
 cd backend
-.venv/Scripts/python -m scripts.seed_samples --synthetic   # 20 generated swatches
+.venv/Scripts/python -m scripts.seed_samples --synthetic   # 37 generated swatches
 .venv/Scripts/python -m scripts.seed_samples --status      # how many are in the library
 .venv/Scripts/python -m scripts.seed_samples --remove      # remove only the samples
 ```
