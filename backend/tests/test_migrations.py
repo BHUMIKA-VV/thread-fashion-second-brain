@@ -29,6 +29,9 @@ APP_TABLES = {
     "metric_counts",
     "boards",
     "board_blocks",
+    "payments",
+    "subscriptions",
+    "billing_events",
 }
 
 
@@ -478,5 +481,63 @@ def test_metrics_database_upgrades_to_boards_and_back(empty_db_url: str) -> None
     assert "boards" not in table_names(empty_db_url)
     with engine.begin() as conn:
         assert conn.execute(text("SELECT count(*) FROM items")).scalar_one() == 2
+    migrations.upgrade(empty_db_url)
+    engine.dispose()
+
+
+BOARDS_REVISION = "e3b7d9a1c4f2"
+
+
+def test_boards_database_with_data_upgrades_to_billing_and_back(empty_db_url: str) -> None:
+    """M14-2 only adds billing tables: accounts, pieces and boards are untouched, the new
+    rules hold on a real upgrade, and downgrading drops billing but keeps everything else."""
+    migrations.upgrade(empty_db_url, BOARDS_REVISION)
+    engine = create_engine(empty_db_url)
+    with engine.begin() as conn:
+        user = conn.execute(
+            text("INSERT INTO users (display_name) VALUES ('studio') RETURNING id")
+        ).scalar_one()
+        conn.execute(
+            text(
+                "INSERT INTO items (user_id, original_key, content_hash, mime_type, width,"
+                " height, file_size) VALUES (:u, 'a/original.jpg', :h, 'image/jpeg', 10, 10, 10)"
+            ),
+            {"u": user, "h": "a" * 64},
+        )
+        conn.execute(text("INSERT INTO boards (user_id, name) VALUES (:u, 'Client')"), {"u": user})
+
+    migrations.upgrade(empty_db_url)  # -> head
+    with engine.begin() as conn:
+        assert conn.execute(text("SELECT count(*) FROM items")).scalar_one() == 1
+        extension = "SELECT 1 FROM pg_extension WHERE extname = 'btree_gist'"
+        assert conn.execute(text(extension)).scalar_one() == 1
+        pay = conn.execute(
+            text(
+                "INSERT INTO payments (user_id, provider, provider_order_id, provider_payment_id,"
+                " plan_id, amount_paise, currency, period_days, status, paid_at)"
+                " VALUES (:u, 'razorpay', 'order_1', 'pay_1', 'studio', 99900, 'INR', 30,"
+                " 'paid', now()) RETURNING id"
+            ),
+            {"u": user},
+        ).scalar_one()
+        new_period = text(
+            "INSERT INTO subscriptions (user_id, payment_id, plan_id, status, starts_at, ends_at)"
+            " VALUES (:u, :p, 'studio', 'active', CAST(:s AS timestamptz),"
+            " CAST(:s AS timestamptz) + interval '30 days')"
+        )
+        conn.execute(new_period, {"u": user, "p": pay, "s": "2026-11-13T00:00:00Z"})
+        with pytest.raises(Exception, match="uq_subscriptions_payment_id"), conn.begin_nested():
+            conn.execute(new_period, {"u": user, "p": pay, "s": "2026-12-13T00:00:00Z"})
+        with pytest.raises(Exception, match="ck_payments_currency"), conn.begin_nested():
+            conn.execute(text("UPDATE payments SET currency = 'USD'"))
+
+    migrations.downgrade(empty_db_url, BOARDS_REVISION)
+    assert not {"payments", "subscriptions", "billing_events"} & table_names(empty_db_url)
+    with engine.begin() as conn:
+        assert conn.execute(text("SELECT count(*) FROM users")).scalar_one() == 1
+        assert conn.execute(text("SELECT count(*) FROM items")).scalar_one() == 1
+        assert conn.execute(text("SELECT count(*) FROM boards")).scalar_one() == 1
+        # Left installed on purpose: something else may use it.
+        assert conn.execute(text(extension)).scalar_one() == 1
     migrations.upgrade(empty_db_url)
     engine.dispose()

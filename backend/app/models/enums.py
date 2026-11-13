@@ -129,6 +129,51 @@ class TokenPurpose(StrEnum):
     RESET_PASSWORD = "reset_password"  # noqa: S105 (a token purpose, not a password)
 
 
+class BillingProvider(StrEnum):
+    RAZORPAY = "razorpay"
+
+
+class PaidPlan(StrEnum):
+    """The plans that are paid for (app/billing/plans.py defines all plans, Free included)."""
+
+    STUDIO = "studio"
+    STUDIO_PRO = "studio_pro"
+
+
+class PaymentStatus(StrEnum):
+    CREATED = "created"  # an order exists; nothing has been paid
+    PAID = "paid"  # verified with the provider (a partial refund keeps it paid)
+    FAILED = "failed"
+    REFUNDED = "refunded"  # refunded in full
+
+
+class PaymentMethod(StrEnum):
+    """Only the kind of method: card numbers, UPI IDs and bank details are never stored."""
+
+    CARD = "card"
+    UPI = "upi"
+    NETBANKING = "netbanking"
+    WALLET = "wallet"
+    OTHER = "other"
+
+
+class SubscriptionStatus(StrEnum):
+    # No "expired": a period has ended once its ends_at has passed.
+    ACTIVE = "active"
+    CANCELLED = "cancelled"  # ended early
+
+
+class CancelReason(StrEnum):
+    REFUND = "refund"
+    OWNER = "owner"
+
+
+class BillingEventOutcome(StrEnum):
+    APPLIED = "applied"  # changed a payment or an access period
+    IGNORED = "ignored"  # an event type Thread doesn't act on, or nothing to change
+    STALE = "stale"  # older than what is already recorded (arrived out of order)
+
+
 def sql_in(values: type[StrEnum]) -> str:
     """Render "'a', 'b'" for use inside a CHECK constraint."""
     return ", ".join(f"'{v.value}'" for v in values)
