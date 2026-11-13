@@ -16,18 +16,38 @@ const standalone = process.env.THREAD_STANDALONE === "1";
 // force every page to render dynamically (see the Next.js CSP guide). 'unsafe-eval' is only
 // for React's development tooling. No upgrade-insecure-requests: the app runs on plain http
 // locally, and upgrading same-origin requests to https would break it.
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' blob: data:",
-  "font-src 'self'",
-  "connect-src 'self'",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-].join("; ");
+function csp(extra: { script?: string; frame?: string; connect?: string; img?: string } = {}) {
+  const more = (sources?: string) => (sources ? ` ${sources}` : "");
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}${more(extra.script)}`,
+    "style-src 'self' 'unsafe-inline'",
+    `img-src 'self' blob: data:${more(extra.img)}`,
+    "font-src 'self'",
+    `connect-src 'self'${more(extra.connect)}`,
+    ...(extra.frame ? [`frame-src ${extra.frame}`] : []),
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join("; ");
+}
+
+const contentSecurityPolicy = csp();
+
+// Razorpay Checkout runs on /account/billing only, so only that page may load its script,
+// frame and API. These origins are the ones Checkout is known to use; Razorpay's docs don't
+// publish a list, so test it in the browser before going live. The page also lets Checkout
+// open payment pop-ups (some UPI and netbanking flows), which same-origin COOP would cut off.
+// Links to the page must load it fully (a plain <a>), because a page's CSP is the one sent
+// with the document it was opened in.
+const CHECKOUT_PATH = "/account/billing"; // also in src/features/billing/paths.ts
+const checkoutContentSecurityPolicy = csp({
+  script: "https://checkout.razorpay.com",
+  frame: "https://api.razorpay.com https://checkout.razorpay.com",
+  connect: "https://api.razorpay.com https://lumberjack.razorpay.com",
+  img: "https://cdn.razorpay.com",
+});
 
 export const SECURITY_HEADERS = [
   { key: "Content-Security-Policy", value: contentSecurityPolicy },
@@ -50,7 +70,17 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   ...(standalone ? { output: "standalone" as const } : {}),
   async headers() {
-    return [{ source: "/:path*", headers: SECURITY_HEADERS }];
+    return [
+      { source: "/:path*", headers: SECURITY_HEADERS },
+      // Later rules win for the same header, so this replaces only these two on that page.
+      {
+        source: CHECKOUT_PATH,
+        headers: [
+          { key: "Content-Security-Policy", value: checkoutContentSecurityPolicy },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
+        ],
+      },
+    ];
   },
   experimental: {
     // Next buffers proxied request bodies and, by default, truncates them at 10 MB, which

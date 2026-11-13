@@ -91,6 +91,7 @@ test("every screen sends security headers, has no CSP violations and passes auto
       `/items/${itemId}`,
       "/settings",
       "/account",
+      "/account/billing",
       "/accounts",
       "/outfit-studio",
       `/outfit-studio/${outfit.id}`,

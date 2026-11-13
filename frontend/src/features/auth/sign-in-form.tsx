@@ -7,6 +7,7 @@ import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api-client";
+import { isCheckoutPath } from "@/features/billing/paths";
 import { safeNext, signIn } from "@/services/auth";
 
 import { Field, FormError } from "./form-parts";
@@ -23,7 +24,9 @@ export function SignInForm() {
     mutationFn: () => signIn({ email, password }),
     onSuccess: (me) => {
       resetForAccount(me);
-      router.push(next);
+      // The checkout page needs its own security policy, which only a full load brings.
+      if (isCheckoutPath(next)) window.location.assign(next);
+      else router.push(next);
     },
   });
 

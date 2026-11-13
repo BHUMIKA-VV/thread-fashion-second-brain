@@ -72,6 +72,11 @@ def main(argv: list[str] | None = None) -> int:
             "THREAD_MAIL_PROVIDER": "log",
             "THREAD_RESEND_API_KEY": "",
             "THREAD_DEEP_ANALYSIS_PROVIDER": "fake",
+            # The local stand-in for Razorpay Checkout: no keys, no network, no money.
+            "THREAD_PAYMENT_PROVIDER": "fake",
+            "THREAD_RAZORPAY_KEY_ID": "",
+            "THREAD_RAZORPAY_KEY_SECRET": "",
+            "THREAD_RAZORPAY_WEBHOOK_SECRET": "",
             "THREAD_ANTHROPIC_API_KEY": "",
             "THREAD_SIGNUP_LIMIT_PER_HOUR": "100000",
             "THREAD_LOGIN_LIMIT_PER_15_MINUTES": "100000",

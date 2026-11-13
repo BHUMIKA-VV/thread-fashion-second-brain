@@ -1,5 +1,6 @@
 """Application settings, loaded from environment variables and the repo-root .env file."""
 
+import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -19,6 +20,9 @@ class Settings(BaseSettings):
         env_file=REPO_ROOT / ".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        # A refused setting is reported by name only: the error never prints the values it
+        # was given, so a secret (an API key, a payment key) can't end up in a log.
+        hide_input_in_errors=True,
     )
 
     app_name: str = "Thread API"
@@ -72,6 +76,21 @@ class Settings(BaseSettings):
     plan_studio_pro_pieces: int = Field(default=250, ge=1)
     plan_studio_pro_bytes: int = Field(default=1024**3, ge=1)
 
+    # Payments through Razorpay, in TEST MODE ONLY for now: "live" is not an accepted mode and
+    # live keys (rzp_live_...) are refused at start-up. Without both test keys no order can be
+    # made and the billing page says payments aren't set up. The keys are sent to Razorpay
+    # only, never logged or shown. "fake" is a local stand-in for development and end-to-end
+    # tests (no network, no money; refused in production).
+    payment_provider: Literal["razorpay", "fake"] = "razorpay"
+    razorpay_mode: Literal["test"] = "test"
+    razorpay_key_id: str | None = None
+    razorpay_key_secret: SecretStr | None = None
+    # Read by the webhook endpoint (a later increment); declared here so it is validated.
+    razorpay_webhook_secret: SecretStr | None = None
+    razorpay_timeout_seconds: float = Field(default=10.0, gt=0, le=30)
+    # Orders started per account per hour (a guard against scripted abuse).
+    checkout_limit_per_hour: int = Field(default=10, ge=1)
+
     # Email. "log" writes messages (with their links) to the API log instead of sending
     # them, for development and tests; "resend" sends through https://resend.com.
     mail_provider: Literal["log", "resend"] = "log"
@@ -119,7 +138,14 @@ class Settings(BaseSettings):
     # it returns a canned description and sends nothing anywhere.
     deep_analysis_provider: Literal["claude", "fake"] = "claude"
 
-    @field_validator("anthropic_api_key", "resend_api_key", mode="before")
+    @field_validator(
+        "anthropic_api_key",
+        "resend_api_key",
+        "razorpay_key_id",
+        "razorpay_key_secret",
+        "razorpay_webhook_secret",
+        mode="before",
+    )
     @classmethod
     def _blank_key_is_no_key(cls, value: object) -> object:
         return None if isinstance(value, str) and not value.strip() else value
@@ -138,9 +164,26 @@ class Settings(BaseSettings):
             problems.append("THREAD_MAIL_PROVIDER=resend and THREAD_RESEND_API_KEY are required")
         if any(not o.startswith("https://") for o in self.origins):
             problems.append("THREAD_ALLOWED_ORIGINS must list only https:// origins")
+        if self.payment_provider == "fake":
+            problems.append("THREAD_PAYMENT_PROVIDER=fake is for development and tests only")
         if problems:
             raise ValueError("Unsafe production settings: " + "; ".join(problems))
         return self
+
+    @model_validator(mode="after")
+    def _razorpay_test_keys_only(self) -> "Settings":
+        """Test keys only, and both halves of a key pair or neither."""
+        key_id = self.razorpay_key_id
+        if (key_id is None) != (self.razorpay_key_secret is None):
+            raise ValueError("Set THREAD_RAZORPAY_KEY_ID and THREAD_RAZORPAY_KEY_SECRET together")
+        if key_id is not None and not re.fullmatch(r"rzp_test_[A-Za-z0-9]{1,40}", key_id):
+            # Never echo the value: it may be a live key pasted by mistake.
+            raise ValueError("THREAD_RAZORPAY_KEY_ID must be a Razorpay test key (rzp_test_...)")
+        return self
+
+    @property
+    def razorpay_configured(self) -> bool:
+        return self.razorpay_key_id is not None and self.razorpay_key_secret is not None
 
     @model_validator(mode="after")
     def _plans_in_order(self) -> "Settings":

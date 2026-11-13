@@ -601,3 +601,56 @@ export type PlanCatalogue = {
   features: PlanFeature[];
   plans: PlanRead[];
 };
+
+export type PaidPlanId = "studio" | "studio_pro";
+
+/** One paid period of access, from starts_at up to ends_at. */
+export type BillingPeriod = {
+  plan_id: PaidPlanId;
+  plan_name: string;
+  starts_at: string;
+  ends_at: string;
+};
+
+export type BillingPayment = {
+  id: string;
+  plan_id: PaidPlanId;
+  plan_name: string;
+  amount_paise: number;
+  currency: "INR";
+  status: "created" | "paid" | "failed" | "refunded";
+  method: string | null;
+  created_at: string;
+  paid_at: string | null;
+};
+
+export type BillingAccount = {
+  plan_id: "free" | PaidPlanId;
+  /** The owner of this Thread is never charged. */
+  exempt: boolean;
+  current: BillingPeriod | null;
+  /** A period paid for that starts later. */
+  upcoming: BillingPeriod | null;
+  payments: BillingPayment[];
+  checkout: { available: boolean; provider: "razorpay" | "fake"; mode: "test" };
+};
+
+/** What Razorpay Checkout needs to open for one order. The amount is the server's. */
+export type CheckoutOrder = {
+  payment_id: string;
+  provider: "razorpay" | "fake";
+  key_id: string;
+  order_id: string;
+  amount_paise: number;
+  currency: "INR";
+  plan_id: PaidPlanId;
+  plan_name: string;
+  description: string;
+  starts_at: string;
+};
+
+export type CheckoutResult = {
+  status: "paid" | "pending" | "failed";
+  period: BillingPeriod | null;
+  failure_code: string | null;
+};

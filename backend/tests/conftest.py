@@ -25,6 +25,12 @@ os.environ["THREAD_DEEP_ANALYSIS_PROVIDER"] = "claude"
 os.environ["THREAD_DEV_AUTO_SIGNIN"] = "false"
 os.environ["THREAD_MAIL_PROVIDER"] = "log"
 os.environ["THREAD_RESEND_API_KEY"] = ""
+# Tests never see real Razorpay keys either, and payments are off unless a test installs a
+# provider itself.
+os.environ["THREAD_PAYMENT_PROVIDER"] = "razorpay"
+os.environ["THREAD_RAZORPAY_KEY_ID"] = ""
+os.environ["THREAD_RAZORPAY_KEY_SECRET"] = ""
+os.environ["THREAD_RAZORPAY_WEBHOOK_SECRET"] = ""
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient

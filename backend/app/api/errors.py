@@ -12,6 +12,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.ml.registry import EmbedderLoading, EmbedderUnavailable
 from app.repositories.errors import ConflictError, NotFoundError
 from app.services.auth import AuthRefused
+from app.services.billing import BillingRefused, BillingUnavailable
 from app.services.deep_analysis import DeepAnalysisRefused, DeepAnalysisUnavailable
 from app.services.embeddings import EmbeddingFailed
 from app.services.images import ImageValidationError
@@ -86,6 +87,22 @@ def register_error_handlers(app: FastAPI) -> None:
             status_code=exc.status_code,
             content=error_body(exc.code, exc.message),
             headers=headers,
+        )
+
+    @app.exception_handler(BillingRefused)
+    async def billing_refused(_: Request, exc: BillingRefused) -> JSONResponse:
+        headers = {"Retry-After": str(exc.retry_after)} if exc.retry_after else None
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=error_body(exc.code, exc.message),
+            headers=headers,
+        )
+
+    @app.exception_handler(BillingUnavailable)
+    async def billing_unavailable(_: Request, exc: BillingUnavailable) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=error_body(exc.code, exc.message),
         )
 
     @app.exception_handler(ConflictError)

@@ -4,7 +4,8 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
 
-import { Button, ButtonLink } from "@/components/ui/button";
+import { Button, ButtonLink, buttonClass } from "@/components/ui/button";
+import { CHECKOUT_PATH } from "@/features/billing/paths";
 import { ApiError } from "@/lib/api-client";
 import {
   changePassword,
@@ -43,6 +44,13 @@ export function AccountSettings() {
             Manage accounts
           </ButtonLink>
         )}
+      </Section>
+      <Section title="Plan">
+        <p className="text-sm text-ink-muted">Your plan, paid periods and payments.</p>
+        {/* A full page load: checkout runs under that page's own security policy. */}
+        <a href={CHECKOUT_PATH} className={buttonClass("secondary", "mt-6")}>
+          Plan and payments
+        </a>
       </Section>
       {me.has_password && <ChangePassword />}
       <Sessions />

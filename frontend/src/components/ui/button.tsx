@@ -15,6 +15,9 @@ const variants: Record<Variant, string> = {
   ghost: "text-ink hover:bg-ink/5",
 };
 
+/** The button look, for a plain <a> that must load its page fully (see features/billing/paths.ts). */
+export const buttonClass = (variant: Variant = "primary", className?: string) => cn(base, variants[variant], className);
+
 export function Button({
   variant = "primary",
   className,
