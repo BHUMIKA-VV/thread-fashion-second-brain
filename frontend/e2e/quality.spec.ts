@@ -48,6 +48,7 @@ async function checkScreen(page: Page, path: string) {
   expect(headers["x-content-type-options"], path).toBe("nosniff");
   expect(headers["referrer-policy"], path).toBe("same-origin");
   expect(headers["x-powered-by"], path).toBeUndefined();
+  expect(headers["strict-transport-security"], path).toContain("max-age=31536000");
   await page.waitForLoadState("networkidle");
   expect(problems, path).toEqual([]);
   expect(await axe(page), path).toEqual([]);

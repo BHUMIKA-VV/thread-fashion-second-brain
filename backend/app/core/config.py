@@ -55,9 +55,10 @@ class Settings(BaseSettings):
     signup_limit_per_hour: int = Field(default=5, ge=1)  # per IP
     login_limit_per_15_minutes: int = Field(default=10, ge=1)  # per IP and per email
     email_limit_per_hour: int = Field(default=3, ge=1)  # verification / reset mails per address
-    # Per-account storage, so one account can't fill the disk. The owner is exempt.
-    quota_items: int = Field(default=200, ge=1)
-    quota_bytes: int = Field(default=1024**3, ge=1)
+    # Per-account storage, so one account can't fill the disk. The owner is exempt. Sized so
+    # a 5 GB volume holds about 15 full accounts beside the owner's archive.
+    quota_items: int = Field(default=100, ge=1)
+    quota_bytes: int = Field(default=250 * 1024**2, ge=1)
 
     # Email. "log" writes messages (with their links) to the API log instead of sending
     # them, for development and tests; "resend" sends through https://resend.com.

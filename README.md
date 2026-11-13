@@ -299,7 +299,7 @@ How it is built:
 - **Rate limits** (in memory, per API process): sign-up and forgot-password per IP, sign-in per IP
   and per address, and at most 3 account emails per address per hour. `THREAD_FORWARDED_HOPS`
   says how many of your own proxies to trust in `X-Forwarded-For`.
-- **Quotas**: 200 pieces and 1 GB per account (`THREAD_QUOTA_ITEMS`, `THREAD_QUOTA_BYTES`); the
+- **Quotas**: 100 pieces and 250 MB per account (`THREAD_QUOTA_ITEMS`, `THREAD_QUOTA_BYTES`); the
   owner is exempt.
 - **Owner**: at most one (`uq_users_single_owner`). Only the owner can run Deep Analyze (it spends
   the owner's Anthropic credit) and see `/accounts`. The owner account can't be deleted or disabled

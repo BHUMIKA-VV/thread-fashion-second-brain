@@ -8,6 +8,8 @@ loadEnvConfig(path.resolve(process.cwd(), ".."));
 const apiUrl = process.env.THREAD_API_URL ?? "http://127.0.0.1:8010";
 const maxUploadBytes = Number(process.env.THREAD_MAX_UPLOAD_BYTES ?? 15 * 1024 * 1024);
 const isDev = process.env.NODE_ENV === "development";
+// Set by the Dockerfile: a self-contained server bundle (node server.js) for deployment.
+const standalone = process.env.THREAD_STANDALONE === "1";
 
 // Everything is served from this origin (fonts are self-hosted by next/font, images come
 // through /api). 'unsafe-inline' scripts are needed by Next.js without nonces; nonces would
@@ -39,10 +41,14 @@ export const SECURITY_HEADERS = [
     key: "Permissions-Policy",
     value: "camera=(self), microphone=(), geolocation=(), payment=(), usb=()",
   },
+  // Production builds: browsers remember to use HTTPS only (ignored over plain http, so a
+  // local production build is unaffected). No preload: that is a separate, lasting decision.
+  ...(isDev ? [] : [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }]),
 ];
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  ...(standalone ? { output: "standalone" as const } : {}),
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
   },

@@ -23,7 +23,7 @@ export default function TermsPage() {
           <li>Nothing that harms the service, such as malware or automated bulk uploads.</li>
         </ul>
         <p>
-          Each account can keep up to 200 pieces and 1 GB. Accounts that break these terms may be
+          Each account can keep up to 100 pieces and 250 MB. Accounts that break these terms may be
           disabled, and their content removed, without notice.
         </p>
       </section>

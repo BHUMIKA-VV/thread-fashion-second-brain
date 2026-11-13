@@ -640,3 +640,19 @@ def security_verify(password_hash: str | None, password: str) -> bool:
     from app.core import security
 
     return security.verify_password(password_hash, password)
+
+
+def test_the_default_storage_limit_reads_in_megabytes(db: Session, storage: LocalStorage) -> None:
+    from app.services.auth import AuthRefused
+    from app.services.items import ItemService
+    from tests.conftest import make_item
+
+    defaults = Settings(_env_file=None, database_url="postgresql+psycopg://unused/db")  # type: ignore[call-arg]
+    assert (defaults.quota_items, defaults.quota_bytes) == (100, 250 * 1024**2)
+    user = User(display_name="Full")
+    db.add(user)
+    db.flush()
+    make_item(db, user, file_size=250 * 1024**2)
+    with pytest.raises(AuthRefused) as refused:
+        ItemService(db, storage, defaults, user.id).check_quota(1)
+    assert "250 MB storage limit" in refused.value.message

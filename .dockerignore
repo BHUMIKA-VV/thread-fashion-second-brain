@@ -1,0 +1,17 @@
+# Keep secrets, local data and build output out of every image's build context.
+.env
+.env.*
+!.env.example
+.git
+.cache
+storage
+**/node_modules
+**/.next
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+frontend/test-results
+frontend/playwright-report
+database/sample_data
+**/*.log

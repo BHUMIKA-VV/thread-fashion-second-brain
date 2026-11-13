@@ -68,10 +68,11 @@ class ItemService:
                 403,
             )
         if used + incoming_bytes > self.settings.quota_bytes:
-            gib = self.settings.quota_bytes / 1024**3
+            limit = self.settings.quota_bytes
+            size = f"{limit / 1024**3:g} GB" if limit >= 1024**3 else f"{limit / 1024**2:g} MB"
             raise AuthRefused(
                 "quota_exceeded",
-                f"Your archive has reached its {gib:g} GB storage limit. "
+                f"Your archive has reached its {size} storage limit. "
                 "Delete a piece to add another.",
                 403,
             )
