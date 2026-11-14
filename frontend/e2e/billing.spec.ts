@@ -38,13 +38,13 @@ test("a confirmed test payment starts a Studio period", async ({ page }) => {
   await checkout.getByRole("button", { name: "Pay (test)" }).click();
 
   await expect(page.getByRole("status").filter({ hasText: "Payment confirmed." })).toContainText("Studio runs from");
-  await expect(page.getByText(/^Paid until /)).toBeVisible();
-  await expect(page.getByRole("table", { name: "Your recent payments" })).toContainText("₹999");
+  await expect(page.getByText(/^Active until /)).toBeVisible();
+  await expect(page.getByRole("list", { name: "Your payments" })).toContainText("₹999");
 
   // What the page shows is what the server recorded.
   await page.reload();
   await expect(page.getByText("Studio", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText(/^Paid until /)).toBeVisible();
+  await expect(page.getByText(/^Active until /)).toBeVisible();
   const me = await (await page.request.get("/api/billing/account")).json();
   expect(me.plan_id).toBe("studio");
 });
@@ -53,20 +53,24 @@ test("closing, declining and an authorisation alone change nothing", async ({ pa
   await page.goto("/account/billing");
   const pay = page.getByRole("button", { name: "Pay ₹999 for Studio" });
   const checkout = page.getByRole("dialog", { name: "Test checkout" });
+  // The checkout's own messages (each payment below has a status line of its own).
+  const buying = page.getByRole("region", { name: "Buy a period" });
 
   await pay.click();
   await checkout.getByRole("button", { name: "Close" }).click();
-  await expect(page.getByRole("status")).toHaveText("Checkout was closed. Nothing was charged.");
+  await expect(buying.getByRole("status")).toHaveText("Checkout was closed. Nothing was charged.");
 
   await pay.click();
   await checkout.getByRole("button", { name: "Decline (test)" }).click();
-  await expect(page.getByRole("status")).toContainText("That attempt didn't go through");
+  await expect(buying.getByRole("status")).toContainText("That attempt didn't go through");
   await checkout.getByRole("button", { name: "Close" }).click();
-  await expect(page.getByRole("main").getByRole("alert")).toHaveText("The payment didn't go through (BAD_REQUEST_ERROR). Nothing was charged.");
+  await expect(buying.getByRole("alert")).toHaveText(
+    "The payment didn't go through (BAD_REQUEST_ERROR). The bank or payment app declined it, or the details didn't go through. Nothing was charged.",
+  );
 
   await pay.click();
   await checkout.getByRole("button", { name: "Authorise only (test)" }).click();
-  await expect(page.getByRole("status")).toContainText("so your plan hasn't changed");
+  await expect(buying.getByRole("status")).toContainText("so your plan hasn't changed");
 
   const me = await (await page.request.get("/api/billing/account")).json();
   expect(me.plan_id).toBe("free");
@@ -132,5 +136,47 @@ test("a capture reported only by webhook still starts the period", async ({ page
   expect(await (await send(signature, eventId)).json()).toEqual({ status: "duplicate" });
 
   await page.goto("/account/billing");
-  await expect(page.getByText(/^Paid until /)).toBeVisible();
+  await expect(page.getByText(/^Active until /)).toBeVisible();
+});
+
+test("a period paid ahead can be cancelled for a full refund, after confirming", async ({ page }) => {
+  await page.goto("/account/billing");
+  const checkout = page.getByRole("dialog", { name: "Test checkout" });
+  await page.getByRole("button", { name: "Pay ₹999 for Studio" }).click();
+  await checkout.getByRole("button", { name: "Pay (test)" }).click();
+  await expect(page.getByText(/^Active until /)).toBeVisible();
+
+  // The next period starts when this one ends, and the button says so.
+  const pro = page.getByRole("button", { name: /^Pay ₹2,499 for Studio Pro from / });
+  await pro.click();
+  await checkout.getByRole("button", { name: "Pay (test)" }).click();
+  await expect(page.getByText(/, already paid for\./)).toBeVisible();
+
+  await page.getByRole("button", { name: "Cancel this period…" }).click();
+  await expect(page.getByRole("group", { name: "Confirm cancelling" })).toContainText("refunded in full");
+  await page.getByRole("button", { name: "Cancel and refund" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Cancelled." })).toContainText("refunding the payment in full");
+  await expect(page.getByText(/, already paid for\./)).toHaveCount(0);
+
+  const payments = page.getByRole("list", { name: "Your payments" });
+  await expect(payments.getByRole("listitem")).toHaveCount(2);
+  await expect(payments.getByRole("listitem").first()).toContainText("Refunded");
+  await page.reload();
+  await expect(page.getByText(/^Active until /)).toBeVisible();
+  await expect(page.getByRole("list", { name: "Your payments" }).getByRole("listitem").first()).toContainText("Refunded");
+});
+
+test("an unfinished payment is listed and can be checked again", async ({ page, request }) => {
+  const order = await (await request.post("/api/billing/checkout", { data: { plan_id: "studio" } })).json();
+  await page.goto("/account/billing");
+  const row = page.getByRole("list", { name: "Your payments" }).getByRole("listitem");
+  await expect(row).toContainText("Not completed");
+  await row.getByRole("button", { name: "Check again" }).click();
+  await expect(row).toContainText("No change yet.");
+
+  // Captured in Checkout, but the tab closed before Thread heard of it.
+  await request.post("/api/billing/fake/pay", { data: { order_id: order.order_id, outcome: "captured" } });
+  await row.getByRole("button", { name: "Check again" }).click();
+  await expect(row).toContainText("Paid");
+  await expect(page.getByText(/^Active until /)).toBeVisible();
 });

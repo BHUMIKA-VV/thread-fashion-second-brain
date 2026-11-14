@@ -225,3 +225,72 @@ def test_the_fake_provider_signs_only_its_own_payments() -> None:
     assert not fake.signature_valid(
         order.id, payment.id, payment_signature(SECRET, order.id, payment.id)
     )
+
+
+# --- refunds -------------------------------------------------------------------------------
+
+REFUND = {
+    "id": "rfnd_FgRAHdNOM4ZVbO",
+    "entity": "refund",
+    "amount": 99900,
+    "currency": "INR",
+    "payment_id": "pay_29QQoUBi66xm2f",
+    "receipt": "thr_rf_0123",
+    "status": "processed",
+    "speed_requested": "normal",
+}
+
+
+def test_a_refund_is_requested_once_with_thread_s_receipt_as_the_idempotency_key() -> None:
+    seen: list[httpx.Request] = []
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json=REFUND)
+
+    refund = client(httpx.MockTransport(handle)).refund("pay_29QQoUBi66xm2f", 99_900, "thr_rf_0123")
+    assert (refund.id, refund.status, refund.amount_paise) == (
+        "rfnd_FgRAHdNOM4ZVbO",
+        "processed",
+        99_900,
+    )
+    request = seen[0]
+    assert str(request.url) == f"{API_BASE}/payments/pay_29QQoUBi66xm2f/refund"
+    assert request.headers["x-refund-idempotency"] == "thr_rf_0123"
+    assert json.loads(request.content) == {
+        "amount": 99_900,
+        "speed": "normal",
+        "receipt": "thr_rf_0123",
+    }
+
+
+def test_refunds_already_made_are_listed() -> None:
+    body = {"entity": "collection", "count": 1, "items": [REFUND]}
+    transport = httpx.MockTransport(lambda r: httpx.Response(200, json=body))
+    [refund] = client(transport).payment_refunds("pay_29QQoUBi66xm2f")
+    assert refund.receipt == "thr_rf_0123"
+
+
+@pytest.mark.parametrize(
+    "body",
+    [{**REFUND, "status": "done"}, {**REFUND, "id": "re_1"}, {**REFUND, "amount": "99900"}],
+)
+def test_malformed_refunds_are_refused(body: dict[str, object]) -> None:
+    transport = httpx.MockTransport(lambda r: httpx.Response(200, json=body))
+    with pytest.raises(ProviderError):
+        client(transport).refund("pay_29QQoUBi66xm2f", 99_900, "thr_rf_1")
+
+
+def test_an_over_refund_is_refused_and_a_request_in_progress_is_retried_later() -> None:
+    over = {
+        "error": {
+            "code": "BAD_REQUEST_ERROR",
+            "description": "The payment has been fully refunded already.",
+        }
+    }
+    refused = httpx.MockTransport(lambda r: httpx.Response(400, json=over))
+    with pytest.raises(ProviderError):
+        client(refused).refund("pay_29QQoUBi66xm2f", 99_900, "thr_rf_1")
+    busy = httpx.MockTransport(lambda r: httpx.Response(409, json={}))
+    with pytest.raises(ProviderUnavailable):
+        client(busy).refund("pay_29QQoUBi66xm2f", 99_900, "thr_rf_1")

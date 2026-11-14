@@ -40,10 +40,15 @@ PaidPlanId = Literal["studio", "studio_pro"]
 class PeriodRead(BaseModel):
     """One paid period of access: from starts_at up to ends_at."""
 
+    payment_id: UUID
     plan_id: PaidPlanId
     plan_name: str
     starts_at: datetime
     ends_at: datetime
+    ended_early: bool = Field(default=False, description="Cancelled before its end (a refund)")
+    cancellable: bool = Field(
+        default=False, description="Not started yet, so it can be cancelled for a full refund"
+    )
 
 
 class PaymentRead(BaseModel):
@@ -56,6 +61,16 @@ class PaymentRead(BaseModel):
     method: str | None
     created_at: datetime
     paid_at: datetime | None
+    provider_payment_id: str | None = Field(description="Razorpay's reference for the payment")
+    refunded_paise: int
+    failure_code: str | None
+    refund: Literal["none", "requested", "partial", "full"]
+    refreshable: bool = Field(description="Thread can ask Razorpay again what became of it")
+
+
+class PaymentPage(BaseModel):
+    payments: list[PaymentRead] = Field(description="The most recent first")
+    next_before: UUID | None = Field(description="Pass as ?before= for the next page")
 
 
 class CheckoutAvailability(BaseModel):
@@ -65,14 +80,29 @@ class CheckoutAvailability(BaseModel):
 
 
 class BillingAccount(BaseModel):
-    """The signed-in account's plan, as of now."""
+    """The signed-in account's plan, as of now. Nothing renews by itself."""
 
     plan_id: Literal["free", "studio", "studio_pro"]
+    status: Literal["owner", "free", "active"]
     exempt: bool = Field(description="The owner of this Thread is never charged")
     current: PeriodRead | None
     upcoming: PeriodRead | None = Field(description="A period paid for that starts later")
-    payments: list[PaymentRead] = Field(description="The most recent first")
+    last_ended: PeriodRead | None = Field(description="The latest period that is over")
+    ending_soon: bool = Field(description="The current period ends within days, none follows")
+    next_start_at: datetime = Field(description="When a period bought now would start")
     checkout: CheckoutAvailability
+
+
+class CancelPeriod(BaseModel):
+    # Sent only after the person confirmed: a request without it changes nothing.
+    confirm: Literal[True]
+
+
+class CancelResult(BaseModel):
+    refund: Literal["processed", "pending"] = Field(
+        description="processed: the money is on its way back; pending: Razorpay is still on it"
+    )
+    account: BillingAccount
 
 
 class CheckoutCreate(BaseModel):

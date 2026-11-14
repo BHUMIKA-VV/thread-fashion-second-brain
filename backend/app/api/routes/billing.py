@@ -9,8 +9,9 @@ import json
 import re
 from pathlib import Path
 from typing import Annotated
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
@@ -30,12 +31,16 @@ from app.core.config import Settings, get_settings
 from app.db.session import get_db
 from app.schemas.billing import (
     BillingAccount,
+    CancelPeriod,
+    CancelResult,
     CheckoutCreate,
     CheckoutOrder,
     CheckoutResult,
     CheckoutVerify,
     FakePay,
     FeatureRead,
+    PaymentPage,
+    PaymentRead,
     PlanCatalogue,
     PlanRead,
 )
@@ -100,6 +105,37 @@ def billing_account(user: CurrentUser, billing: Billing, response: Response) -> 
     """The signed-in account's plan, paid periods and recent payments."""
     response.headers["Cache-Control"] = NO_STORE
     return billing.account(user)
+
+
+@router.get("/payments", response_model=PaymentPage)
+def payment_history(
+    user: CurrentUser,
+    billing: Billing,
+    response: Response,
+    before: UUID | None = None,
+    limit: Annotated[int, Query(ge=1, le=50)] = 20,
+) -> PaymentPage:
+    """This account's payments, newest first. Pass next_before as ?before= for more."""
+    response.headers["Cache-Control"] = NO_STORE
+    return billing.history(user, before, limit)
+
+
+@router.post("/payments/{payment_id}/refresh", response_model=PaymentRead)
+def refresh_payment(
+    payment_id: UUID, user: CurrentUser, billing: Billing, response: Response
+) -> PaymentRead:
+    """Ask Razorpay again about an unfinished payment or a refund in progress."""
+    response.headers["Cache-Control"] = NO_STORE
+    return billing.refresh(user, payment_id)
+
+
+@router.post("/payments/{payment_id}/cancel", response_model=CancelResult)
+def cancel_period(
+    payment_id: UUID, _: CancelPeriod, user: CurrentUser, billing: Billing, response: Response
+) -> CancelResult:
+    """Cancel the period this payment bought, before it starts, for a full refund."""
+    response.headers["Cache-Control"] = NO_STORE
+    return billing.cancel(user, payment_id)
 
 
 @router.post("/checkout", response_model=CheckoutOrder, status_code=status.HTTP_201_CREATED)

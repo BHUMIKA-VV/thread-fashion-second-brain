@@ -15,6 +15,7 @@ Only what billing needs is read from a response: ids, amount, currency, status, 
 method and a short error code. The payer's email, phone, card, UPI ID or bank are never read.
 """
 
+import dataclasses
 import hashlib
 import hmac
 import logging
@@ -73,6 +74,19 @@ class ProviderPayment:
     refunded_paise: int = 0
 
 
+RefundStatus = Literal["pending", "processed", "failed"]
+REFUND_ID = re.compile(r"rfnd_[A-Za-z0-9]{1,40}")
+
+
+@dataclass(frozen=True)
+class Refund:
+    id: str
+    payment_id: str
+    amount_paise: int
+    status: RefundStatus
+    receipt: str | None
+
+
 @dataclass(frozen=True)
 class WebhookEvent:
     """The parts of a webhook event Thread acts on. The body itself is never stored."""
@@ -96,6 +110,10 @@ class PaymentProvider(Protocol):
     def signature_valid(self, order_id: str, payment_id: str, signature: str) -> bool: ...
 
     def order_payments(self, order_id: str) -> list[ProviderPayment]: ...
+
+    def refund(self, payment_id: str, amount_paise: int, receipt: str) -> Refund: ...
+
+    def payment_refunds(self, payment_id: str) -> list[Refund]: ...
 
 
 def payment_signature(secret: str, order_id: str, payment_id: str) -> str:
@@ -204,6 +222,30 @@ def parse_payment(body: Any) -> ProviderPayment:
     return payment
 
 
+def parse_refund(body: Any) -> Refund:
+    try:
+        refund = Refund(
+            id=body["id"],
+            payment_id=body["payment_id"],
+            amount_paise=body["amount"],
+            status=body["status"],
+            receipt=body.get("receipt"),
+        )
+    except (KeyError, TypeError, AttributeError) as exc:
+        raise ProviderError("Razorpay's refund response was incomplete") from exc
+    if not (
+        isinstance(refund.id, str)
+        and REFUND_ID.fullmatch(refund.id)
+        and isinstance(refund.payment_id, str)
+        and PAYMENT_ID.fullmatch(refund.payment_id)
+        and type(refund.amount_paise) is int
+        and refund.status in ("pending", "processed", "failed")
+        and (refund.receipt is None or isinstance(refund.receipt, str))
+    ):
+        raise ProviderError("Razorpay's refund response was malformed")
+    return refund
+
+
 class RazorpayClient:
     """The real Razorpay API, with test keys (settings refuse live ones)."""
 
@@ -234,7 +276,8 @@ class RazorpayClient:
         if response.status_code in (401, 403):
             logger.error("Razorpay refused the API keys (HTTP %s)", response.status_code)
             raise ProviderUnavailable("Razorpay refused the API keys")
-        if response.status_code >= 500 or response.status_code == 429:
+        # 409: an identical idempotent request is still in progress, so retrying later is right.
+        if response.status_code >= 500 or response.status_code in (409, 429):
             logger.warning("Razorpay %s %s answered HTTP %s", method, path, response.status_code)
             raise ProviderUnavailable("Razorpay is not available right now")
         if response.status_code >= 400:
@@ -269,6 +312,30 @@ class RazorpayClient:
 
     def signature_valid(self, order_id: str, payment_id: str, signature: str) -> bool:
         return signature_matches(self._secret.get_secret_value(), order_id, payment_id, signature)
+
+    def refund(self, payment_id: str, amount_paise: int, receipt: str) -> Refund:
+        """Refund (part of) a captured payment: POST /v1/payments/{id}/refund. The receipt is
+        Thread's own and unique per refund, and doubles as the idempotency key, so a retried
+        request can't refund twice."""
+        if not PAYMENT_ID.fullmatch(payment_id):
+            raise ProviderError("Not a Razorpay payment id")
+        body = self._request(
+            "POST",
+            f"/payments/{payment_id}/refund",
+            json={"amount": amount_paise, "speed": "normal", "receipt": receipt},
+            headers={"X-Refund-Idempotency": receipt},
+        )
+        return parse_refund(body)
+
+    def payment_refunds(self, payment_id: str) -> list[Refund]:
+        """Refunds already made on a payment: GET /v1/payments/{id}/refunds."""
+        if not PAYMENT_ID.fullmatch(payment_id):
+            raise ProviderError("Not a Razorpay payment id")
+        body = self._request("GET", f"/payments/{payment_id}/refunds", params={"count": 100})
+        items = body.get("items")
+        if not isinstance(items, list):
+            raise ProviderError("Razorpay's refunds response was malformed")
+        return [parse_refund(item) for item in items]
 
     def order_payments(self, order_id: str) -> list[ProviderPayment]:
         """Every payment attempt on one order (GET /v1/orders/{id}/payments)."""
@@ -306,6 +373,9 @@ class FakeProvider:
     def __init__(self) -> None:
         self._orders: dict[str, Order] = {}
         self._payments: dict[str, ProviderPayment] = {}
+        self._refunds: dict[str, list[Refund]] = {}
+        # What the stand-in's next refund comes back as (tests set "pending").
+        self.refund_outcome: RefundStatus = "processed"
         self._lock = threading.Lock()
 
     def create_order(
@@ -350,6 +420,35 @@ class FakeProvider:
     def order_payments(self, order_id: str) -> list[ProviderPayment]:
         with self._lock:
             return [p for p in self._payments.values() if p.order_id == order_id]
+
+    def refund(self, payment_id: str, amount_paise: int, receipt: str) -> Refund:
+        """A refund the stand-in processes at once (Razorpay may leave one pending)."""
+        with self._lock:
+            payment = self._payments.get(payment_id)
+            if payment is None or payment.status not in ("captured", "refunded"):
+                raise ProviderError("Razorpay refused the request (HTTP 400)")
+            for known in self._refunds.get(payment_id, []):
+                if known.receipt == receipt:
+                    return known
+            if payment.refunded_paise + amount_paise > payment.amount_paise:
+                raise ProviderError("Razorpay refused the request (HTTP 400)")
+            status: RefundStatus = self.refund_outcome
+            refund = Refund(
+                f"rfnd_{secrets.token_hex(7)}", payment_id, amount_paise, status, receipt
+            )
+            self._refunds.setdefault(payment_id, []).append(refund)
+            if status == "processed":
+                total = payment.refunded_paise + amount_paise
+                self._payments[payment_id] = dataclasses.replace(
+                    payment,
+                    refunded_paise=total,
+                    status="refunded" if total == payment.amount_paise else payment.status,
+                )
+        return refund
+
+    def payment_refunds(self, payment_id: str) -> list[Refund]:
+        with self._lock:
+            return list(self._refunds.get(payment_id, []))
 
 
 FAKE_PROVIDER = FakeProvider()

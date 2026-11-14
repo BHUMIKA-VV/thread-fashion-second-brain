@@ -606,10 +606,15 @@ export type PaidPlanId = "studio" | "studio_pro";
 
 /** One paid period of access, from starts_at up to ends_at. */
 export type BillingPeriod = {
+  payment_id: string;
   plan_id: PaidPlanId;
   plan_name: string;
   starts_at: string;
   ends_at: string;
+  /** Cancelled before its end (a refund). */
+  ended_early: boolean;
+  /** Not started yet, so it can be cancelled for a full refund. */
+  cancellable: boolean;
 };
 
 export type BillingPayment = {
@@ -622,18 +627,35 @@ export type BillingPayment = {
   method: string | null;
   created_at: string;
   paid_at: string | null;
+  /** Razorpay's reference for the payment, to match its emailed receipt. */
+  provider_payment_id: string | null;
+  refunded_paise: number;
+  failure_code: string | null;
+  refund: "none" | "requested" | "partial" | "full";
+  /** Thread can ask Razorpay again what became of it. */
+  refreshable: boolean;
 };
+
+export type PaymentPage = { payments: BillingPayment[]; next_before: string | null };
 
 export type BillingAccount = {
   plan_id: "free" | PaidPlanId;
+  status: "owner" | "free" | "active";
   /** The owner of this Thread is never charged. */
   exempt: boolean;
   current: BillingPeriod | null;
   /** A period paid for that starts later. */
   upcoming: BillingPeriod | null;
-  payments: BillingPayment[];
+  /** The latest period that is over. */
+  last_ended: BillingPeriod | null;
+  /** The current period ends within days, and nothing follows it. */
+  ending_soon: boolean;
+  /** When a period bought now would start. */
+  next_start_at: string;
   checkout: { available: boolean; provider: "razorpay" | "fake"; mode: "test" };
 };
+
+export type CancelResult = { refund: "processed" | "pending"; account: BillingAccount };
 
 /** What Razorpay Checkout needs to open for one order. The amount is the server's. */
 export type CheckoutOrder = {

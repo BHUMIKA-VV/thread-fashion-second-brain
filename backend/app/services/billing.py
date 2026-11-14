@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, tuple_
 from sqlalchemy.orm import Session
 
 from app.billing.plans import CURRENCY, Plan, PlanId, plans
@@ -39,9 +39,11 @@ from app.models import Payment, Subscription, User
 from app.models.enums import BillingProvider, CancelReason, PaymentStatus, SubscriptionStatus
 from app.schemas.billing import (
     BillingAccount,
+    CancelResult,
     CheckoutAvailability,
     CheckoutOrder,
     CheckoutResult,
+    PaymentPage,
     PaymentRead,
     PeriodRead,
 )
@@ -50,8 +52,13 @@ from app.services.rate_limit import RateLimited, limiter
 
 logger = logging.getLogger(__name__)
 
-RECENT_PAYMENTS = 10
+HISTORY_PAGE = 20
+REFRESH_PER_HOUR = 30
+# The current period counts as ending soon this close to its end, with nothing after it.
+ENDING_SOON = timedelta(days=7)
 ACTIVE = SubscriptionStatus.ACTIVE.value
+SETTLED = (PaymentStatus.PAID.value, PaymentStatus.REFUNDED.value)
+UNSETTLED = (PaymentStatus.CREATED.value, PaymentStatus.FAILED.value)
 
 
 @dataclass(frozen=True)
@@ -82,6 +89,8 @@ class BillingUnavailable(Exception):
         self.message = message
 
 
+PAYMENT_NOT_FOUND = BillingRefused("payment_not_found", "No such payment on this account.", 404)
+
 NOT_SET_UP = BillingUnavailable(
     "payments_not_configured", "Payments aren't set up on this Thread yet. Nothing was charged."
 )
@@ -111,34 +120,139 @@ class BillingService:
         now = self.clock()
         periods = self.db.scalars(
             select(Subscription)
-            .where(
-                Subscription.user_id == principal.id,
-                Subscription.status == ACTIVE,
-                Subscription.ends_at > now,
-            )
+            .where(Subscription.user_id == principal.id)
             .order_by(Subscription.starts_at)
         ).all()
-        current = next((p for p in periods if p.starts_at <= now), None)
-        upcoming = next((p for p in periods if p.starts_at > now), None)
-        payments = self.db.scalars(
-            select(Payment)
-            .where(Payment.user_id == principal.id)
-            .order_by(Payment.created_at.desc())
-            .limit(RECENT_PAYMENTS)
-        ).all()
+        active = [p for p in periods if p.status == ACTIVE and p.ends_at > now]
+        current = next((p for p in active if p.starts_at <= now), None)
+        upcoming = next((p for p in active if p.starts_at > now), None)
+        over = [p for p in periods if p not in active and p.starts_at <= now]
+        last_ended = max(over, key=lambda p: p.cancelled_at or p.ends_at, default=None)
+        cancellable = upcoming is not None and self._cancellable(principal, upcoming, now)
+        next_start = self._next_start(principal.id, now)
         self.db.commit()
+        status = "owner" if principal.is_owner else "active" if current else "free"
         return BillingAccount(
             plan_id=current.plan_id if current else PlanId.FREE.value,  # type: ignore[arg-type]
+            status=status,  # type: ignore[arg-type]
             exempt=principal.is_owner,
             current=self._period(current) if current else None,
-            upcoming=self._period(upcoming) if upcoming else None,
-            payments=[self._payment(p) for p in payments],
+            upcoming=self._period(upcoming, cancellable=cancellable) if upcoming else None,
+            last_ended=self._period(last_ended) if last_ended else None,
+            ending_soon=bool(current and upcoming is None and current.ends_at - now <= ENDING_SOON),
+            next_start_at=next_start,
             checkout=CheckoutAvailability(
                 available=self.provider is not None,
                 provider=self.provider.name if self.provider else self.settings.payment_provider,
                 mode=self.settings.razorpay_mode,
             ),
         )
+
+    def history(
+        self, principal: Principal, before: UUID | None = None, limit: int = HISTORY_PAGE
+    ) -> PaymentPage:
+        """This account's payments, newest first, a page at a time. Nothing is ever left out:
+        failed and unfinished attempts are listed too."""
+        query = (
+            select(Payment)
+            .where(Payment.user_id == principal.id)
+            .order_by(Payment.created_at.desc(), Payment.id.desc())
+            .limit(limit + 1)
+        )
+        if before is not None:
+            anchor = self.db.scalar(
+                select(Payment).where(Payment.id == before, Payment.user_id == principal.id)
+            )
+            if anchor is None:
+                raise PAYMENT_NOT_FOUND
+            query = query.where(
+                tuple_(Payment.created_at, Payment.id) < (anchor.created_at, anchor.id)
+            )
+        rows = list(self.db.scalars(query))
+        page, more = rows[:limit], len(rows) > limit
+        views = self._payments(page)
+        self.db.commit()
+        return PaymentPage(payments=views, next_before=page[-1].id if more else None)
+
+    def refresh(self, principal: Principal, payment_id: UUID) -> PaymentRead:
+        """Ask Razorpay again about one of this account's payments: an unfinished or failed
+        one (it may have been captured since) or a refund still in progress."""
+        if self.provider is None:
+            raise NOT_SET_UP
+        self._limit(f"refresh:{principal.id}", REFRESH_PER_HOUR, "Too many checks. Try later.")
+        payment = self._own_payment_by_id(principal.id, payment_id)
+        if self._payments([payment])[0].refreshable:
+            order_id, status = payment.provider_order_id, payment.status
+            self.db.commit()
+            if status in UNSETTLED:
+                self._settle_order(payment_id, order_id, apply=True)
+            else:
+                self._sync_refund(payment_id)
+            payment = self._own_payment_by_id(principal.id, payment_id)
+        view = self._payments([payment])[0]
+        self.db.commit()
+        return view
+
+    def cancel(self, principal: Principal, payment_id: UUID) -> CancelResult:
+        """Cancel a period that hasn't started, refunding its payment in full (test mode).
+
+        The payment row stays locked while Razorpay is asked, so two clicks can't make two
+        refunds; Thread's receipt is also Razorpay's idempotency key for the same reason. A
+        running period is never cancelled here: refunds for those wait for a refund policy.
+        """
+        if self.provider is None:
+            raise NOT_SET_UP
+        if principal.is_owner:
+            raise BillingRefused("owner_exempt", "The owner of this Thread is never charged.", 403)
+        now = self.clock()
+        payment = self._own_payment_by_id(principal.id, payment_id, lock=True)
+        period = self.db.scalar(
+            select(Subscription).where(Subscription.payment_id == payment.id).with_for_update()
+        )
+        if period is None or not self._cancellable(principal, period, now, payment):
+            self.db.rollback()
+            raise BillingRefused(
+                "not_cancellable",
+                "Only a paid period that hasn't started yet can be cancelled here.",
+                409,
+            )
+        receipt = f"thr_rf_{payment.id.hex}"
+        provider_payment_id = payment.provider_payment_id
+        assert provider_payment_id is not None  # noqa: S101 (paid)
+        try:
+            known = [
+                r
+                for r in self.provider.payment_refunds(provider_payment_id)
+                if r.receipt == receipt
+            ]
+            refund = (
+                known[0]
+                if known
+                else self.provider.refund(provider_payment_id, payment.amount_paise, receipt)
+            )
+        except ProviderUnavailable as exc:
+            self.db.rollback()
+            raise BillingUnavailable(
+                "payments_unavailable",
+                "Razorpay can't be reached right now. Nothing changed; try again.",
+            ) from exc
+        except ProviderError as exc:
+            self.db.rollback()
+            raise _refund_failed() from exc
+        if refund.status == "failed" or refund.amount_paise != payment.amount_paise:
+            self.db.rollback()
+            logger.error("Refund %s for payment %s was not a full refund", refund.id, payment.id)
+            raise _refund_failed()
+        if refund.status == "processed":
+            self.record_refund(payment, refund.amount_paise)
+        # The period ends now either way: it hadn't started, and its money is on its way back.
+        if period.status == ACTIVE:
+            period.status = SubscriptionStatus.CANCELLED.value
+            period.cancelled_at = now
+            period.cancel_reason = CancelReason.REFUND.value
+        self.db.commit()
+        logger.info("Upcoming period of payment %s cancelled; refund %s", payment.id, refund.id)
+        return CancelResult(refund=refund.status, account=self.account(principal))
 
     # --- buying ----------------------------------------------------------------------------
 
@@ -371,37 +485,64 @@ class BillingService:
         self.db.commit()  # nothing stays locked while Razorpay is asked
         report: list[Reconciled] = []
         for payment_id, order_id, status in rows:
-            try:
-                attempts = self.provider.order_payments(order_id)
-            except (ProviderUnavailable, ProviderError) as exc:
-                report.append(Reconciled(payment_id, status, "unreachable", str(exc)))
-                continue
-            remote = _decisive(attempts)
-            if remote is None:
-                report.append(Reconciled(payment_id, status, "unchanged", _summary(attempts)))
-                continue
-            if not apply:
-                report.append(Reconciled(payment_id, status, f"would be {remote.status}", ""))
-                continue
-            payment = self.db.scalar(
-                select(Payment)
-                .where(Payment.id == payment_id)
-                .with_for_update()
-                .execution_options(populate_existing=True)
-            )
-            if (
-                payment is None
-                or payment.status not in (PaymentStatus.CREATED.value, PaymentStatus.FAILED.value)
-                or (remote.status == "failed" and payment.status == PaymentStatus.FAILED.value)
-                or not self.matches(payment, remote)
-            ):
-                self.db.rollback()
-                report.append(Reconciled(payment_id, status, "unchanged", "settled meanwhile"))
-                continue
-            self.settle(payment, remote)
-            self.db.commit()
-            report.append(Reconciled(payment_id, status, payment.status, ""))
+            after, note = self._settle_order(payment_id, order_id, apply=apply)
+            report.append(Reconciled(payment_id, status, after, note))
         return report
+
+    def _settle_order(self, payment_id: UUID, order_id: str, *, apply: bool) -> tuple[str, str]:
+        """Settle one unsettled payment as Razorpay's attempts on its order say. Returns what
+        it became ("paid", "failed", "unchanged", "unreachable", "would be ...") and a note."""
+        assert self.provider is not None  # noqa: S101 (checked by the callers)
+        try:
+            attempts = self.provider.order_payments(order_id)
+        except (ProviderUnavailable, ProviderError) as exc:
+            return "unreachable", str(exc)
+        remote = _decisive(attempts)
+        if remote is None:
+            return "unchanged", _summary(attempts)
+        if not apply:
+            return f"would be {remote.status}", ""
+        payment = self._locked(payment_id)
+        if (
+            payment is None
+            or payment.status not in UNSETTLED
+            or (remote.status == "failed" and payment.status == PaymentStatus.FAILED.value)
+            or not self.matches(payment, remote)
+        ):
+            self.db.rollback()
+            return "unchanged", "settled meanwhile"
+        self.settle(payment, remote)
+        self.db.commit()
+        return payment.status, ""
+
+    def _sync_refund(self, payment_id: UUID) -> None:
+        """Record what Razorpay has refunded on a settled payment so far."""
+        assert self.provider is not None  # noqa: S101 (checked by the callers)
+        payment = self.db.get_one(Payment, payment_id)
+        provider_payment_id = payment.provider_payment_id
+        assert provider_payment_id is not None  # noqa: S101 (settled)
+        self.db.commit()
+        try:
+            remote = self.provider.fetch_payment(provider_payment_id)
+        except (ProviderUnavailable, ProviderError) as exc:
+            raise _unreachable("Nothing changed; try again.") from exc
+        payment = self._locked(payment_id)
+        if (
+            payment is not None
+            and payment.status in SETTLED
+            and remote.id == payment.provider_payment_id
+            and self.matches(payment, remote)
+        ):
+            self.record_refund(payment, remote.refunded_paise)
+        self.db.commit()
+
+    def _locked(self, payment_id: UUID) -> Payment | None:
+        return self.db.scalar(
+            select(Payment)
+            .where(Payment.id == payment_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
 
     # --- internals -------------------------------------------------------------------------
 
@@ -464,15 +605,40 @@ class BillingService:
         plan = self.plans.get(plan_id)
         return plan.name if plan else plan_id
 
-    def _period(self, period: Subscription) -> PeriodRead:
+    def _period(self, period: Subscription, *, cancellable: bool = False) -> PeriodRead:
         return PeriodRead(
+            payment_id=period.payment_id,
             plan_id=period.plan_id,  # type: ignore[arg-type]
             plan_name=self._plan_name(period.plan_id),
             starts_at=period.starts_at,
             ends_at=period.ends_at,
+            ended_early=period.status == SubscriptionStatus.CANCELLED.value,
+            cancellable=cancellable,
         )
 
-    def _payment(self, payment: Payment) -> PaymentRead:
+    def _payments(self, payments: list[Payment]) -> list[PaymentRead]:
+        ids = [p.id for p in payments]
+        periods = (
+            {
+                s.payment_id: s
+                for s in self.db.scalars(
+                    select(Subscription).where(Subscription.payment_id.in_(ids))
+                )
+            }
+            if ids
+            else {}
+        )
+        return [self._payment(p, periods.get(p.id)) for p in payments]
+
+    def _payment(self, payment: Payment, period: Subscription | None) -> PaymentRead:
+        if payment.status == PaymentStatus.REFUNDED.value:
+            refund = "full"
+        elif payment.refunded_paise > 0:
+            refund = "partial"
+        elif period is not None and period.cancel_reason == CancelReason.REFUND.value:
+            refund = "requested"  # cancelled here; Razorpay hasn't confirmed the money yet
+        else:
+            refund = "none"
         return PaymentRead(
             id=payment.id,
             plan_id=payment.plan_id,  # type: ignore[arg-type]
@@ -483,7 +649,47 @@ class BillingService:
             method=payment.method,
             created_at=payment.created_at,
             paid_at=payment.paid_at,
+            provider_payment_id=payment.provider_payment_id,
+            refunded_paise=payment.refunded_paise,
+            failure_code=payment.failure_code,
+            refund=refund,  # type: ignore[arg-type]
+            refreshable=self.provider is not None
+            and (payment.status in UNSETTLED or refund == "requested"),
         )
+
+    def _cancellable(
+        self,
+        principal: Principal,
+        period: Subscription,
+        now: datetime,
+        payment: Payment | None = None,
+    ) -> bool:
+        if self.provider is None or principal.is_owner:
+            return False
+        if period.status != ACTIVE or period.starts_at <= now:
+            return False
+        payment = payment or self.db.get(Payment, period.payment_id)
+        return (
+            payment is not None
+            and payment.status == PaymentStatus.PAID.value
+            and payment.refunded_paise == 0
+        )
+
+    def _own_payment_by_id(self, user_id: UUID, payment_id: UUID, *, lock: bool = False) -> Payment:
+        query = select(Payment).where(Payment.id == payment_id, Payment.user_id == user_id)
+        if lock:
+            query = query.with_for_update()
+        payment = self.db.scalar(query.execution_options(populate_existing=True))
+        if payment is None:
+            self.db.rollback()
+            raise PAYMENT_NOT_FOUND
+        return payment
+
+    def _limit(self, key: str, limit: int, message: str) -> None:
+        try:
+            limiter.hit(key, limit, 3600)
+        except RateLimited as exc:
+            raise BillingRefused("rate_limited", message, 429, exc.retry_after) from exc
 
 
 NOTHING_CHARGED = "Nothing was charged."
@@ -520,3 +726,11 @@ def _summary(attempts: list[ProviderPayment]) -> str:
     if not attempts:
         return "no payment attempts"
     return ", ".join(sorted({a.status for a in attempts}))
+
+
+def _refund_failed() -> BillingRefused:
+    return BillingRefused(
+        "refund_failed",
+        "Razorpay couldn't make the refund, so your period is unchanged.",
+        502,
+    )

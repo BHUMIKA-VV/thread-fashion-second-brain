@@ -10,6 +10,8 @@ import type { BillingPeriod, PaidPlanId } from "@/types/api";
 import { loadCheckout, scriptFor, type CheckoutSuccess } from "./checkout-script";
 
 export const BILLING_KEY = ["billing", "account"] as const;
+// The account's payment history (its own query, a page at a time).
+export const PAYMENTS_KEY = ["billing", "payments"] as const;
 
 export type CheckoutState =
   | { step: "idle" }
@@ -42,6 +44,7 @@ export function useCheckout() {
       busy.current = false;
       setState(next);
       void queryClient.invalidateQueries({ queryKey: BILLING_KEY });
+      void queryClient.invalidateQueries({ queryKey: PAYMENTS_KEY });
     },
     [queryClient],
   );

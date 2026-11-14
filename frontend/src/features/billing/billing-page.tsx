@@ -1,25 +1,21 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { useMutation, useQuery, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
+import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/features/auth/use-session";
 import { formatPrice } from "@/features/pricing/format";
-import { getBillingAccount, getPlans } from "@/services/billing";
-import type { BillingAccount, BillingPeriod, PaidPlanId, PlanRead } from "@/types/api";
+import { ApiError } from "@/lib/api-client";
+import { cancelPeriod, getBillingAccount, getPlans } from "@/services/billing";
+import type { BillingAccount, BillingPeriod, CancelResult, PaidPlanId, PlanRead } from "@/types/api";
 
-import { BILLING_KEY, isBusy, useCheckout, type CheckoutState } from "./use-checkout";
+import { formatDate, formatDay, startsLater } from "./dates";
+import { failureMessage } from "./messages";
+import { PaymentHistory } from "./payment-history";
+import { BILLING_KEY, isBusy, PAYMENTS_KEY, useCheckout, type CheckoutState } from "./use-checkout";
 
-const dateFormat = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "long", year: "numeric" });
-export const formatDate = (iso: string) => dateFormat.format(new Date(iso));
-
-const PAYMENT_STATUS: Record<BillingAccount["payments"][number]["status"], string> = {
-  created: "Not completed",
-  paid: "Paid",
-  failed: "Failed",
-  refunded: "Refunded",
-};
+export { formatDate } from "./dates";
 
 type PaidPlan = PlanRead & { id: PaidPlanId };
 
@@ -58,15 +54,7 @@ export function BillingPage() {
   return (
     <div className="space-y-14">
       <Section title="Your plan">
-        <p className="font-display text-3xl">{data.exempt ? "Owner" : (data.current?.plan_name ?? "Free")}</p>
-        <p className="mt-2 text-sm text-ink-muted">
-          {data.exempt
-            ? "The owner of this Thread is never charged."
-            : data.current
-              ? `Paid until ${formatDate(data.current.ends_at)}. Nothing renews or charges by itself.`
-              : "No paid period at the moment."}
-        </p>
-        {data.upcoming && <Upcoming period={data.upcoming} />}
+        <PlanSummary data={data} />
       </Section>
 
       {!data.exempt && (
@@ -77,7 +65,108 @@ export function BillingPage() {
         </Section>
       )}
 
-      {data.payments.length > 0 && <Payments payments={data.payments} />}
+      {!data.exempt && (
+        <Section title="Payments">
+          <PaymentHistory />
+        </Section>
+      )}
+    </div>
+  );
+}
+
+function PlanSummary({ data }: { data: BillingAccount }) {
+  // Kept here, above the period it cancels, so its outcome stays on screen once that
+  // period is gone from the account.
+  const queryClient = useQueryClient();
+  const cancel = useMutation({
+    mutationFn: cancelPeriod,
+    onSuccess: (result) => {
+      queryClient.setQueryData(BILLING_KEY, result.account);
+      void queryClient.invalidateQueries({ queryKey: PAYMENTS_KEY });
+    },
+  });
+  if (data.exempt) {
+    return (
+      <>
+        <p className="font-display text-3xl">Owner</p>
+        <p className="mt-2 text-sm text-ink-muted">The owner of this Thread is never charged.</p>
+      </>
+    );
+  }
+  const current = data.current;
+  return (
+    <>
+      <p className="font-display text-3xl">{current?.plan_name ?? "Free"}</p>
+      <p className="mt-2 text-sm">
+        {current
+          ? `Active until ${formatDate(current.ends_at)}. Nothing renews or charges by itself.`
+          : data.last_ended
+            ? `${data.last_ended.plan_name} ${data.last_ended.ended_early ? "was cancelled" : `ended on ${formatDate(data.last_ended.ends_at)}`}. You're on Free; your pieces are kept.`
+            : "You're on Free. Nothing is charged unless you buy a period."}
+      </p>
+      {data.ending_soon && current && (
+        <p className="mt-3 border-l-2 border-warning pl-3 text-sm">
+          {current.plan_name} ends on {formatDate(current.ends_at)}. Buy another period below to carry on without a gap.
+        </p>
+      )}
+      {data.upcoming && <Upcoming period={data.upcoming} cancel={cancel} />}
+      {cancel.isSuccess && (
+        <p role="status" className="mt-3 text-sm">
+          {cancel.data.refund === "processed"
+            ? "Cancelled. Razorpay is refunding the payment in full; banks usually take a few working days."
+            : "Cancelled. Razorpay is still processing the refund; your payments list shows when it's done."}
+        </p>
+      )}
+      <p className="mt-4 text-sm text-ink-muted">
+        There&apos;s nothing to cancel: each payment buys one period, and nothing is charged again unless you buy another.
+      </p>
+    </>
+  );
+}
+
+type Cancel = UseMutationResult<CancelResult, Error, string>;
+
+function Upcoming({ period, cancel }: { period: BillingPeriod; cancel: Cancel }) {
+  return (
+    <div className="mt-5 border border-line p-4">
+      <p className="text-sm">
+        Then <span className="font-medium">{period.plan_name}</span> from {formatDate(period.starts_at)} to {formatDate(period.ends_at)},
+        already paid for.
+      </p>
+      {period.cancellable && <CancelUpcoming period={period} cancel={cancel} />}
+    </div>
+  );
+}
+
+/** Cancelling refunds money, so it takes a second, explicit step. */
+function CancelUpcoming({ period, cancel }: { period: BillingPeriod; cancel: Cancel }) {
+  const [confirming, setConfirming] = useState(false);
+  if (!confirming) {
+    return (
+      <Button variant="secondary" className="mt-3" onClick={() => setConfirming(true)}>
+        Cancel this period…
+      </Button>
+    );
+  }
+  return (
+    <div role="group" aria-label="Confirm cancelling" className="mt-3 space-y-3">
+      <p className="text-sm">
+        Cancel {period.plan_name} from {formatDate(period.starts_at)}? It hasn&apos;t started, so its payment is refunded in full. This
+        can&apos;t be undone, but you can buy another period afterwards.
+      </p>
+      {cancel.isError && (
+        <p role="alert" className="text-sm text-danger">
+          {cancel.error instanceof ApiError ? cancel.error.message : "Thread couldn't cancel the period. Nothing changed."}
+        </p>
+      )}
+      <div className="flex flex-wrap gap-3">
+        <Button className="bg-danger hover:bg-danger/90" disabled={cancel.isPending} onClick={() => cancel.mutate(period.payment_id)}>
+          {cancel.isPending ? "Cancelling…" : "Cancel and refund"}
+        </Button>
+        <Button variant="ghost" disabled={cancel.isPending} onClick={() => setConfirming(false)}>
+          Keep it
+        </Button>
+      </div>
     </div>
   );
 }
@@ -102,6 +191,7 @@ function Offer({
   if (data.upcoming) {
     return <p className="mt-5 text-sm">Your next period is already paid for. You can buy another once it starts.</p>;
   }
+  const later = startsLater(data.next_start_at);
   return (
     <>
       <ul className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -113,24 +203,17 @@ function Offer({
             </p>
             <Button className="mt-4" disabled={isBusy(state)} onClick={() => void buy(plan.id)}>
               Pay {formatPrice(plan.price_paise)} for {plan.name}
+              {later ? ` from ${formatDay(data.next_start_at)}` : ""}
             </Button>
           </li>
         ))}
       </ul>
       <p className="mt-5 text-sm text-ink-muted">
-        {data.current
-          ? "A new period starts when the current one ends, so paying early adds time."
+        {later
+          ? `A new period starts when the current one ends, on ${formatDate(data.next_start_at)}: paying early adds time, and choosing the other plan switches to it from then.`
           : "A period starts as soon as the payment is confirmed."}
       </p>
     </>
-  );
-}
-
-function Upcoming({ period }: { period: BillingPeriod }) {
-  return (
-    <p className="mt-2 text-sm">
-      Then {period.plan_name} from {formatDate(period.starts_at)} to {formatDate(period.ends_at)}, already paid for.
-    </p>
   );
 }
 
@@ -145,44 +228,6 @@ function TestModeNote({ provider }: { provider: BillingAccount["checkout"]["prov
   );
 }
 
-function Payments({ payments }: { payments: BillingAccount["payments"] }) {
-  return (
-    <Section title="Payments">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <caption className="sr-only">Your recent payments</caption>
-          <thead className="text-ink-muted">
-            <tr>
-              <th scope="col" className="py-2 pr-4 font-normal">
-                Date
-              </th>
-              <th scope="col" className="py-2 pr-4 font-normal">
-                Plan
-              </th>
-              <th scope="col" className="py-2 pr-4 font-normal">
-                Amount
-              </th>
-              <th scope="col" className="py-2 font-normal">
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {payments.map((p) => (
-              <tr key={p.id} className="border-t border-line">
-                <td className="py-2 pr-4">{formatDate(p.paid_at ?? p.created_at)}</td>
-                <td className="py-2 pr-4">{p.plan_name}</td>
-                <td className="py-2 pr-4">{formatPrice(p.amount_paise)}</td>
-                <td className="py-2">{PAYMENT_STATUS[p.status]}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Section>
-  );
-}
-
 export function checkoutMessage(state: CheckoutState): string | null {
   switch (state.step) {
     case "idle":
@@ -191,18 +236,18 @@ export function checkoutMessage(state: CheckoutState): string | null {
       return "Starting checkout…";
     case "open":
       return state.failedCode
-        ? "That attempt didn't go through. Try again in the checkout window, or close it."
+        ? `That attempt didn't go through. ${failureMessage(state.failedCode)} Try again in the checkout window, or close it.`
         : "Checkout is open.";
     case "verifying":
       return "Confirming the payment with Razorpay…";
     case "paid":
       return `Payment confirmed. ${state.period.plan_name} runs from ${formatDate(state.period.starts_at)} to ${formatDate(state.period.ends_at)}.`;
     case "pending":
-      return "Razorpay hasn't confirmed this payment yet, so your plan hasn't changed. It starts once Razorpay confirms it; Razorpay refunds an authorisation that is never completed.";
+      return "Razorpay hasn't confirmed this payment yet, so your plan hasn't changed. It starts once Razorpay confirms it; Razorpay refunds an authorisation that is never completed. Use Check again under Payments.";
     case "cancelled":
       return "Checkout was closed. Nothing was charged.";
     case "failed":
-      return `The payment didn't go through${state.code ? ` (${state.code})` : ""}. Nothing was charged.`;
+      return `The payment didn't go through${state.code ? ` (${state.code})` : ""}. ${failureMessage(state.code)} Nothing was charged.`;
     case "error":
       return state.message;
   }
@@ -214,9 +259,12 @@ function CheckoutStatus({ state }: { state: CheckoutState }) {
   return (
     <div className="mt-5 text-sm">
       <p role="status">{problem ? null : checkoutMessage(state)}</p>
-      <p role="alert" className="text-danger">
-        {problem ? checkoutMessage(state) : null}
-      </p>
+      {/* An alert is announced when it appears, so it is only there while there's a problem. */}
+      {problem && (
+        <p role="alert" className="text-danger">
+          {checkoutMessage(state)}
+        </p>
+      )}
     </div>
   );
 }

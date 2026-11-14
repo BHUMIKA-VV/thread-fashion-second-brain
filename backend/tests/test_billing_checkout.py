@@ -242,7 +242,9 @@ def test_a_captured_payment_grants_one_period_once(shop: Shop, buyer: User) -> N
     me = shop.http.get("/billing/account").json()
     assert me["plan_id"] == "studio"
     assert me["current"]["ends_at"] == period["ends_at"]
-    assert [p["status"] for p in me["payments"]] == ["paid"]
+    assert me["status"] == "active"
+    history = shop.http.get("/billing/payments").json()
+    assert [p["status"] for p in history["payments"]] == ["paid"]
 
 
 def test_a_forged_signature_is_refused_and_changes_nothing(shop: Shop, buyer: User) -> None:
@@ -390,7 +392,8 @@ def test_an_ended_period_leaves_the_account_on_free(db: Session, shop: Shop, buy
 def test_the_owner_sees_an_exempt_account(db: Session, shop: Shop) -> None:
     shop.sign_in(account(db), owner=True)
     me = shop.http.get("/billing/account").json()
-    assert (me["exempt"], me["plan_id"], me["payments"]) == (True, "free", [])
+    assert (me["exempt"], me["plan_id"], me["status"]) == (True, "free", "owner")
+    assert shop.http.get("/billing/payments").json() == {"payments": [], "next_before": None}
     assert me["checkout"] == {"available": True, "provider": "fake", "mode": "test"}
 
 

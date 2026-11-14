@@ -1,5 +1,14 @@
 import { apiFetch } from "@/lib/api-client";
-import type { BillingAccount, CheckoutOrder, CheckoutResult, PaidPlanId, PlanCatalogue } from "@/types/api";
+import type {
+  BillingAccount,
+  BillingPayment,
+  CancelResult,
+  CheckoutOrder,
+  CheckoutResult,
+  PaidPlanId,
+  PaymentPage,
+  PlanCatalogue,
+} from "@/types/api";
 
 /** The plans, with prices defined by the server. Public. */
 export const getPlans = () => apiFetch<PlanCatalogue>("/billing/plans");
@@ -19,3 +28,15 @@ export const startCheckout = (planId: PaidPlanId) => apiFetch<CheckoutOrder>("/b
 /** What Checkout handed back; the server confirms it with Razorpay before granting anything. */
 export const verifyCheckout = (body: { order_id: string; payment_id: string; signature: string }) =>
   apiFetch<CheckoutResult>("/billing/checkout/verify", json(body));
+
+/** This account's payments, newest first, a page at a time. */
+export const getPayments = (before?: string | null) =>
+  apiFetch<PaymentPage>(`/billing/payments${before ? `?before=${encodeURIComponent(before)}` : ""}`);
+
+/** Ask the server to check with Razorpay again what became of one payment. */
+export const refreshPayment = (paymentId: string) =>
+  apiFetch<BillingPayment>(`/billing/payments/${encodeURIComponent(paymentId)}/refresh`, { method: "POST" });
+
+/** Cancel a period that hasn't started, for a full refund. Sent only after the person confirms. */
+export const cancelPeriod = (paymentId: string) =>
+  apiFetch<CancelResult>(`/billing/payments/${encodeURIComponent(paymentId)}/cancel`, json({ confirm: true }));

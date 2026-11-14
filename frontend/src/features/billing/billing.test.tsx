@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { apiErrorResponse, routeFetch } from "@/test/fetch-router";
 import { renderWithQuery } from "@/test/render";
-import type { BillingAccount, CheckoutOrder, Me, PlanCatalogue } from "@/types/api";
+import type { BillingAccount, BillingPayment, BillingPeriod, CheckoutOrder, Me, PaymentPage, PlanCatalogue } from "@/types/api";
 
 import { BillingPage, checkoutMessage } from "./billing-page";
 import type { CheckoutFailure, CheckoutSuccess, RazorpayOptions } from "./checkout-script";
@@ -31,19 +31,61 @@ class FakeRazorpay {
 }
 
 const ME: Me = { id: "u1", display_name: "Asha", email: "asha@example.com", email_verified: true, is_owner: false, has_password: true };
-const PERIOD = { plan_id: "studio" as const, plan_name: "Studio", starts_at: "2026-11-13T12:00:00Z", ends_at: "2026-12-13T12:00:00Z" };
+const PERIOD: BillingPeriod = {
+  payment_id: "p1",
+  plan_id: "studio",
+  plan_name: "Studio",
+  starts_at: "2026-11-13T12:00:00Z",
+  ends_at: "2026-12-13T12:00:00Z",
+  ended_early: false,
+  cancellable: false,
+};
+const NEXT: BillingPeriod = {
+  ...PERIOD,
+  payment_id: "p2",
+  plan_id: "studio_pro",
+  plan_name: "Studio Pro",
+  starts_at: PERIOD.ends_at,
+  ends_at: "2027-01-12T12:00:00Z",
+  cancellable: true,
+};
 
 function account(overrides: Partial<BillingAccount> = {}): BillingAccount {
   return {
     plan_id: "free",
+    status: "free",
     exempt: false,
     current: null,
     upcoming: null,
-    payments: [],
+    last_ended: null,
+    ending_soon: false,
+    next_start_at: new Date().toISOString(),
     checkout: { available: true, provider: "fake", mode: "test" },
     ...overrides,
   };
 }
+
+function payment(overrides: Partial<BillingPayment> = {}): BillingPayment {
+  return {
+    id: "p1",
+    plan_id: "studio",
+    plan_name: "Studio",
+    amount_paise: 99_900,
+    currency: "INR",
+    status: "paid",
+    method: "upi",
+    created_at: PERIOD.starts_at,
+    paid_at: PERIOD.starts_at,
+    provider_payment_id: "pay_B2",
+    refunded_paise: 0,
+    failure_code: null,
+    refund: "none",
+    refreshable: false,
+    ...overrides,
+  };
+}
+
+const page = (payments: BillingPayment[], next_before: string | null = null): PaymentPage => ({ payments, next_before });
 
 const CATALOGUE: PlanCatalogue = {
   status: "proposed",
@@ -77,6 +119,7 @@ function serve(state: BillingAccount, extra: Parameters<typeof routeFetch>[0] = 
     "GET /api/billing/account": () => Response.json(state),
     "GET /api/billing/plans": () => Response.json(CATALOGUE),
     "POST /api/billing/checkout": () => Response.json(ORDER, { status: 201 }),
+    "GET /api/billing/payments": () => Response.json(page([])),
     ...extra,
   });
 }
@@ -118,7 +161,7 @@ describe("BillingPage", () => {
     act(() => opened[0].options.handler(SUCCESS));
     expect(await screen.findByText(/Payment confirmed\. Studio runs from 13 November 2026 to 13 December 2026\./)).toBeInTheDocument();
     expect(verify).toHaveBeenCalledTimes(1);
-    expect(await screen.findByText(/Paid until 13 December 2026/)).toBeInTheDocument();
+    expect(await screen.findByText(/Active until 13 December 2026/)).toBeInTheDocument();
   });
 
   it("says nothing changed when the payment is only authorised", async () => {
@@ -144,7 +187,7 @@ describe("BillingPage", () => {
     act(() => opened[1].failed!({ error: { code: "BAD_REQUEST_ERROR" } }));
     expect(await screen.findByText(/That attempt didn't go through/)).toBeInTheDocument();
     act(() => opened[1].options.modal.ondismiss());
-    expect(await screen.findByRole("alert")).toHaveTextContent("The payment didn't go through (BAD_REQUEST_ERROR). Nothing was charged.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("The payment didn't go through (BAD_REQUEST_ERROR). The bank or payment app declined it, or the details didn't go through. Nothing was charged.");
   });
 
   it("shows the server's refusal when verifying fails", async () => {
@@ -186,20 +229,102 @@ describe("BillingPage", () => {
     renderWithQuery(<BillingPage />);
     expect(await screen.findByText("Confirm your email address before buying a plan.")).toBeInTheDocument();
   });
+});
 
-  it("shows a period already paid ahead and the payments made", async () => {
-    serve(
-      account({
-        plan_id: "studio",
-        current: PERIOD,
-        upcoming: { ...PERIOD, plan_id: "studio_pro", plan_name: "Studio Pro", starts_at: PERIOD.ends_at, ends_at: "2027-01-12T12:00:00Z" },
-        payments: [{ id: "p1", plan_id: "studio", plan_name: "Studio", amount_paise: 99_900, currency: "INR", status: "paid", method: "upi", created_at: PERIOD.starts_at, paid_at: PERIOD.starts_at }],
-      }),
-    );
+describe("the dashboard", () => {
+  it("says until when the plan runs, that nothing renews, and when it is ending", async () => {
+    serve(account({ plan_id: "studio", status: "active", current: PERIOD, ending_soon: true, next_start_at: PERIOD.ends_at }));
     renderWithQuery(<BillingPage />);
-    expect(await screen.findByText(/Then Studio Pro from 13 December 2026 to 12 January 2027, already paid for\./)).toBeInTheDocument();
-    expect(screen.getByText(/Your next period is already paid for/)).toBeInTheDocument();
-    expect(screen.getByRole("table", { name: "Your recent payments" })).toHaveTextContent("Paid");
+    expect(await screen.findByText(/Active until 13 December 2026\. Nothing renews or charges by itself\./)).toBeInTheDocument();
+    expect(screen.getByText(/Studio ends on 13 December 2026\. Buy another period below/)).toBeInTheDocument();
+    expect(screen.getByText(/There's nothing to cancel/)).toBeInTheDocument();
+    // Buying now adds the next period after this one, and the button says when.
+    expect(screen.getByRole("button", { name: "Pay ₹2,499 for Studio Pro from 13 December" })).toBeEnabled();
+  });
+
+  it("says when a period ended and that the pieces are kept", async () => {
+    serve(account({ last_ended: { ...PERIOD, ended_early: false } }));
+    renderWithQuery(<BillingPage />);
+    expect(await screen.findByText("Studio ended on 13 December 2026. You're on Free; your pieces are kept.")).toBeInTheDocument();
+  });
+
+  it("cancels a period that hasn't started only after a second, explicit step", async () => {
+    const cancelled = account({ plan_id: "studio", status: "active", current: PERIOD });
+    const cancel = vi.fn(() => Response.json({ refund: "processed", account: cancelled }));
+    const fetch = serve(account({ plan_id: "studio", status: "active", current: PERIOD, upcoming: NEXT }), {
+      "POST /api/billing/payments/p2/cancel": cancel,
+    });
+    renderWithQuery(<BillingPage />);
+    expect(await screen.findByText(/, already paid for./)).toHaveTextContent("Then Studio Pro from 13 December 2026 to 12 January 2027, already paid for.");
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel this period…" }));
+    const confirm = screen.getByRole("group", { name: "Confirm cancelling" });
+    expect(confirm).toHaveTextContent("its payment is refunded in full");
+    fireEvent.click(screen.getByRole("button", { name: "Keep it" }));
+    expect(cancel).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel this period…" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel and refund" }));
+    expect(await screen.findByText(/Cancelled\. Razorpay is refunding the payment in full/)).toBeInTheDocument();
+    const sent = fetch.mock.calls.find(([url]) => String(url) === "/api/billing/payments/p2/cancel")!;
+    expect(JSON.parse(String(sent[1]!.body))).toEqual({ confirm: true });
+    expect(screen.queryByText(/, already paid for./)).not.toBeInTheDocument();
+  });
+
+  it("shows the server's refusal to cancel and keeps the period", async () => {
+    serve(account({ current: PERIOD, upcoming: NEXT, status: "active", plan_id: "studio" }), {
+      "POST /api/billing/payments/p2/cancel": () => apiErrorResponse(503, "payments_unavailable", "Razorpay can't be reached right now. Nothing changed; try again."),
+    });
+    renderWithQuery(<BillingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Cancel this period…" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel and refund" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Nothing changed; try again.");
+    expect(screen.getByText(/, already paid for./)).toBeInTheDocument();
+  });
+
+  it("lists every payment, with plain failure messages and a reference to match receipts", async () => {
+    const older = payment({ id: "p0", status: "failed", paid_at: null, provider_payment_id: null, method: null, failure_code: "GATEWAY_ERROR", refreshable: true });
+    serve(account(), {
+      "GET /api/billing/payments?before=p1": () => Response.json(page([older])),
+      "GET /api/billing/payments": () => Response.json(page([payment({ refund: "partial", refunded_paise: 30_000 })], "p1")),
+    });
+    renderWithQuery(<BillingPage />);
+    const paid = await screen.findByRole("listitem", { name: "Studio, ₹999, 13 November 2026" });
+    expect(paid).toHaveTextContent("Paid, partly refunded");
+    expect(paid).toHaveTextContent("Refunded:₹300");
+    expect(paid).toHaveTextContent("Reference:pay_B2");
+    expect(paid).toHaveTextContent("Method:UPI");
+
+    fireEvent.click(screen.getByRole("button", { name: "Show more payments" }));
+    const failed = await screen.findByText("The bank or payment network had a problem. Nothing was charged.");
+    expect(failed).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Show more payments" })).not.toBeInTheDocument();
+    expect(screen.getByText(/Thread doesn't issue invoices/)).toBeInTheDocument();
+  });
+
+  it("checks an unfinished payment again and says when nothing has changed", async () => {
+    const unfinished = payment({ status: "created", paid_at: null, provider_payment_id: null, method: null, refreshable: true });
+    let refreshed = unfinished;
+    serve(account(), {
+      "GET /api/billing/payments": () => Response.json(page([refreshed])),
+      "POST /api/billing/payments/p1/refresh": () => Response.json(refreshed),
+    });
+    renderWithQuery(<BillingPage />);
+    expect(await screen.findByText(/If money left your account, check again/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Check again" }));
+    expect(await screen.findByText("No change yet.")).toBeInTheDocument();
+
+    refreshed = payment();
+    fireEvent.click(screen.getByRole("button", { name: "Check again" }));
+    await vi.waitFor(() => expect(screen.getByRole("listitem", { name: "Studio, ₹999, 13 November 2026" })).toHaveTextContent("Paid"));
+    await vi.waitFor(() => expect(screen.queryByRole("button", { name: "Check again" })).not.toBeInTheDocument());
+  });
+
+  it("explains a declined attempt in plain words", () => {
+    expect(checkoutMessage({ step: "failed", code: "BAD_REQUEST_ERROR" })).toBe(
+      "The payment didn't go through (BAD_REQUEST_ERROR). The bank or payment app declined it, or the details didn't go through. Nothing was charged.",
+    );
+    expect(checkoutMessage({ step: "failed", code: "SOMETHING_NEW" })).toContain("The payment didn't go through.");
   });
 });
 
