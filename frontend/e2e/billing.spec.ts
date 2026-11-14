@@ -1,3 +1,5 @@
+import { createHmac } from "node:crypto";
+
 import { expect, test } from "./helpers/auth";
 
 // Checkout on /account/billing, against the API's local stand-in for Razorpay
@@ -93,4 +95,42 @@ test.describe("the owner", () => {
     const refused = await request.post("/api/billing/checkout", { data: { plan_id: "studio" } });
     expect(refused.status()).toBe(403);
   });
+});
+
+// The stand-in's webhook secret (FakeProvider.WEBHOOK_SECRET): public, and only honoured with
+// the fake provider outside production.
+const FAKE_WEBHOOK_SECRET = "thread-fake-webhook-not-a-secret";
+
+test("a capture reported only by webhook still starts the period", async ({ page, request }) => {
+  const order = await (await request.post("/api/billing/checkout", { data: { plan_id: "studio" } })).json();
+  // Paid in Checkout, then the tab was closed: the browser never asked the server to verify.
+  const paid = await (await request.post("/api/billing/fake/pay", { data: { order_id: order.order_id, outcome: "captured" } })).json();
+  const body = JSON.stringify({
+    entity: "event",
+    account_id: "acc_test",
+    event: "payment.captured",
+    contains: ["payment"],
+    payload: {
+      payment: {
+        entity: { id: paid.razorpay_payment_id, entity: "payment", amount: 99_900, currency: "INR", status: "captured", order_id: order.order_id, method: "upi" },
+      },
+    },
+    created_at: Math.floor(Date.now() / 1000),
+  });
+  const send = (signature: string, eventId: string) =>
+    request.post("/api/billing/webhooks/razorpay", {
+      data: body,
+      headers: { "content-type": "application/json", "x-razorpay-signature": signature, "x-razorpay-event-id": eventId },
+    });
+  const eventId = `evt_e2e${Date.now()}`;
+
+  expect((await send("0".repeat(64), eventId)).status()).toBe(400);
+  const signature = createHmac("sha256", FAKE_WEBHOOK_SECRET).update(body).digest("hex");
+  const delivered = await send(signature, eventId);
+  expect(delivered.status(), await delivered.text()).toBe(200);
+  expect(await delivered.json()).toEqual({ status: "applied" });
+  expect(await (await send(signature, eventId)).json()).toEqual({ status: "duplicate" });
+
+  await page.goto("/account/billing");
+  await expect(page.getByText(/^Paid until /)).toBeVisible();
 });

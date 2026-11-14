@@ -20,6 +20,7 @@ adds time rather than replacing it. At most one period can be paid for in advanc
 
 import logging
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
@@ -35,7 +36,7 @@ from app.billing.razorpay import (
 )
 from app.core.config import Settings
 from app.models import Payment, Subscription, User
-from app.models.enums import BillingProvider, PaymentStatus, SubscriptionStatus
+from app.models.enums import BillingProvider, CancelReason, PaymentStatus, SubscriptionStatus
 from app.schemas.billing import (
     BillingAccount,
     CheckoutAvailability,
@@ -51,6 +52,14 @@ logger = logging.getLogger(__name__)
 
 RECENT_PAYMENTS = 10
 ACTIVE = SubscriptionStatus.ACTIVE.value
+
+
+@dataclass(frozen=True)
+class Reconciled:
+    payment_id: UUID
+    before: str
+    after: str
+    note: str
 
 
 class BillingRefused(Exception):
@@ -240,22 +249,39 @@ class BillingService:
             # Settled meanwhile (a repeated request, or later the webhook).
             self.db.commit()
             return self._settled_result(payment)
-        if (remote.id, remote.order_id, remote.amount_paise, remote.currency) != (
-            payment_id,
-            payment.provider_order_id,
-            payment.amount_paise,
-            payment.currency,
-        ):
+        if not self.matches(payment, remote, payment_id):
             self.db.rollback()
-            logger.error("Razorpay payment %s does not match payment %s", remote.id, payment.id)
             raise BillingRefused(
                 "payment_mismatch", "This payment could not be confirmed. Nothing changed.", 400
             )
-        return self._apply(payment, remote)
+        result = self.settle(payment, remote)
+        if result is None:
+            self.db.rollback()
+            raise BillingRefused(
+                "payment_refunded", "This payment was refunded, so it grants no access.", 409
+            )
+        self.db.commit()
+        return result
 
-    # --- internals -------------------------------------------------------------------------
+    # --- settling (shared by verify, webhooks and reconciliation) ---------------------------
+    # The caller holds the payment row lock and commits.
 
-    def _apply(self, payment: Payment, remote: ProviderPayment) -> CheckoutResult:
+    @staticmethod
+    def matches(payment: Payment, remote: ProviderPayment, payment_id: str | None = None) -> bool:
+        """The provider's payment is on this order, for this amount and currency."""
+        same = (remote.order_id, remote.amount_paise, remote.currency) == (
+            payment.provider_order_id,
+            payment.amount_paise,
+            payment.currency,
+        )
+        if not same or (payment_id is not None and remote.id != payment_id):
+            logger.error("Razorpay payment %s does not match payment %s", remote.id, payment.id)
+            return False
+        return True
+
+    def settle(self, payment: Payment, remote: ProviderPayment) -> CheckoutResult | None:
+        """Bring an unsettled payment (created or failed) in line with the provider's word.
+        Returns None for a payment the provider says was refunded: nothing is applied."""
         now = self.clock()
         if remote.status == "captured":
             payment.status = PaymentStatus.PAID.value
@@ -265,7 +291,11 @@ class BillingService:
             # An earlier attempt on this order may have failed; this one went through.
             payment.failed_at = None
             payment.failure_code = None
-            assert payment.user_id is not None  # noqa: S101 (selected by user_id)
+            if payment.user_id is None:
+                # The account was deleted before the capture arrived: the money is recorded,
+                # but there is no one to give access to. It needs a refund (never automatic).
+                logger.warning("Payment %s captured after its account was deleted", payment.id)
+                return CheckoutResult(status="paid", period=None)
             # One account's payments are settled one at a time, so two can't both start now.
             self.db.execute(select(User.id).where(User.id == payment.user_id).with_for_update())
             starts_at = self._next_start(payment.user_id, now)
@@ -278,28 +308,110 @@ class BillingService:
                 ends_at=starts_at + timedelta(days=payment.period_days),
             )
             self.db.add(period)
-            self.db.commit()
-            logger.info("Payment %s verified; access period %s granted", payment.id, period.id)
+            self.db.flush()
+            logger.info("Payment %s settled; access period %s granted", payment.id, period.id)
             return CheckoutResult(status="paid", period=self._period(period))
         if remote.status == "failed":
             payment.status = PaymentStatus.FAILED.value
             payment.failed_at = payment.failed_at or now
             payment.failure_code = remote.error_code
-            self.db.commit()
             return CheckoutResult(status="failed", period=None, failure_code=remote.error_code)
         if remote.status == "refunded":
-            self.db.rollback()
-            raise BillingRefused(
-                "payment_refunded", "This payment was refunded, so it grants no access.", 409
-            )
+            return None
         # created or authorized: not captured yet, so nothing is granted. Razorpay captures it
         # (or refunds an authorization that is never captured); the webhook then settles it.
-        self.db.rollback()
         return CheckoutResult(status="pending", period=None)
+
+    def record_refund(self, payment: Payment, refunded_paise: int) -> bool:
+        """Record the provider's cumulative refunded amount on a settled payment. A full refund
+        ends the access period it bought; a partial one keeps it. False if nothing changed
+        (an older or repeated report: refunds only ever grow)."""
+        refunded = min(refunded_paise, payment.amount_paise)
+        if refunded <= payment.refunded_paise:
+            return False
+        now = self.clock()
+        payment.refunded_paise = refunded
+        payment.refunded_at = now
+        if refunded == payment.amount_paise:
+            payment.status = PaymentStatus.REFUNDED.value
+            period = self.db.scalar(
+                select(Subscription)
+                .where(Subscription.payment_id == payment.id, Subscription.status == ACTIVE)
+                .with_for_update()
+            )
+            if period is not None:
+                period.status = SubscriptionStatus.CANCELLED.value
+                period.cancelled_at = now
+                period.cancel_reason = CancelReason.REFUND.value
+        logger.info(
+            "Payment %s refunded %s of %s paise", payment.id, refunded, payment.amount_paise
+        )
+        return True
+
+    def reconcile(
+        self, *, settle_after: timedelta, look_back: timedelta, apply: bool
+    ) -> list[Reconciled]:
+        """Ask Razorpay about payments still unsettled (created or failed) that are older than
+        settle_after and younger than look_back, and settle each as Razorpay says. For when
+        webhooks can't arrive (no public URL yet) or were missed. With apply=False nothing is
+        written: it only reports what it would do."""
+        if self.provider is None:
+            raise NOT_SET_UP
+        now = self.clock()
+        rows = self.db.execute(
+            select(Payment.id, Payment.provider_order_id, Payment.status)
+            .where(
+                Payment.provider == BillingProvider.RAZORPAY.value,
+                Payment.status.in_((PaymentStatus.CREATED.value, PaymentStatus.FAILED.value)),
+                Payment.created_at <= now - settle_after,
+                Payment.created_at >= now - look_back,
+            )
+            .order_by(Payment.created_at)
+        ).all()
+        self.db.commit()  # nothing stays locked while Razorpay is asked
+        report: list[Reconciled] = []
+        for payment_id, order_id, status in rows:
+            try:
+                attempts = self.provider.order_payments(order_id)
+            except (ProviderUnavailable, ProviderError) as exc:
+                report.append(Reconciled(payment_id, status, "unreachable", str(exc)))
+                continue
+            remote = _decisive(attempts)
+            if remote is None:
+                report.append(Reconciled(payment_id, status, "unchanged", _summary(attempts)))
+                continue
+            if not apply:
+                report.append(Reconciled(payment_id, status, f"would be {remote.status}", ""))
+                continue
+            payment = self.db.scalar(
+                select(Payment)
+                .where(Payment.id == payment_id)
+                .with_for_update()
+                .execution_options(populate_existing=True)
+            )
+            if (
+                payment is None
+                or payment.status not in (PaymentStatus.CREATED.value, PaymentStatus.FAILED.value)
+                or (remote.status == "failed" and payment.status == PaymentStatus.FAILED.value)
+                or not self.matches(payment, remote)
+            ):
+                self.db.rollback()
+                report.append(Reconciled(payment_id, status, "unchanged", "settled meanwhile"))
+                continue
+            self.settle(payment, remote)
+            self.db.commit()
+            report.append(Reconciled(payment_id, status, payment.status, ""))
+        return report
+
+    # --- internals -------------------------------------------------------------------------
 
     def _settled_result(self, payment: Payment) -> CheckoutResult:
         if payment.status == PaymentStatus.FAILED.value:
             return CheckoutResult(status="failed", period=None, failure_code=payment.failure_code)
+        if payment.status == PaymentStatus.REFUNDED.value:
+            raise BillingRefused(
+                "payment_refunded", "This payment was refunded, so it grants no access.", 409
+            )
         period = self.db.scalar(select(Subscription).where(Subscription.payment_id == payment.id))
         return CheckoutResult(
             status="paid" if period is not None else "failed",
@@ -391,3 +503,20 @@ def _provider_failed(after: str = NOTHING_CHARGED) -> BillingRefused:
     return BillingRefused(
         "payment_provider_error", f"Razorpay gave an answer Thread couldn't use. {after}", 502
     )
+
+
+def _decisive(attempts: list[ProviderPayment]) -> ProviderPayment | None:
+    """The attempt that settles an order: a captured one if any; else, when every attempt
+    failed, the last failure. An attempt still open (created, authorized) decides nothing."""
+    captured = [a for a in attempts if a.status == "captured"]
+    if captured:
+        return captured[0]
+    if attempts and all(a.status == "failed" for a in attempts):
+        return attempts[-1]
+    return None
+
+
+def _summary(attempts: list[ProviderPayment]) -> str:
+    if not attempts:
+        return "no payment attempts"
+    return ", ".join(sorted({a.status for a in attempts}))

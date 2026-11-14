@@ -22,6 +22,7 @@ import re
 import secrets
 import threading
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any, Literal, Protocol
 
 import httpx
@@ -68,6 +69,18 @@ class ProviderPayment:
     status: ProviderStatus
     method: str | None
     error_code: str | None
+    # Refunded so far, in paise (cumulative): only webhook and fetch payloads carry it.
+    refunded_paise: int = 0
+
+
+@dataclass(frozen=True)
+class WebhookEvent:
+    """The parts of a webhook event Thread acts on. The body itself is never stored."""
+
+    type: str
+    occurred_at: datetime
+    # None when the event carries no payment Thread can read (most event types).
+    payment: ProviderPayment | None
 
 
 class PaymentProvider(Protocol):
@@ -82,6 +95,8 @@ class PaymentProvider(Protocol):
 
     def signature_valid(self, order_id: str, payment_id: str, signature: str) -> bool: ...
 
+    def order_payments(self, order_id: str) -> list[ProviderPayment]: ...
+
 
 def payment_signature(secret: str, order_id: str, payment_id: str) -> str:
     """The signature Razorpay Checkout returns for a successful payment."""
@@ -95,6 +110,41 @@ def signature_matches(secret: str, order_id: str, payment_id: str, signature: st
         return False
     expected = payment_signature(secret, order_id, payment_id)
     return hmac.compare_digest(expected, signature)
+
+
+def webhook_signature(secret: str, body: bytes) -> str:
+    """X-Razorpay-Signature: HMAC-SHA256 of the raw request body with the webhook secret."""
+    return hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+
+
+def webhook_signature_matches(secret: str, body: bytes, signature: str) -> bool:
+    if not SIGNATURE.fullmatch(signature):
+        return False
+    return hmac.compare_digest(webhook_signature(secret, body), signature)
+
+
+def parse_event(body: Any) -> WebhookEvent:
+    """Read a verified webhook body. Only the payment entity is read, and only if well formed;
+    an event Thread can't read is still a valid event, just one it ignores."""
+    if not isinstance(body, dict) or not isinstance(body.get("event"), str):
+        raise ProviderError("Not a Razorpay webhook event")
+    created = body.get("created_at")
+    # Unix seconds in Razorpay's samples; a missing or odd value falls back to now.
+    occurred_at = (
+        datetime.fromtimestamp(created, UTC)
+        if type(created) is int and 0 < created < 10**11
+        else datetime.now(UTC)
+    )
+    payment = None
+    entity = (
+        body.get("payload", {}).get("payment", {}) if isinstance(body.get("payload"), dict) else {}
+    )
+    if isinstance(entity, dict) and isinstance(entity.get("entity"), dict):
+        try:
+            payment = parse_payment(entity["entity"])
+        except ProviderError:
+            payment = None
+    return WebhookEvent(type=body["event"][:64], occurred_at=occurred_at, payment=payment)
 
 
 def method_kind(method: object) -> str | None:
@@ -135,6 +185,7 @@ def parse_payment(body: Any) -> ProviderPayment:
             status=body["status"],
             method=method_kind(body.get("method")),
             error_code=_error_code(body.get("error_code")),
+            refunded_paise=body.get("amount_refunded") or 0,
         )
     except (KeyError, TypeError, AttributeError) as exc:
         raise ProviderError("Razorpay's payment response was incomplete") from exc
@@ -146,6 +197,8 @@ def parse_payment(body: Any) -> ProviderPayment:
         and type(payment.amount_paise) is int
         and isinstance(payment.currency, str)
         and payment.status in PROVIDER_STATUSES
+        and type(payment.refunded_paise) is int
+        and 0 <= payment.refunded_paise <= payment.amount_paise
     ):
         raise ProviderError("Razorpay's payment response was malformed")
     return payment
@@ -217,6 +270,16 @@ class RazorpayClient:
     def signature_valid(self, order_id: str, payment_id: str, signature: str) -> bool:
         return signature_matches(self._secret.get_secret_value(), order_id, payment_id, signature)
 
+    def order_payments(self, order_id: str) -> list[ProviderPayment]:
+        """Every payment attempt on one order (GET /v1/orders/{id}/payments)."""
+        if not ORDER_ID.fullmatch(order_id):
+            raise ProviderError("Not a Razorpay order id")
+        body = self._request("GET", f"/orders/{order_id}/payments")
+        items = body.get("items")
+        if not isinstance(items, list):
+            raise ProviderError("Razorpay's order payments response was malformed")
+        return [parse_payment(item) for item in items]
+
 
 def _safe_json(response: httpx.Response) -> dict[str, Any]:
     try:
@@ -237,6 +300,8 @@ class FakeProvider:
     name: Literal["razorpay", "fake"] = "fake"
     key_id = "rzp_test_fakelocal"
     SECRET = "thread-fake-provider-not-a-secret"  # noqa: S105
+    # Signs the stand-in's webhooks, which end-to-end tests send themselves.
+    WEBHOOK_SECRET = "thread-fake-webhook-not-a-secret"  # noqa: S105
 
     def __init__(self) -> None:
         self._orders: dict[str, Order] = {}
@@ -282,6 +347,10 @@ class FakeProvider:
     def signature_valid(self, order_id: str, payment_id: str, signature: str) -> bool:
         return signature_matches(self.SECRET, order_id, payment_id, signature)
 
+    def order_payments(self, order_id: str) -> list[ProviderPayment]:
+        with self._lock:
+            return [p for p in self._payments.values() if p.order_id == order_id]
+
 
 FAKE_PROVIDER = FakeProvider()
 
@@ -293,4 +362,13 @@ def provider_for(settings: Settings) -> PaymentProvider | None:
         return FAKE_PROVIDER if settings.app_env != "production" else None
     if settings.razorpay_configured:
         return RazorpayClient(settings)
+    return None
+
+
+def webhook_secret_for(settings: Settings, provider: PaymentProvider | None) -> str | None:
+    """The secret webhooks must be signed with, or None when webhooks aren't set up."""
+    if provider is FAKE_PROVIDER and settings.app_env != "production":
+        return FakeProvider.WEBHOOK_SECRET
+    if settings.payment_provider == "razorpay" and settings.razorpay_webhook_secret is not None:
+        return settings.razorpay_webhook_secret.get_secret_value()
     return None

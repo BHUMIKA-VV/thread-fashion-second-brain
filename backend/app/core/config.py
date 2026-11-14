@@ -85,7 +85,7 @@ class Settings(BaseSettings):
     razorpay_mode: Literal["test"] = "test"
     razorpay_key_id: str | None = None
     razorpay_key_secret: SecretStr | None = None
-    # Read by the webhook endpoint (a later increment); declared here so it is validated.
+    # Signs Razorpay webhooks (POST /billing/webhooks/razorpay); set on the Dashboard webhook.
     razorpay_webhook_secret: SecretStr | None = None
     razorpay_timeout_seconds: float = Field(default=10.0, gt=0, le=30)
     # Orders started per account per hour (a guard against scripted abuse).

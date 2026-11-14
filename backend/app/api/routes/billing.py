@@ -5,10 +5,13 @@ for how a payment is verified). The /billing/fake/* endpoints serve a local stan
 Razorpay Checkout to development and end-to-end tests; they answer 404 everywhere else.
 """
 
+import json
+import re
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from app.api.deps import CurrentUser
@@ -18,7 +21,10 @@ from app.billing.razorpay import (
     FakeProvider,
     PaymentProvider,
     ProviderError,
+    parse_event,
     provider_for,
+    webhook_secret_for,
+    webhook_signature_matches,
 )
 from app.core.config import Settings, get_settings
 from app.db.session import get_db
@@ -33,10 +39,14 @@ from app.schemas.billing import (
     PlanCatalogue,
     PlanRead,
 )
-from app.services.billing import BillingService
+from app.services.billing import BillingRefused, BillingService, BillingUnavailable
+from app.services.billing_webhooks import WebhookService
 
 FAKE_CHECKOUT_JS = Path(__file__).resolve().parents[2] / "billing" / "fake_checkout.js"
 NO_STORE = "no-store"
+# Razorpay's events are a few kilobytes; anything far larger isn't one.
+MAX_WEBHOOK_BYTES = 64 * 1024
+EVENT_ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
 
 router = APIRouter(prefix="/billing", tags=["billing"])
 
@@ -108,6 +118,41 @@ def verify_checkout(
     """Confirm a payment Checkout reported, with Razorpay itself, before granting access."""
     response.headers["Cache-Control"] = NO_STORE
     return billing.verify(user, body.order_id, body.payment_id, body.signature)
+
+
+@router.post("/webhooks/razorpay", include_in_schema=False)
+async def razorpay_webhook(
+    request: Request,
+    settings: Annotated[Settings, Depends(get_settings)],
+    provider: Annotated[PaymentProvider | None, Depends(get_payment_provider)],
+    billing: Billing,
+) -> dict[str, str]:
+    """Events from Razorpay, signed with the webhook secret. No session: the signature over the
+    raw body is the only thing that makes a request believable. Answers 2xx once an event is
+    recorded (or recognised as a repeat), so Razorpay stops retrying it."""
+    secret = webhook_secret_for(settings, provider)
+    if secret is None:
+        # 503 rather than 404: Razorpay keeps retrying for 24 hours while this is fixed.
+        raise BillingUnavailable("webhooks_not_configured", "Webhooks aren't set up here.")
+    declared = request.headers.get("content-length", "")
+    if declared.isdigit() and int(declared) > MAX_WEBHOOK_BYTES:
+        raise BillingRefused("too_large", "That is not a webhook event.", 413)
+    body = await request.body()
+    if len(body) > MAX_WEBHOOK_BYTES:
+        raise BillingRefused("too_large", "That is not a webhook event.", 413)
+    # Checked on the exact bytes received, before anything in them is read.
+    signature = request.headers.get("x-razorpay-signature", "")
+    if not webhook_signature_matches(secret, body, signature):
+        raise BillingRefused("signature_invalid", "The webhook signature did not match.", 400)
+    event_id = request.headers.get("x-razorpay-event-id", "")
+    if not EVENT_ID.fullmatch(event_id):
+        raise BillingRefused("event_id_missing", "The webhook had no usable event id.", 400)
+    try:
+        event = parse_event(json.loads(body))
+    except (ValueError, ProviderError) as exc:
+        raise BillingRefused("not_an_event", "The webhook body is not an event.", 400) from exc
+    handled = await run_in_threadpool(WebhookService(billing.db, billing).handle, event_id, event)
+    return {"status": handled.outcome}
 
 
 # --- the local stand-in for Razorpay Checkout (development and end-to-end tests only) ------
