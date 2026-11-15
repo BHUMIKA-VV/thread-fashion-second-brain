@@ -381,7 +381,9 @@ def test_the_same_photo_can_be_in_two_archives(web: TestClient) -> None:
 def test_accounts_have_a_piece_quota_the_owner_does_not(
     web: TestClient, db: Session, settings: Settings
 ) -> None:
-    app.dependency_overrides[get_settings] = lambda: settings.model_copy(update={"quota_items": 1})
+    app.dependency_overrides[get_settings] = lambda: settings.model_copy(
+        update={"quota_items": 1, "plan_free_pieces": 1}
+    )
     alice = account(web, "alice@example.com")
     assert upload(alice, seed=1).status_code == 201
     full = upload(alice, seed=2)
@@ -394,7 +396,7 @@ def test_accounts_have_a_piece_quota_the_owner_does_not(
 
 def test_accounts_have_a_storage_quota(web: TestClient, settings: Settings) -> None:
     app.dependency_overrides[get_settings] = lambda: settings.model_copy(
-        update={"quota_bytes": 1000}
+        update={"quota_bytes": 1000, "plan_free_bytes": 1000}
     )
     alice = account(web, "alice@example.com")
     full = upload(alice)
@@ -643,8 +645,8 @@ def security_verify(password_hash: str | None, password: str) -> bool:
 
 
 def test_the_default_storage_limit_reads_in_megabytes(db: Session, storage: LocalStorage) -> None:
-    from app.services.auth import AuthRefused
-    from app.services.items import ItemService
+    from app.services.auth import AuthRefused, Principal
+    from app.services.entitlements import EntitlementService
     from tests.conftest import make_item
 
     defaults = Settings(_env_file=None, database_url="postgresql+psycopg://unused/db")  # type: ignore[call-arg]
@@ -654,5 +656,5 @@ def test_the_default_storage_limit_reads_in_megabytes(db: Session, storage: Loca
     db.flush()
     make_item(db, user, file_size=250 * 1024**2)
     with pytest.raises(AuthRefused) as refused:
-        ItemService(db, storage, defaults, user.id).check_quota(1)
+        EntitlementService(db, defaults).check_upload(Principal(user.id, False, True), 1)
     assert "250 MB storage limit" in refused.value.message

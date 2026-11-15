@@ -39,6 +39,7 @@ from app.schemas.billing import (
     CheckoutVerify,
     FakePay,
     FeatureRead,
+    LimitsPolicy,
     PaymentPage,
     PaymentRead,
     PlanCatalogue,
@@ -80,6 +81,11 @@ def list_plans(
             )
             for p in plans(settings)
         ],
+        limits=LimitsPolicy(
+            starts_at=settings.plan_limits_from,
+            earlier_pieces=settings.quota_items,
+            earlier_bytes=settings.quota_bytes,
+        ),
     )
 
 

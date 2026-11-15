@@ -19,8 +19,18 @@ class PlanRead(BaseModel):
     currency: Literal["INR"]
     period_days: int | None = Field(description="Days one payment covers; null for Free")
     max_pieces: int
-    max_bytes: int | None = Field(description="Storage for photographs; null if not set")
+    max_bytes: int = Field(description="Storage for photographs, in bytes")
     features: list[str] = Field(description="Keys into the catalogue's features, in order")
+
+
+class LimitsPolicy(BaseModel):
+    """When plan limits apply, and what earlier accounts keep."""
+
+    starts_at: datetime | None = Field(
+        description="When plan limits start; null: not yet, every account keeps the earlier ones"
+    )
+    earlier_pieces: int = Field(description="Pieces every account had before plans")
+    earlier_bytes: int = Field(description="Storage every account had before plans")
 
 
 class PlanCatalogue(BaseModel):
@@ -32,6 +42,7 @@ class PlanCatalogue(BaseModel):
     on_sale: bool = Field(description="Whether a plan can be bought; false until checkout opens")
     features: list[FeatureRead]
     plans: list[PlanRead]
+    limits: LimitsPolicy
 
 
 PaidPlanId = Literal["studio", "studio_pro"]
@@ -79,6 +90,19 @@ class CheckoutAvailability(BaseModel):
     mode: Literal["test"] = Field(description="Test mode: no real money moves")
 
 
+class UsageRead(BaseModel):
+    """How much of the archive's room is used. Limits are null for the owner."""
+
+    pieces: int
+    max_pieces: int | None
+    bytes_used: int
+    max_bytes: int | None
+    earlier_limits: bool = Field(
+        description="Held at the limits from before plans, which are larger than the plan's"
+    )
+    full: bool = Field(description="No room for another piece; nothing already added is touched")
+
+
 class BillingAccount(BaseModel):
     """The signed-in account's plan, as of now. Nothing renews by itself."""
 
@@ -90,6 +114,7 @@ class BillingAccount(BaseModel):
     last_ended: PeriodRead | None = Field(description="The latest period that is over")
     ending_soon: bool = Field(description="The current period ends within days, none follows")
     next_start_at: datetime = Field(description="When a period bought now would start")
+    usage: UsageRead
     checkout: CheckoutAvailability
 
 

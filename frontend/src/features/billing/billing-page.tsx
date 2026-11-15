@@ -10,6 +10,7 @@ import { ApiError } from "@/lib/api-client";
 import { cancelPeriod, getBillingAccount, getPlans } from "@/services/billing";
 import type { BillingAccount, BillingPeriod, CancelResult, PaidPlanId, PlanRead } from "@/types/api";
 
+import { ArchiveRoom } from "./archive-room";
 import { formatDate, formatDay, startsLater } from "./dates";
 import { failureMessage } from "./messages";
 import { PaymentHistory } from "./payment-history";
@@ -54,7 +55,7 @@ export function BillingPage() {
   return (
     <div className="space-y-14">
       <Section title="Your plan">
-        <PlanSummary data={data} />
+        <PlanSummary data={data} plans={paidPlans} />
       </Section>
 
       {!data.exempt && (
@@ -74,7 +75,14 @@ export function BillingPage() {
   );
 }
 
-function PlanSummary({ data }: { data: BillingAccount }) {
+/** The first paid plan with more room than the account has now, if any. */
+function roomierPlan(usage: BillingAccount["usage"], plans: PaidPlan[]): string | null {
+  const { max_pieces, max_bytes } = usage;
+  if (max_pieces === null || max_bytes === null) return null;
+  return plans.find((p) => p.max_pieces > max_pieces || p.max_bytes > max_bytes)?.name ?? null;
+}
+
+function PlanSummary({ data, plans }: { data: BillingAccount; plans: PaidPlan[] }) {
   // Kept here, above the period it cancels, so its outcome stays on screen once that
   // period is gone from the account.
   const queryClient = useQueryClient();
@@ -109,6 +117,7 @@ function PlanSummary({ data }: { data: BillingAccount }) {
           {current.plan_name} ends on {formatDate(current.ends_at)}. Buy another period below to carry on without a gap.
         </p>
       )}
+      <ArchiveRoom usage={data.usage} roomier={data.checkout.available ? roomierPlan(data.usage, plans) : null} />
       {data.upcoming && <Upcoming period={data.upcoming} cancel={cancel} />}
       {cancel.isSuccess && (
         <p role="status" className="mt-3 text-sm">

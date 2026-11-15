@@ -58,6 +58,16 @@ describe("UploadPanel", () => {
     expect(uploadItem).toHaveBeenCalledTimes(2);
   });
 
+  it("links a refusal for a full archive to the plan", async () => {
+    uploadItem.mockRejectedValueOnce(
+      new ApiError(403, "quota_exceeded", "Your archive is full: Free holds 25 pieces and you have 25. Every piece you have is kept."),
+    );
+    renderWithQuery(<UploadPanel />);
+    addFiles(jpeg("one-more.jpg"));
+    expect(await screen.findByText(/Your archive is full/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "See your plan" })).toHaveAttribute("href", "/account/billing");
+  });
+
   it("links duplicates to the copy already in the library", async () => {
     uploadItem.mockRejectedValue(
       new ApiError(409, "conflict", "This image is already in your library.", {

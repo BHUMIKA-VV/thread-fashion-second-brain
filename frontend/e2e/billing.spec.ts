@@ -30,6 +30,9 @@ test("a confirmed test payment starts a Studio period", async ({ page }) => {
   await page.goto("/account/billing");
   await expect(page.getByText(/Test mode\./)).toBeVisible();
   await expect(page.getByText("Free", { exact: true })).toBeVisible();
+  // Plan limits haven't started here, so a new account keeps the earlier room.
+  await expect(page.getByText("0 of 100")).toBeVisible();
+  await expect(page.getByText(/keeps the room it had before plans/)).toBeVisible();
 
   await page.getByRole("button", { name: "Pay ₹999 for Studio" }).click();
   const checkout = page.getByRole("dialog", { name: "Test checkout" });

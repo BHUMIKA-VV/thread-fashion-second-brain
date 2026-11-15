@@ -26,6 +26,7 @@ from app.schemas.items import (
     TagCount,
 )
 from app.services.embeddings import EmbeddingService
+from app.services.entitlements import EntitlementService
 from app.services.images import ImageValidationError
 from app.services.items import ItemService
 from app.services.library import library_summary
@@ -99,8 +100,8 @@ async def upload_item(
 ) -> ItemRead:
     """Upload one image. Returns at once; analysis status starts as `queued`.
 
-    Needs a verified email address, and fits within the account's quota (the owner is
-    exempt)."""
+    Needs a verified email address, and room under the account's plan limits (the owner
+    is exempt; services/entitlements.py)."""
     declared = request.headers.get("content-length")
     if (
         declared
@@ -111,8 +112,8 @@ async def upload_item(
             "too_large", f"The file is larger than {settings.max_upload_bytes // (1024 * 1024)} MB."
         )
     data = await read_limited(file, settings.max_upload_bytes)
-    if not user.is_owner:
-        await run_in_threadpool(service.check_quota, len(data))
+    entitlements = EntitlementService(service.db, settings)
+    await run_in_threadpool(entitlements.check_upload, user, len(data))
     # Decoding, re-encoding and the DB write are blocking: keep them off the event loop.
     item = await run_in_threadpool(service.upload, data, type)
     response.headers["Location"] = f"/items/{item.id}"

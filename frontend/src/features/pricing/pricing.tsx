@@ -11,10 +11,6 @@ import type { PlanCatalogue, PlanRead } from "@/types/api";
 
 import { formatPeriod, formatPrice, formatStorage } from "./format";
 
-function storageText(plan: PlanRead): string {
-  return plan.max_bytes === null ? "Not set yet" : formatStorage(plan.max_bytes);
-}
-
 function PlanCard({ plan, catalogue }: { plan: PlanRead; catalogue: PlanCatalogue }) {
   const paid = plan.price_paise > 0;
   const titleId = `plan-${plan.id}`;
@@ -34,7 +30,7 @@ function PlanCard({ plan, catalogue }: { plan: PlanRead; catalogue: PlanCatalogu
         <dt className="text-ink-muted">Private archive</dt>
         <dd className="text-right">Up to {plan.max_pieces} pieces</dd>
         <dt className="mt-2 text-ink-muted">Storage</dt>
-        <dd className="mt-2 text-right">{storageText(plan)}</dd>
+        <dd className="mt-2 text-right">{formatStorage(plan.max_bytes)}</dd>
       </dl>
 
       <ul aria-label={`${plan.name} includes`} className="mt-6 space-y-2.5 text-sm">
@@ -129,7 +125,7 @@ function Comparison({ catalogue }: { catalogue: PlanCatalogue }) {
               </th>
               {plans.map((p) => (
                 <td key={p.id} className="px-3 py-3 text-center">
-                  {storageText(p)}
+                  {formatStorage(p.max_bytes)}
                 </td>
               ))}
             </tr>
@@ -157,6 +153,18 @@ function Comparison({ catalogue }: { catalogue: PlanCatalogue }) {
   );
 }
 
+/** When plan limits apply. Accounts made before then never get less room than they had. */
+function LimitsText({ limits }: { limits: PlanCatalogue["limits"] }) {
+  const earlier = `${limits.earlier_pieces} pieces and ${formatStorage(limits.earlier_bytes)}`;
+  if (!limits.starts_at) return <>Until plan limits start, every account keeps the room it has today: {earlier}.</>;
+  const day = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(limits.starts_at));
+  return (
+    <>
+      Plan limits apply from {day}. Accounts made before then keep at least {earlier}.
+    </>
+  );
+}
+
 /** The plans and their comparison, from the server's catalogue: prices are never written here. */
 export function Pricing() {
   const catalogue = useQuery({ queryKey: ["billing", "plans"], queryFn: getPlans });
@@ -180,7 +188,7 @@ export function Pricing() {
           <p className="font-medium text-ink">Proposed pilot pricing</p>
           <p className="mt-1 text-ink-muted">
             These prices are a proposal for Thread&apos;s pilot, not settled prices, and they are in Indian rupees. Nothing is on sale yet:
-            no payment can be made and no account is charged. Until plans open, every account keeps the limits it has today.
+            no payment can be made and no account is charged. <LimitsText limits={data.limits} />
           </p>
         </div>
       )}

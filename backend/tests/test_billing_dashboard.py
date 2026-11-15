@@ -246,7 +246,12 @@ def test_a_period_that_has_not_started_can_be_cancelled_for_a_full_refund(
     db.refresh(period)
     assert (period.status, period.cancel_reason) == ("cancelled", "refund")
     history = shop.http.get("/billing/payments").json()["payments"]
-    assert [p["refund"] for p in history] == ["full", "none"]  # kept, never deleted
+    # Both kept, never deleted. (Made in one test transaction, they share a created_at, so
+    # their order isn't fixed here; the history test covers ordering.)
+    assert {p["id"]: p["refund"] for p in history} == {
+        upcoming["payment_id"]: "full",
+        current["payment_id"]: "none",
+    }
 
     # Twice is refused; so is the period that is running; the slot is free again.
     assert cancel(shop, upcoming["payment_id"]).json()["error"]["code"] == "not_cancellable"

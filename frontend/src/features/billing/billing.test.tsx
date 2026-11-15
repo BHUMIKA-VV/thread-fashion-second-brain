@@ -60,6 +60,7 @@ function account(overrides: Partial<BillingAccount> = {}): BillingAccount {
     last_ended: null,
     ending_soon: false,
     next_start_at: new Date().toISOString(),
+    usage: { pieces: 3, max_pieces: 25, bytes_used: 12 * 1024 ** 2, max_bytes: 250 * 1024 ** 2, earlier_limits: false, full: false },
     checkout: { available: true, provider: "fake", mode: "test" },
     ...overrides,
   };
@@ -92,10 +93,11 @@ const CATALOGUE: PlanCatalogue = {
   on_sale: false,
   features: [],
   plans: [
-    { id: "free", name: "Free", summary: "", price_paise: 0, currency: "INR", period_days: null, max_pieces: 25, max_bytes: null, features: [] },
-    { id: "studio", name: "Studio", summary: "", price_paise: 99_900, currency: "INR", period_days: 30, max_pieces: 100, max_bytes: 1, features: [] },
-    { id: "studio_pro", name: "Studio Pro", summary: "", price_paise: 249_900, currency: "INR", period_days: 30, max_pieces: 250, max_bytes: 2, features: [] },
+    { id: "free", name: "Free", summary: "", price_paise: 0, currency: "INR", period_days: null, max_pieces: 25, max_bytes: 250 * 1024 ** 2, features: [] },
+    { id: "studio", name: "Studio", summary: "", price_paise: 99_900, currency: "INR", period_days: 30, max_pieces: 100, max_bytes: 250 * 1024 ** 2, features: [] },
+    { id: "studio_pro", name: "Studio Pro", summary: "", price_paise: 249_900, currency: "INR", period_days: 30, max_pieces: 250, max_bytes: 1024 * 1024 ** 2, features: [] },
   ],
+  limits: { starts_at: null, earlier_pieces: 100, earlier_bytes: 250 * 1024 ** 2 },
 };
 
 const ORDER: CheckoutOrder = {
@@ -318,6 +320,47 @@ describe("the dashboard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Check again" }));
     await vi.waitFor(() => expect(screen.getByRole("listitem", { name: "Studio, ₹999, 13 November 2026" })).toHaveTextContent("Paid"));
     await vi.waitFor(() => expect(screen.queryByRole("button", { name: "Check again" })).not.toBeInTheDocument());
+  });
+
+  it("shows how much room the archive uses, as the server counts it", async () => {
+    serve(account());
+    renderWithQuery(<BillingPage />);
+    expect(await screen.findByText("3 of 25")).toBeInTheDocument();
+    expect(screen.getByText("12 MB of 250 MB")).toBeInTheDocument();
+    expect(screen.queryByText(/Your archive is full/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/room it had before plans/)).not.toBeInTheDocument();
+  });
+
+  it("says a full archive keeps every piece, and which plan has more room", async () => {
+    const full = { pieces: 30, max_pieces: 25, bytes_used: 1024 ** 2, max_bytes: 250 * 1024 ** 2, earlier_limits: false, full: true };
+    serve(account({ usage: full }));
+    renderWithQuery(<BillingPage />);
+    expect(await screen.findByText("30 of 25")).toBeInTheDocument();
+    expect(screen.getByText(/Your archive is full\. Every piece you have is kept/)).toHaveTextContent(
+      "To add another, delete a piece, or buy a period of Studio below.",
+    );
+  });
+
+  it("on the largest plan, a full archive only suggests deleting", async () => {
+    const full = { pieces: 250, max_pieces: 250, bytes_used: 1024 ** 2, max_bytes: 1024 * 1024 ** 2, earlier_limits: false, full: true };
+    serve(account({ plan_id: "studio_pro", status: "active", current: { ...NEXT, starts_at: PERIOD.starts_at, cancellable: false }, usage: full }));
+    renderWithQuery(<BillingPage />);
+    expect(await screen.findByText(/Your archive is full/)).toHaveTextContent("To add another, delete a piece.");
+  });
+
+  it("says when an account keeps the room it had before plans, and shows the owner no limits", async () => {
+    const earlier = { pieces: 40, max_pieces: 100, bytes_used: 0, max_bytes: 250 * 1024 ** 2, earlier_limits: true, full: false };
+    serve(account({ usage: earlier }));
+    const { unmount } = renderWithQuery(<BillingPage />);
+    expect(await screen.findByText("40 of 100")).toBeInTheDocument();
+    expect(screen.getByText(/keeps the room it had before plans/)).toBeInTheDocument();
+    unmount();
+
+    const owner = { pieces: 500, max_pieces: null, bytes_used: 0, max_bytes: null, earlier_limits: false, full: false };
+    serve(account({ status: "owner", exempt: true, usage: owner }));
+    renderWithQuery(<BillingPage />);
+    expect(await screen.findByText("The owner of this Thread is never charged.")).toBeInTheDocument();
+    expect(screen.queryByText(/500 of/)).not.toBeInTheDocument();
   });
 
   it("explains a declined attempt in plain words", () => {

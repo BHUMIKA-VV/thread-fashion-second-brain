@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { isArchiveFull } from "@/features/billing/archive-room";
 import { ApiError } from "@/lib/api-client";
 import { precheckFile } from "@/lib/upload-rules";
 import { uploadItem } from "@/services/items";
@@ -21,6 +22,8 @@ export type UploadEntry = {
   item?: Item;
   existingItemId?: string;
   error?: string;
+  /** Refused because the archive has no room under its plan. */
+  full?: boolean;
 };
 
 const CONCURRENCY = 3;
@@ -66,6 +69,7 @@ export function useUploadQueue() {
           patch(entry.id, {
             status: "error",
             error: error instanceof Error ? error.message : "Upload failed.",
+            full: isArchiveFull(error),
           });
         }
       } finally {
@@ -112,7 +116,7 @@ export function useUploadQueue() {
   }, []);
 
   const retry = useCallback(
-    (id: string) => patch(id, { status: "waiting", error: undefined, progress: 0 }),
+    (id: string) => patch(id, { status: "waiting", error: undefined, full: undefined, progress: 0 }),
     [patch],
   );
 

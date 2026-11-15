@@ -587,8 +587,8 @@ export type PlanRead = {
   /** Days one payment covers; null for Free. */
   period_days: number | null;
   max_pieces: number;
-  /** Storage for photographs; null when no figure is set. */
-  max_bytes: number | null;
+  /** Storage for photographs, in bytes. */
+  max_bytes: number;
   /** Keys into PlanCatalogue.features. */
   features: string[];
 };
@@ -600,6 +600,27 @@ export type PlanCatalogue = {
   on_sale: boolean;
   features: PlanFeature[];
   plans: PlanRead[];
+  limits: LimitsPolicy;
+};
+
+/** When plan limits apply, and what accounts made earlier keep. */
+export type LimitsPolicy = {
+  /** When plan limits start; null: they haven't, and every account keeps the earlier ones. */
+  starts_at: string | null;
+  earlier_pieces: number;
+  earlier_bytes: number;
+};
+
+/** How much of the archive's room is used. Limits are null for the owner. */
+export type ArchiveUsage = {
+  pieces: number;
+  max_pieces: number | null;
+  bytes_used: number;
+  max_bytes: number | null;
+  /** Held at the limits from before plans, which are larger than the plan's. */
+  earlier_limits: boolean;
+  /** No room for another piece. Nothing already added is touched. */
+  full: boolean;
 };
 
 export type PaidPlanId = "studio" | "studio_pro";
@@ -652,6 +673,7 @@ export type BillingAccount = {
   ending_soon: boolean;
   /** When a period bought now would start. */
   next_start_at: string;
+  usage: ArchiveUsage;
   checkout: { available: boolean; provider: "razorpay" | "fake"; mode: "test" };
 };
 

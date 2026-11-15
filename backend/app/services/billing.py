@@ -46,8 +46,10 @@ from app.schemas.billing import (
     PaymentPage,
     PaymentRead,
     PeriodRead,
+    UsageRead,
 )
 from app.services.auth import Principal
+from app.services.entitlements import EntitlementService
 from app.services.rate_limit import RateLimited, limiter
 
 logger = logging.getLogger(__name__)
@@ -130,6 +132,7 @@ class BillingService:
         last_ended = max(over, key=lambda p: p.cancelled_at or p.ends_at, default=None)
         cancellable = upcoming is not None and self._cancellable(principal, upcoming, now)
         next_start = self._next_start(principal.id, now)
+        ent = EntitlementService(self.db, self.settings, self.clock).for_account(principal)
         self.db.commit()
         status = "owner" if principal.is_owner else "active" if current else "free"
         return BillingAccount(
@@ -141,6 +144,14 @@ class BillingService:
             last_ended=self._period(last_ended) if last_ended else None,
             ending_soon=bool(current and upcoming is None and current.ends_at - now <= ENDING_SOON),
             next_start_at=next_start,
+            usage=UsageRead(
+                pieces=ent.pieces,
+                max_pieces=ent.max_pieces,
+                bytes_used=ent.bytes_used,
+                max_bytes=ent.max_bytes,
+                earlier_limits=ent.legacy,
+                full=not ent.room_for(0),
+            ),
             checkout=CheckoutAvailability(
                 available=self.provider is not None,
                 provider=self.provider.name if self.provider else self.settings.payment_provider,

@@ -7,6 +7,7 @@ import { useId, useRef, useState, type DragEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
+import { SeeYourPlan } from "@/features/billing/archive-room";
 import { PaletteStrip } from "@/features/palette/palette-strip";
 import { cn } from "@/lib/cn";
 import { TYPE_LABELS } from "@/lib/labels";
@@ -192,6 +193,7 @@ function QueueRow({
           {entry.error && entry.status === "error" && (
             <span className="text-xs text-danger">{entry.error}</span>
           )}
+          {entry.status === "error" && entry.full && <SeeYourPlan />}
         </div>
         {entry.status === "done" && entry.item?.palette && (
           <PaletteStrip colors={entry.item.palette.colors} className="mt-2 max-w-60 rounded-full" />

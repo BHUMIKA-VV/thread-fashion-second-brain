@@ -1,13 +1,15 @@
 """Thread's plans: what each one includes, allows and costs.
 
 This is the one place plans are defined. The pricing page reads them from GET /billing/plans
-rather than repeating prices, and later increments (checkout, limits) will read them from
-here. Prices and limits come from settings (THREAD_PLAN_*), so they can change without a
-code change; what a plan includes is fixed here, because every line must describe something
-Thread actually does.
+rather than repeating prices; checkout charges these prices and services/entitlements.py
+enforces these limits. Prices and limits come from settings (THREAD_PLAN_*), so they can
+change without a code change; what a plan includes is fixed here, because every line must
+describe something Thread actually does.
 
-The pricing is a proposal for a pilot, not validated market pricing, and nothing is on sale
-yet: no payment can be taken and these limits are not enforced.
+Every plan includes every feature: plans differ only in how large the private archive can
+be, so moving between plans never takes a board, outfit or presentation away.
+
+The pricing is a proposal for a pilot, not validated market pricing.
 """
 
 from dataclasses import dataclass
@@ -83,8 +85,7 @@ class Plan:
     # None for Free: it isn't paid for, so it has no billing period.
     period_days: int | None
     max_pieces: int
-    # None: no storage figure is set for this plan yet.
-    max_bytes: int | None
+    max_bytes: int
     features: tuple[str, ...]
 
 
@@ -98,8 +99,8 @@ def plans(settings: Settings) -> list[Plan]:
             price_paise=0,
             period_days=None,
             max_pieces=settings.plan_free_pieces,
-            max_bytes=None,
-            features=PUBLIC + ARCHIVE,
+            max_bytes=settings.plan_free_bytes,
+            features=PUBLIC + ARCHIVE + STUDIO,
         ),
         Plan(
             id=PlanId.STUDIO,

@@ -10,7 +10,7 @@ import { Pricing } from "./pricing";
 
 const MB = 1024 ** 2;
 const PUBLIC = ["demo", "playground"];
-const STUDIO = [...PUBLIC, "archive", "boards"];
+const ALL = [...PUBLIC, "archive", "boards"];
 
 function catalogue(overrides: Partial<PlanCatalogue> = {}, studioPrice = 99_900): PlanCatalogue {
   return {
@@ -23,10 +23,11 @@ function catalogue(overrides: Partial<PlanCatalogue> = {}, studioPrice = 99_900)
       { key: "boards", label: "Textile moodboards", detail: "With a colour story." },
     ],
     plans: [
-      { id: "free", name: "Free", summary: "A small archive.", price_paise: 0, currency: "INR", period_days: null, max_pieces: 25, max_bytes: null, features: [...PUBLIC, "archive"] },
-      { id: "studio", name: "Studio", summary: "A working archive.", price_paise: studioPrice, currency: "INR", period_days: 30, max_pieces: 100, max_bytes: 250 * MB, features: STUDIO },
-      { id: "studio_pro", name: "Studio Pro", summary: "More room.", price_paise: 249_900, currency: "INR", period_days: 30, max_pieces: 250, max_bytes: 1024 * MB, features: STUDIO },
+      { id: "free", name: "Free", summary: "A small archive.", price_paise: 0, currency: "INR", period_days: null, max_pieces: 25, max_bytes: 250 * MB, features: ALL },
+      { id: "studio", name: "Studio", summary: "A working archive.", price_paise: studioPrice, currency: "INR", period_days: 30, max_pieces: 100, max_bytes: 250 * MB, features: ALL },
+      { id: "studio_pro", name: "Studio Pro", summary: "More room.", price_paise: 249_900, currency: "INR", period_days: 30, max_pieces: 250, max_bytes: 1024 * MB, features: ALL },
     ],
+    limits: { starts_at: null, earlier_pieces: 100, earlier_bytes: 250 * MB },
     ...overrides,
   };
 }
@@ -58,14 +59,16 @@ describe("Pricing", () => {
     const free = screen.getByRole("region", { name: "Free" });
     expect(free).toHaveTextContent("₹0");
     expect(free).toHaveTextContent("Up to 25 pieces");
-    expect(free).toHaveTextContent("Not set yet"); // no storage figure is invented
-    expect(within(free).getByRole("list", { name: "Free includes" })).not.toHaveTextContent("moodboards");
+    expect(free).toHaveTextContent("250 MB");
+    // Every plan has boards: plans differ only in room.
+    expect(within(free).getByRole("list", { name: "Free includes" })).toHaveTextContent("Textile moodboards");
     expect(within(free).getByRole("link", { name: "Create a free account" })).toHaveAttribute("href", "/signup");
     expect(screen.getByRole("region", { name: "Studio Pro" })).toHaveTextContent("₹2,499");
 
     const note = screen.getByRole("note", { name: "About these prices" });
     expect(note).toHaveTextContent("Proposed pilot pricing");
     expect(note).toHaveTextContent("no payment can be made and no account is charged");
+    expect(note).toHaveTextContent("Until plan limits start, every account keeps the room it has today: 100 pieces and 250 MB.");
     // Only the catalogue is read; nothing is sent.
     expect(fetch.mock.calls.map(([url, init]) => `${init?.method ?? "GET"} ${String(url)}`)).toEqual(["GET /api/billing/plans"]);
   });
@@ -83,11 +86,20 @@ describe("Pricing", () => {
     const table = await screen.findByRole("table", { name: "What each plan includes and allows" });
     expect(within(table).getAllByRole("columnheader").map((h) => h.textContent)).toEqual(["Feature", "Free", "Studio", "Studio Pro"]);
     const boards = within(table).getByRole("row", { name: /Textile moodboards/ });
-    expect(within(boards).getAllByRole("cell").map((c) => c.textContent)).toEqual(["Not included", "Included", "Included"]);
+    expect(within(boards).getAllByRole("cell").map((c) => c.textContent)).toEqual(["Included", "Included", "Included"]);
     const pieces = within(table).getByRole("row", { name: /Pieces in your archive/ });
     expect(within(pieces).getAllByRole("cell").map((c) => c.textContent)).toEqual(["25", "100", "250"]);
     // The table scrolls inside a region a keyboard can reach on a narrow screen.
     expect(screen.getByRole("region", { name: "Comparison table" })).toHaveAttribute("tabindex", "0");
+  });
+
+  it("says from when plan limits apply, and what earlier accounts keep", async () => {
+    const limits = { starts_at: "2026-12-01T00:00:00Z", earlier_pieces: 100, earlier_bytes: 250 * MB };
+    routeFetch({ "GET /api/billing/plans": () => Response.json(catalogue({ limits })) });
+    renderWithQuery(<Pricing />);
+    expect(await screen.findByRole("note", { name: "About these prices" })).toHaveTextContent(
+      "Plan limits apply from 1 December 2026. Accounts made before then keep at least 100 pieces and 250 MB.",
+    );
   });
 
   it("says when the plans can't be loaded, and tries again on request", async () => {

@@ -30,7 +30,7 @@ def test_the_proposed_plans_with_server_defined_prices_in_paise(client: TestClie
     fields = ("id", "price_paise", "currency", "period_days", "max_pieces", "max_bytes")
     rows = [tuple(p[f] for f in fields) for p in body["plans"]]
     assert rows == [
-        ("free", 0, "INR", None, 25, None),
+        ("free", 0, "INR", None, 25, 250 * MB),
         ("studio", 99_900, "INR", 30, 100, 250 * MB),
         ("studio_pro", 249_900, "INR", 30, 250, 1024 * MB),
     ]
@@ -43,9 +43,9 @@ def test_each_plan_lists_known_features_and_includes_the_one_below(client: TestC
     assert all(f["label"] and f["detail"] for f in body["features"])
     free, studio, pro = (set(p["features"]) for p in body["plans"])
     assert free | studio | pro <= set(keys)
-    assert free < studio <= pro
-    assert {"demo", "playground", "archive"} <= free
-    assert {"boards", "presentations", "outfit_studio"} <= studio - free
+    # Plans differ only in room: a change of plan never takes a board or an outfit away.
+    assert free == studio == pro
+    assert {"demo", "playground", "archive", "boards", "presentations", "outfit_studio"} <= free
 
 
 def test_nothing_is_offered_that_thread_does_not_do(client: TestClient) -> None:

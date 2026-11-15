@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useId, useState, type ChangeEvent } from "react";
 
+import { isArchiveFull, SeeYourPlan } from "@/features/billing/archive-room";
 import { ApiError } from "@/lib/api-client";
 import { ACCEPT_ATTRIBUTE, precheckFile } from "@/lib/upload-rules";
 import type { NewBlock } from "@/services/boards";
@@ -12,7 +13,7 @@ type State =
   | { state: "idle" }
   | { state: "uploading"; progress: number }
   | { state: "added"; duplicate: boolean }
-  | { state: "error"; message: string };
+  | { state: "error"; message: string; full?: boolean };
 
 function existingId(error: unknown): string | null {
   if (!(error instanceof ApiError) || error.status !== 409) return null;
@@ -54,6 +55,7 @@ export function AddInspiration({ busy, onAdd }: { busy: boolean; onAdd: (block: 
         setStatus({
           state: "error",
           message: error instanceof ApiError && error.status !== 0 ? error.message : "The image could not be uploaded. Try again.",
+          full: isArchiveFull(error),
         });
       }
     } finally {
@@ -96,6 +98,7 @@ export function AddInspiration({ busy, onAdd }: { busy: boolean; onAdd: (block: 
             {status.message}
           </p>
         )}
+        {status.state === "error" && status.full && <SeeYourPlan className="text-sm underline underline-offset-2" />}
       </div>
     </section>
   );

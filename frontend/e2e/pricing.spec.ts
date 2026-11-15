@@ -26,6 +26,8 @@ test.describe("signed out", () => {
     const free = page.getByRole("region", { name: "Free", exact: true });
     await expect(free).toContainText("₹0");
     await expect(free).toContainText("Up to 25 pieces");
+    await expect(free).toContainText("250 MB");
+    await expect(note).toContainText("every account keeps the room it has today: 100 pieces and 250 MB");
     await expect(free.getByRole("link", { name: "Create a free account" })).toHaveAttribute("href", "/signup");
     const studio = page.getByRole("region", { name: "Studio", exact: true });
     await expect(studio).toContainText("₹999");
@@ -39,7 +41,7 @@ test.describe("signed out", () => {
     await expect(pro).toContainText("1 GB");
 
     const table = page.getByRole("table", { name: "What each plan includes and allows" });
-    await expect(table.getByRole("row", { name: /Outfit Studio/ }).getByRole("cell")).toHaveText(["Not included", "Included", "Included"]);
+    await expect(table.getByRole("row", { name: /Outfit Studio/ }).getByRole("cell")).toHaveText(["Included", "Included", "Included"]);
     await expect(page.getByText("Can I buy a plan today?")).toBeVisible();
     await expect(page.getByRole("link", { name: "terms", exact: true })).toHaveAttribute("href", "/terms");
     await expect(page.getByRole("link", { name: "privacy notice" })).toHaveAttribute("href", "/privacy");

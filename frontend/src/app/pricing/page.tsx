@@ -6,7 +6,7 @@ import { Pricing } from "@/features/pricing/pricing";
 import { shareMetadata } from "@/lib/site";
 
 const DESCRIPTION =
-  "Proposed pilot pricing for Thread: a free tier with the museum demo, the photo playground and a small archive, and two studio plans. Nothing is on sale yet.";
+  "Proposed pilot pricing for Thread: a free tier with the museum demo, the photo playground and a small archive, and two studio plans with more room. Nothing is on sale yet.";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -22,7 +22,7 @@ const QUESTIONS = [
   },
   {
     q: "What happens to my pieces if I change plan?",
-    a: "Nothing you have added is deleted because of a plan change. How an archive that holds more than a plan allows will be handled is set out here before plans open.",
+    a: "Nothing you have added is deleted or hidden because of a plan change. If your archive holds more than a plan allows, you keep every piece and can still view, edit, present and delete them; you can add more once there is room again.",
   },
   {
     q: "What counts towards the limits?",
@@ -48,7 +48,7 @@ export default function PricingPage() {
       <PageHeader
         kicker="Plans"
         title="Pricing"
-        description="Start with the museum demo and the photo playground. Keep a private archive, and move to a studio plan when your work needs boards, presentations and room to grow."
+        description="Start with the museum demo and the photo playground. Keep a private archive with boards, presentations and Outfit Studio, and move to a studio plan when your archive needs room to grow."
       />
       <div className="mt-10">
         <Pricing />

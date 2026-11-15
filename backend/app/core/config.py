@@ -1,6 +1,7 @@
 """Application settings, loaded from environment variables and the repo-root .env file."""
 
 import re
+from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -59,16 +60,22 @@ class Settings(BaseSettings):
     signup_limit_per_hour: int = Field(default=5, ge=1)  # per IP
     login_limit_per_15_minutes: int = Field(default=10, ge=1)  # per IP and per email
     email_limit_per_hour: int = Field(default=3, ge=1)  # verification / reset mails per address
-    # Per-account storage, so one account can't fill the disk. The owner is exempt. Sized so
-    # a 5 GB volume holds about 15 full accounts beside the owner's archive.
+    # The limits every account had before plans (the owner is exempt). Sized so a 5 GB
+    # volume holds about 15 full accounts beside the owner's archive. Until plan limits start
+    # (below), every account keeps these; afterwards, accounts made before then still do.
     quota_items: int = Field(default=100, ge=1)
     quota_bytes: int = Field(default=250 * 1024**2, ge=1)
+    # When plan limits start, as an ISO date or time (UTC if no zone is given). Unset: they
+    # haven't, and every account keeps the limits above. Set: accounts made from then on get
+    # their plan's limits; older accounts get their plan's or the ones above, whichever is
+    # larger. No piece is ever deleted or hidden because of a plan (services/entitlements.py).
+    plan_limits_from: datetime | None = None
 
-    # Plans: proposed pilot pricing, shown by GET /billing/plans and the /pricing page. Nothing
-    # is on sale yet: no account is charged, and these limits are not enforced (the quota
-    # above still applies to every account). Prices are whole paise (99_900 = Rs 999).
+    # Plans: proposed pilot pricing, shown by GET /billing/plans and the /pricing page.
+    # Prices are whole paise (99_900 = Rs 999).
     plan_period_days: int = Field(default=30, ge=1, le=366)
     plan_free_pieces: int = Field(default=25, ge=1)
+    plan_free_bytes: int = Field(default=250 * 1024**2, ge=1)
     plan_studio_price_paise: int = Field(default=99_900, gt=0)
     plan_studio_pieces: int = Field(default=100, ge=1)
     plan_studio_bytes: int = Field(default=250 * 1024**2, ge=1)
@@ -190,11 +197,18 @@ class Settings(BaseSettings):
         """Each plan gives at least as much as the one below it, for more money."""
         if not (self.plan_free_pieces <= self.plan_studio_pieces <= self.plan_studio_pro_pieces):
             raise ValueError("Plan pieces must not shrink from Free to Studio to Studio Pro")
-        if self.plan_studio_bytes > self.plan_studio_pro_bytes:
-            raise ValueError("Studio Pro must not have less storage than Studio")
+        if not (self.plan_free_bytes <= self.plan_studio_bytes <= self.plan_studio_pro_bytes):
+            raise ValueError("A plan must not have less storage than the one below it")
         if self.plan_studio_price_paise >= self.plan_studio_pro_price_paise:
             raise ValueError("Studio Pro must cost more than Studio")
         return self
+
+    @field_validator("plan_limits_from")
+    @classmethod
+    def _limits_from_in_utc(cls, value: datetime | None) -> datetime | None:
+        if value is not None and value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
+        return value
 
     @property
     def origins(self) -> list[str]:
