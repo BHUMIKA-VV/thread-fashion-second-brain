@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
+import Link from "next/link";
 import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,17 @@ export function BillingPage() {
           <TestModeNote provider={data.checkout.provider} />
           <Offer data={data} verified={Boolean(me?.email_verified)} plans={paidPlans} state={state} buy={buy} />
           <CheckoutStatus state={state} />
+          <p className="mt-5 text-sm text-ink-muted">
+            Payments are handled by Razorpay: Thread never sees card, UPI or bank details. See the{" "}
+            <Link href="/terms" className="text-ink underline underline-offset-4">
+              terms
+            </Link>{" "}
+            for refunds and the{" "}
+            <Link href="/privacy" className="text-ink underline underline-offset-4">
+              privacy notice
+            </Link>{" "}
+            for what is kept.
+          </p>
         </Section>
       )}
 

@@ -21,7 +21,7 @@ test.describe("signed out", () => {
 
     const note = page.getByRole("note", { name: "About these prices" });
     await expect(note).toContainText("Proposed pilot pricing");
-    await expect(note).toContainText("no payment can be made");
+    await expect(note).toContainText("no real payment can be made");
 
     const free = page.getByRole("region", { name: "Free", exact: true });
     await expect(free).toContainText("₹0");

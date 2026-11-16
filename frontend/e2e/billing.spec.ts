@@ -1,6 +1,10 @@
 import { createHmac } from "node:crypto";
 
+import AxeBuilder from "@axe-core/playwright";
+
 import { expect, PASSWORD, signIn, signUpVerified, test, uniqueEmail } from "./helpers/auth";
+
+const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 // Checkout on /account/billing, against the API's local stand-in for Razorpay
 // (THREAD_PAYMENT_PROVIDER=fake in backend/scripts/e2e_server.py): no keys, no network, no money.
@@ -24,6 +28,31 @@ test("only the billing page lets Razorpay Checkout in, and opens it with a full 
   const [response] = await Promise.all([page.waitForEvent("response", (r) => r.url().endsWith("/account/billing")), link.click()]);
   expect(response.request().resourceType()).toBe("document");
   await expect(page.getByRole("heading", { name: "Plan and payments", level: 1 })).toBeVisible();
+});
+
+test("the billing page and its checkout pass WCAG checks and fit a phone", async ({ page }) => {
+  await page.goto("/account/billing");
+  await expect(page.getByRole("button", { name: "Pay ₹999 for Studio" })).toBeVisible();
+  const check = async (what: string) => {
+    const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
+    expect(results.violations, what).toEqual([]);
+  };
+  await check("billing page");
+  for (const width of [360, 390]) {
+    await page.setViewportSize({ width, height: 800 });
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow, `${width}px`).toBeLessThanOrEqual(0);
+  }
+
+  // The test checkout on a phone: it fits, and closing it leaves nothing charged.
+  await page.getByRole("button", { name: "Pay ₹999 for Studio" }).click();
+  const checkout = page.getByRole("dialog", { name: "Test checkout" });
+  await expect(checkout).toBeVisible();
+  const box = await checkout.boundingBox();
+  expect(box && box.x >= 0 && box.x + box.width <= 390).toBe(true);
+  await check("checkout open");
+  await checkout.getByRole("button", { name: /close/i }).click();
+  await expect(page.getByRole("region", { name: "Buy a period" }).getByRole("status")).toHaveText("Checkout was closed. Nothing was charged.");
 });
 
 test("a confirmed test payment starts a Studio period", async ({ page }) => {

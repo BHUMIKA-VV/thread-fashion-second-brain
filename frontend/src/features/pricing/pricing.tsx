@@ -49,7 +49,7 @@ function PlanCard({ plan, catalogue }: { plan: PlanRead; catalogue: PlanCatalogu
               <ButtonLink href="/pilot#request" className="w-full">
                 Ask about {plan.name}
               </ButtonLink>
-              <p className="mt-2 text-center text-xs text-ink-muted">Payments aren&apos;t open yet.</p>
+              <p className="mt-2 text-center text-xs text-ink-muted">Real payments aren&apos;t open yet.</p>
             </>
           )
         ) : (
@@ -188,7 +188,7 @@ export function Pricing() {
           <p className="font-medium text-ink">Proposed pilot pricing</p>
           <p className="mt-1 text-ink-muted">
             These prices are a proposal for Thread&apos;s pilot, not settled prices, and they are in Indian rupees. Nothing is on sale yet:
-            no payment can be made and no account is charged. <LimitsText limits={data.limits} />
+            no real payment can be made and no account is charged. <LimitsText limits={data.limits} />
           </p>
         </div>
       )}

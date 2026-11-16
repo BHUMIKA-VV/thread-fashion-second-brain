@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Privacy" };
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy" updated="3 November 2026">
+    <LegalPage title="Privacy" updated="16 November 2026">
       <section>
         <h2>What is stored</h2>
         <ul>
@@ -20,8 +20,10 @@ export default function PrivacyPage() {
         <p>
           Your archive is private to your account. Other accounts can&apos;t see, search or find
           your pieces. The owner of this Thread can see account names, email addresses and how many
-          pieces each account holds, to deal with abuse. No advertising, no tracking of you across
-          pages or sites, and no analytics cookies; the only cookie is the one that keeps you signed in.
+          pieces each account holds, to deal with abuse. The owner can also see each account&apos;s
+          plan and payments, to help with them, and what the owner does there is recorded. No
+          advertising, no tracking of you across pages or sites, and no analytics cookies; the only
+          cookie is the one that keeps you signed in.
         </p>
       </section>
       <section>
@@ -53,9 +55,23 @@ export default function PrivacyPage() {
         <h2>Who else handles it</h2>
         <p>
           Images are analysed on Thread&apos;s own server. Account emails are delivered by an email
-          provider. Only the owner of this Thread can send a piece to Anthropic&apos;s Claude for
+          provider. Payments are handled by Razorpay (below). Only the owner of this Thread can send a piece to Anthropic&apos;s Claude for
           deep analysis; your pieces are never sent.
         </p>
+      </section>
+      <section>
+        <h2>If you buy a plan</h2>
+        <p>
+          Payments are handled by Razorpay. Card, UPI and bank details are entered in
+          Razorpay&apos;s checkout and go to Razorpay, never to Thread; Razorpay&apos;s own privacy
+          policy covers what it processes.
+        </p>
+        <ul>
+          <li>For each payment, Thread keeps the plan, the amount, its status, the kind of payment method (such as &ldquo;UPI&rdquo;), Razorpay&apos;s order, payment and refund references, a short error code if it failed, and when it happened.</li>
+          <li>Never card numbers, UPI IDs, bank details, or your phone number.</li>
+          <li>If you delete your account, these payment records are kept as a record of money taken, but no longer linked to you.</li>
+          <li>While Thread is in its pilot, payments run in Razorpay&apos;s test mode and no real money is taken.</li>
+        </ul>
       </section>
       <section>
         <h2>If you register interest</h2>
@@ -75,8 +91,9 @@ export default function PrivacyPage() {
         <h2>Deleting your data</h2>
         <p>
           Deleting your account from your account page removes your account, every piece,
-          collection and image file at once. To have an interest registration deleted, or for any
-          other request, write to <Contact />.
+          collection and image file at once. Payment records are the one exception: they are kept,
+          no longer linked to you (see above). To have an interest registration deleted, or for
+          any other request, write to <Contact />.
         </p>
       </section>
     </LegalPage>

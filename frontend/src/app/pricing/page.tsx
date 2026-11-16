@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 const QUESTIONS = [
   {
     q: "Can I buy a plan today?",
-    a: "Not yet. These are proposed prices for a pilot, published so you can tell us whether they fit. No payment can be made on Thread yet and no account is charged. To take part in the pilot, ask on the studio pilot page.",
+    a: "Not with real money. These are proposed prices for a pilot, published so you can tell us whether they fit. Pilot accounts can try checkout on their billing page, where payments run in Razorpay's test mode and no real money is taken. To take part in the pilot, ask on the studio pilot page.",
   },
   {
     q: "What happens to my pieces if I change plan?",
@@ -38,7 +38,7 @@ const QUESTIONS = [
   },
   {
     q: "What about cancellation and refunds?",
-    a: "The cancellation and refund policy will be published in the terms before any payment can be made.",
+    a: "Nothing renews: each payment buys one 30-day period. A period that hasn't started can be cancelled from your billing page for a full refund; a period that has started isn't refunded through the site. The terms set this out in full.",
   },
 ] as const;
 

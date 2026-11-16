@@ -135,6 +135,25 @@ afterEach(() => vi.restoreAllMocks());
 const payButton = () => screen.findByRole("button", { name: "Pay ₹999 for Studio" });
 
 describe("BillingPage", () => {
+  it("starts one checkout however quickly Pay is clicked again", async () => {
+    const fetch = serve(account());
+    renderWithQuery(<BillingPage />);
+    const pay = await payButton();
+    fireEvent.click(pay);
+    fireEvent.click(pay);
+    fireEvent.click(screen.getByRole("button", { name: "Pay ₹2,499 for Studio Pro" }));
+    await vi.waitFor(() => expect(opened).toHaveLength(1));
+    expect(fetch.mock.calls.filter(([url]) => String(url) === "/api/billing/checkout")).toHaveLength(1);
+  });
+
+  it("says Razorpay handles payments, and links to the terms and the privacy notice", async () => {
+    serve(account());
+    renderWithQuery(<BillingPage />);
+    expect(await screen.findByText(/Payments are handled by Razorpay: Thread never sees card, UPI or bank details./)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "terms" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "privacy notice" })).toHaveAttribute("href", "/privacy");
+  });
+
   it("opens Checkout for the server's order, sending only the plan", async () => {
     const fetch = serve(account());
     renderWithQuery(<BillingPage />);

@@ -54,7 +54,7 @@ describe("Pricing", () => {
     expect(studio).toHaveTextContent("250 MB");
     expect(within(studio).getByRole("list", { name: "Studio includes" })).toHaveTextContent("Textile moodboards");
     expect(within(studio).getByRole("link", { name: "Ask about Studio" })).toHaveAttribute("href", "/pilot#request");
-    expect(studio).toHaveTextContent("Payments aren't open yet.");
+    expect(studio).toHaveTextContent("Real payments aren't open yet.");
 
     const free = screen.getByRole("region", { name: "Free" });
     expect(free).toHaveTextContent("₹0");
@@ -67,7 +67,7 @@ describe("Pricing", () => {
 
     const note = screen.getByRole("note", { name: "About these prices" });
     expect(note).toHaveTextContent("Proposed pilot pricing");
-    expect(note).toHaveTextContent("no payment can be made and no account is charged");
+    expect(note).toHaveTextContent("no real payment can be made and no account is charged");
     expect(note).toHaveTextContent("Until plan limits start, every account keeps the room it has today: 100 pieces and 250 MB.");
     // Only the catalogue is read; nothing is sent.
     expect(fetch.mock.calls.map(([url, init]) => `${init?.method ?? "GET"} ${String(url)}`)).toEqual(["GET /api/billing/plans"]);
