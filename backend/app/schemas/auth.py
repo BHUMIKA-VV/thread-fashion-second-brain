@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.core.security import PASSWORD_MAX, PASSWORD_MIN
 
@@ -94,6 +94,8 @@ class AccountRead(BaseModel):
     disabled: bool
     is_owner: bool
     items: int
+    plan_id: Literal["free", "studio", "studio_pro"] = "free"
+    plan_until: datetime | None = Field(default=None, description="When the current period ends")
 
 
 class OutboxEmail(BaseModel):

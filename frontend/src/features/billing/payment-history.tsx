@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/features/pricing/format";
 import { ApiError } from "@/lib/api-client";
 import { getPayments, refreshPayment } from "@/services/billing";
-import type { BillingPayment } from "@/types/api";
+import type { BillingPayment, PaymentPage } from "@/types/api";
 
 import { formatDate } from "./dates";
 import { paymentNote, paymentStatus } from "./messages";
@@ -14,11 +14,34 @@ import { BILLING_KEY, PAYMENTS_KEY } from "./use-checkout";
 
 const METHODS: Record<string, string> = { card: "Card", upi: "UPI", netbanking: "Netbanking", wallet: "Wallet", other: "Other" };
 
-/** Every payment this account made, failed and unfinished ones included, newest first. */
-export function PaymentHistory() {
+/** Where a payment list comes from: the signed-in account's own, or (for the owner) another's. */
+export type PaymentSource = {
+  key: readonly unknown[];
+  fetchPage: (before: string | null) => Promise<PaymentPage>;
+  check: (paymentId: string) => Promise<BillingPayment>;
+  /** Also refetched after a check. */
+  related: readonly (readonly unknown[])[];
+  listLabel: string;
+  checkLabel: string;
+  /** The receipt note is for the account holder. */
+  holder: boolean;
+};
+
+const OWN: PaymentSource = {
+  key: PAYMENTS_KEY,
+  fetchPage: (before) => getPayments(before),
+  check: refreshPayment,
+  related: [BILLING_KEY],
+  listLabel: "Your payments",
+  checkLabel: "Check again",
+  holder: true,
+};
+
+/** Every payment of one account, failed and unfinished ones included, newest first. */
+export function PaymentHistory({ source = OWN }: { source?: PaymentSource }) {
   const history = useInfiniteQuery({
-    queryKey: PAYMENTS_KEY,
-    queryFn: ({ pageParam }) => getPayments(pageParam),
+    queryKey: source.key,
+    queryFn: ({ pageParam }) => source.fetchPage(pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.next_before,
   });
@@ -27,7 +50,7 @@ export function PaymentHistory() {
   if (history.isError) {
     return (
       <p role="alert" className="text-sm text-danger">
-        Thread couldn&apos;t load your payments. {history.error.message}
+        Thread couldn&apos;t load {source.holder ? "your" : "the"} payments. {history.error.message}
       </p>
     );
   }
@@ -36,9 +59,9 @@ export function PaymentHistory() {
 
   return (
     <>
-      <ul aria-label="Your payments" className="divide-y divide-line border-y border-line">
+      <ul aria-label={source.listLabel} className="divide-y divide-line border-y border-line">
         {payments.map((payment) => (
-          <PaymentRow key={payment.id} payment={payment} />
+          <PaymentRow key={payment.id} payment={payment} source={source} />
         ))}
       </ul>
       {history.hasNextPage && (
@@ -46,20 +69,21 @@ export function PaymentHistory() {
           {history.isFetchingNextPage ? "Loading…" : "Show more payments"}
         </Button>
       )}
-      <p className="mt-5 text-sm text-ink-muted">
-        Razorpay may email you a receipt for each payment; its reference matches the one shown here. Thread doesn&apos;t issue invoices.
-      </p>
+      {source.holder && (
+        <p className="mt-5 text-sm text-ink-muted">
+          Razorpay may email you a receipt for each payment; its reference matches the one shown here. Thread doesn&apos;t issue invoices.
+        </p>
+      )}
     </>
   );
 }
 
-function PaymentRow({ payment }: { payment: BillingPayment }) {
+function PaymentRow({ payment, source }: { payment: BillingPayment; source: PaymentSource }) {
   const queryClient = useQueryClient();
   const refresh = useMutation({
-    mutationFn: () => refreshPayment(payment.id),
+    mutationFn: () => source.check(payment.id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: PAYMENTS_KEY });
-      void queryClient.invalidateQueries({ queryKey: BILLING_KEY });
+      for (const key of [source.key, ...source.related]) void queryClient.invalidateQueries({ queryKey: key });
     },
   });
   const note = paymentNote(payment);
@@ -98,7 +122,7 @@ function PaymentRow({ payment }: { payment: BillingPayment }) {
       {payment.refreshable && (
         <div className="mt-2">
           <Button variant="secondary" className="px-3 py-1.5" disabled={refresh.isPending} onClick={() => refresh.mutate()}>
-            {refresh.isPending ? "Checking…" : "Check again"}
+            {refresh.isPending ? "Checking…" : source.checkLabel}
           </Button>
           <p role="status" className="mt-1 text-ink-muted">
             {refresh.isSuccess && refresh.data.status === payment.status && refresh.data.refund === payment.refund ? "No change yet." : null}

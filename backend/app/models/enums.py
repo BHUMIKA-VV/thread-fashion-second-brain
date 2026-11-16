@@ -174,6 +174,15 @@ class BillingEventOutcome(StrEnum):
     STALE = "stale"  # older than what is already recorded (arrived out of order)
 
 
+class AdminActionKind(StrEnum):
+    """What the owner did, as recorded in admin_actions."""
+
+    BILLING_LOOKUP = "billing_lookup"
+    PAYMENT_CHECK = "payment_check"  # asked Razorpay again about one payment
+    ACCOUNT_DISABLE = "account_disable"
+    ACCOUNT_ENABLE = "account_enable"
+
+
 def sql_in(values: type[StrEnum]) -> str:
     """Render "'a', 'b'" for use inside a CHECK constraint."""
     return ", ".join(f"'{v.value}'" for v in values)

@@ -3,6 +3,10 @@ import type { Metadata } from "next";
 import { PAGE, PageHeader } from "@/components/page-header";
 import { AccountsAdmin } from "@/features/auth/accounts-admin";
 import { AuthGate } from "@/features/auth/auth-gate";
+import {
+  BillingAdmin,
+  BillingSelection,
+} from "@/features/billing/billing-admin";
 import { InterestAdmin } from "@/features/interest/interest-admin";
 import { MetricsAdmin } from "@/features/metrics/metrics-admin";
 
@@ -18,7 +22,10 @@ export default function AccountsPage() {
       />
       <div className="mt-10 max-w-4xl">
         <AuthGate what="accounts">
-          <AccountsAdmin />
+          <BillingSelection>
+            <AccountsAdmin />
+            <BillingAdmin />
+          </BillingSelection>
           <InterestAdmin />
           <MetricsAdmin />
         </AuthGate>

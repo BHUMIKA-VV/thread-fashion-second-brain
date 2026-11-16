@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api-client";
-import type { AccountRead, Me } from "@/types/api";
+import type { AccountRead, AdminAccountBilling, AdminAction, BillingPayment, BillingSummary, Me, PaymentPage } from "@/types/api";
 
 const json = (method: string, body?: unknown): RequestInit => ({
   method,
@@ -38,6 +38,28 @@ export const deleteAccount = (password: string) =>
   apiFetch<void>("/auth/delete-account", json("POST", { password }));
 
 export const listAccounts = () => apiFetch<AccountRead[]>("/admin/accounts", { cache: "no-store" });
+
+/** Owner only: billing figures, lookup, one account's billing, and asking Razorpay again. */
+export const getBillingSummary = () => apiFetch<BillingSummary>("/admin/billing/summary", { cache: "no-store" });
+
+export const lookupBilling = (q: string) =>
+  apiFetch<{ account_id: string }>(`/admin/billing/lookup?q=${encodeURIComponent(q)}`, { cache: "no-store" });
+
+export const getAccountBilling = (id: string) =>
+  apiFetch<AdminAccountBilling>(`/admin/accounts/${encodeURIComponent(id)}/billing`, { cache: "no-store" });
+
+export const getAccountPayments = (id: string, before: string | null) =>
+  apiFetch<PaymentPage>(
+    `/admin/accounts/${encodeURIComponent(id)}/payments${before ? `?before=${encodeURIComponent(before)}` : ""}`,
+    { cache: "no-store" },
+  );
+
+export const checkAccountPayment = (id: string, paymentId: string) =>
+  apiFetch<BillingPayment>(`/admin/accounts/${encodeURIComponent(id)}/payments/${encodeURIComponent(paymentId)}/check`, {
+    method: "POST",
+  });
+
+export const listAdminActions = () => apiFetch<AdminAction[]>("/admin/actions", { cache: "no-store" });
 
 export const setAccountDisabled = (id: string, disabled: boolean) =>
   apiFetch<AccountRead>(`/admin/accounts/${id}/${disabled ? "disable" : "enable"}`, json("POST"));

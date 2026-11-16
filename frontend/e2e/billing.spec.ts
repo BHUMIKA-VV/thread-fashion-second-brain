@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 
-import { expect, test } from "./helpers/auth";
+import { expect, PASSWORD, signIn, signUpVerified, test, uniqueEmail } from "./helpers/auth";
 
 // Checkout on /account/billing, against the API's local stand-in for Razorpay
 // (THREAD_PAYMENT_PROVIDER=fake in backend/scripts/e2e_server.py): no keys, no network, no money.
@@ -101,6 +101,47 @@ test.describe("the owner", () => {
     await expect(page.getByRole("button", { name: /^Pay/ })).toHaveCount(0);
     const refused = await request.post("/api/billing/checkout", { data: { plan_id: "studio" } });
     expect(refused.status()).toBe(403);
+  });
+
+  test("finds an account's payment, checks it with Razorpay, and sees the action recorded", async ({ page, playwright, baseURL }) => {
+    // Someone else starts a checkout and closes the tab before paying.
+    const buyer = await playwright.request.newContext({ baseURL });
+    const email = uniqueEmail("billing-support");
+    await signUpVerified(buyer, email, "E2E Support Case");
+    await signIn(buyer, email);
+    const order = await (await buyer.post("/api/billing/checkout", { data: { plan_id: "studio" } })).json();
+
+    try {
+      await page.goto("/accounts");
+      const billing = page.getByRole("region", { name: "Billing" });
+      await expect(billing.getByText(/these amounts aren't real money/)).toBeVisible();
+      await expect(billing.getByLabel("Totals from verified payments")).toContainText("Net");
+
+      await billing.getByRole("textbox", { name: "Find an account" }).fill(order.order_id);
+      await billing.getByRole("button", { name: "Find" }).click();
+      const account = page.getByRole("region", { name: "Billing of E2E Support Case" });
+      await expect(account).toContainText("Free.");
+      const row = account.getByRole("list", { name: "Payments of E2E Support Case" }).getByRole("listitem");
+      await expect(row).toContainText("Not completed");
+      // Nothing here can refund, cancel or grant a period.
+      await expect(account.getByRole("button", { name: /refund|cancel|grant/i })).toHaveCount(0);
+
+      await row.getByRole("button", { name: "Check with Razorpay" }).click();
+      await expect(row).toContainText("No change yet.");
+
+      // Razorpay captured it after all: checking again brings Thread's record up to date.
+      await buyer.post("/api/billing/fake/pay", { data: { order_id: order.order_id, outcome: "captured" } });
+      await row.getByRole("button", { name: "Check with Razorpay" }).click();
+      await expect(row).toContainText("Paid");
+      await expect(account).toContainText("Studio, active until");
+
+      const recent = page.getByRole("list", { name: "Recent owner actions" });
+      await expect(recent.getByRole("listitem").first()).toContainText("Checked a payment with Razorpay · E2E Support Case · updated");
+      await expect(recent).toContainText("Looked up billing · E2E Support Case · found");
+    } finally {
+      await buyer.post("/api/auth/delete-account", { data: { password: PASSWORD } });
+      await buyer.dispose();
+    }
   });
 });
 

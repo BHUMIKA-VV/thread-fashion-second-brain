@@ -424,6 +424,34 @@ export type AccountRead = {
   disabled: boolean;
   is_owner: boolean;
   items: number;
+  plan_id: "free" | PaidPlanId;
+  /** When the current paid period ends; null on Free. */
+  plan_until: string | null;
+};
+
+/** The owner's billing figures. Totals come from verified payments only (test mode). */
+export type BillingSummary = {
+  accounts: { free: number; studio: number; studio_pro: number };
+  paid_ahead: number;
+  ended: number;
+  cancelled_refund: number;
+  cancelled_owner: number;
+  payments: { unfinished: number; paid: number; failed: number; refunded: number; refund_requested: number };
+  totals: { paid_paise: number; refunded_paise: number; net_paise: number };
+  mode: "test";
+  provider: "razorpay" | "fake";
+};
+
+export type AdminAccountBilling = { account: AccountRead; billing: BillingAccount };
+
+export type AdminAction = {
+  id: string;
+  created_at: string;
+  action: "billing_lookup" | "payment_check" | "account_disable" | "account_enable";
+  account_id: string | null;
+  account_name: string | null;
+  payment_id: string | null;
+  outcome: string;
 };
 
 /** A published piece as the public showcase shows it: no notes, source or file details. */

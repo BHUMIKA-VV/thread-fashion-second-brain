@@ -32,6 +32,7 @@ APP_TABLES = {
     "payments",
     "subscriptions",
     "billing_events",
+    "admin_actions",
 }
 
 
