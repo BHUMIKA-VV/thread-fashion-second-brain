@@ -358,6 +358,8 @@ class BillingService:
             )
         # A failed attempt can be followed by a successful one on the same order.
         if payment.status not in (PaymentStatus.CREATED.value, PaymentStatus.FAILED.value):
+            if payment_id != payment.provider_payment_id:
+                self.second_payment(payment, payment_id)
             self.db.commit()
             return self._settled_result(payment)
         self.db.commit()
@@ -372,6 +374,8 @@ class BillingService:
         payment = self._own_payment(principal.id, order_id, lock=True)
         if payment.status in (PaymentStatus.PAID.value, PaymentStatus.REFUNDED.value):
             # Settled meanwhile (a repeated request, or later the webhook).
+            if payment_id != payment.provider_payment_id:
+                self.second_payment(payment, payment_id)
             self.db.commit()
             return self._settled_result(payment)
         if not self.matches(payment, remote, payment_id):
@@ -525,6 +529,19 @@ class BillingService:
         self.settle(payment, remote)
         self.db.commit()
         return payment.status, ""
+
+    @staticmethod
+    def second_payment(payment: Payment, provider_payment_id: str) -> None:
+        """Another payment on an order Thread already settled. It grants nothing (one order
+        buys one period), but money may have been taken twice, so the owner is told: the log
+        names both payments and nothing about the payer."""
+        logger.warning(
+            "Order of payment %s (settled as %s) has another payment %s; it grants no access. "
+            "Check it in the Razorpay Dashboard and refund it if it was captured.",
+            payment.id,
+            payment.provider_payment_id,
+            provider_payment_id,
+        )
 
     def _sync_refund(self, payment_id: UUID) -> None:
         """Record what Razorpay has refunded on a settled payment so far."""

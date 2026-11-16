@@ -6,6 +6,7 @@ amounts in paise, created_at in Unix seconds. Each is signed here with a test we
 """
 
 import json
+import logging
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from itertools import count
@@ -187,6 +188,24 @@ def test_a_captured_payment_is_settled_once_however_often_it_is_delivered(
         ("order.paid", "ignored"),
     ]
     assert recorded[0].occurred_at == datetime.fromtimestamp(CREATED_AT, UTC)
+
+
+def test_a_second_capture_on_a_paid_order_grants_nothing_and_is_logged(
+    db: Session, hooks: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    pay = unpaid(db, account(db))
+    assert deliver(hooks, event("payment.captured", entity(pay))).json() == {"status": "applied"}
+    first = fresh(db, pay).provider_payment_id
+
+    with caplog.at_level(logging.WARNING, logger="app.services.billing"):
+        second = deliver(hooks, event("payment.captured", entity(pay, id="pay_secondone1")))
+    assert second.json() == {"status": "ignored"}
+    assert fresh(db, pay).provider_payment_id == first
+    assert len(periods(db, pay)) == 1
+    [warning] = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert str(pay.id) in warning.getMessage() and "pay_secondone1" in warning.getMessage()
+    # Nothing about the payer: the entity carried an email, phone and UPI ID.
+    assert "@" not in warning.getMessage() and "+91" not in warning.getMessage()
 
 
 def test_order_paid_alone_settles_the_payment(db: Session, hooks: TestClient) -> None:

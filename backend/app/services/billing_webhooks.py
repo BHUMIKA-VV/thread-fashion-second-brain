@@ -114,6 +114,8 @@ class WebhookService:
 
     def _captured(self, payment: Payment, remote: ProviderPayment) -> str:
         if payment.status in SETTLED:
+            if remote.status == "captured" and remote.id != payment.provider_payment_id:
+                self.billing.second_payment(payment, remote.id)
             return IGNORED  # verify (or an earlier event) got there first
         if remote.status != "captured" or not self.billing.matches(payment, remote):
             return IGNORED

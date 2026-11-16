@@ -36,7 +36,9 @@ def test_the_proposed_plans_with_server_defined_prices_in_paise(client: TestClie
     ]
 
 
-def test_each_plan_lists_known_features_and_includes_the_one_below(client: TestClient) -> None:
+def test_each_plan_lists_known_features_and_all_plans_have_the_same_ones(
+    client: TestClient,
+) -> None:
     body = catalogue(client)
     keys = [f["key"] for f in body["features"]]
     assert len(keys) == len(set(keys))
