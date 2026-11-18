@@ -6,13 +6,16 @@
 #
 # THREAD_API_URL is fixed at build time: the /api proxy (next.config.ts rewrites) is
 # compiled into the server. THREAD_CONTACT_EMAIL (shown on /terms and /privacy) too.
+#
+# Node is pinned (all three stages): a floating node:24-alpine once brought a newer npm whose
+# `npm ci` rejected the lock file, so the build changed without the repository changing.
 
-FROM node:24-alpine AS deps
+FROM node:24.22.3-alpine AS deps
 WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 
-FROM node:24-alpine AS build
+FROM node:24.22.3-alpine AS build
 WORKDIR /app
 ARG THREAD_API_URL
 ARG THREAD_CONTACT_EMAIL=""
@@ -27,7 +30,7 @@ COPY frontend/ ./
 RUN test -n "$THREAD_API_URL" || (echo "Set --build-arg THREAD_API_URL" >&2; exit 1)
 RUN npm run build
 
-FROM node:24-alpine
+FROM node:24.22.3-alpine
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \

@@ -51,9 +51,11 @@ COPY backend/ /app/backend/
 COPY database/migrations/ /app/database/migrations/
 
 # Verifies the weights' SHA-256, downloading them only if they aren't already here. Settings
-# need a database URL to load; this placeholder is never connected to.
+# need a database URL to load; this placeholder is never connected to. THREAD_APP_ENV=test
+# for this build step only: settings default to production, whose checks (secure cookies,
+# https URLs, email) can't be met while building. The running container stays production.
 COPY --from=model-weights / /app/.cache/models/
-RUN THREAD_DATABASE_URL=postgresql+psycopg://build-only/none python -m scripts.fetch_model \
+RUN THREAD_APP_ENV=test THREAD_DATABASE_URL=postgresql+psycopg://build-only/none python -m scripts.fetch_model \
  && mkdir -p /data/storage \
  && chown -R thread:thread /app/.cache /data
 
