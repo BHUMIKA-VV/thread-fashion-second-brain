@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 def ensure_dev_user() -> None:
     """Create the development user if the database is reachable and migrated."""
     settings = get_settings()
-    if settings.app_env == "production":
+    if settings.app_env != "development":
         return
     try:
         with get_session_factory()() as db, db.begin():
@@ -113,7 +113,7 @@ def create_app() -> FastAPI:
     app.include_router(outfits.router)
     app.include_router(boards.router)
     app.include_router(deep_analysis.router)
-    if settings.app_env != "production" and settings.mail_provider == "log":
+    if settings.app_env == "development" and settings.mail_provider == "log":
         app.include_router(dev.router)
     return app
 

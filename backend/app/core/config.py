@@ -28,7 +28,10 @@ class Settings(BaseSettings):
 
     app_name: str = "Thread API"
     app_version: str = "0.1.0"
-    app_env: Literal["development", "test", "production"] = "development"
+    # Production unless set otherwise: a deployment that forgets THREAD_APP_ENV gets every
+    # production check (and refuses to start if its settings aren't safe) instead of quietly
+    # running as development. Local work sets THREAD_APP_ENV=development in .env.
+    app_env: Literal["development", "test", "production"] = "production"
     log_level: str = "INFO"
 
     database_url: str = Field(
@@ -38,8 +41,9 @@ class Settings(BaseSettings):
 
     # The local development user: it owns the archive built before accounts existed and
     # becomes the owner account once claimed (`python -m scripts.claim_owner`). With
-    # dev_auto_signin, a request without a session acts as this user, in development only,
-    # so local work needs no sign-in; it is never honoured in test or production.
+    # dev_auto_signin, a request without a session acts as this user, in development only
+    # and only from this machine (a loopback connection), so local work needs no sign-in; it
+    # is never honoured in test or production, nor for a request from anywhere else.
     dev_user_id: UUID = UUID("00000000-0000-4000-8000-000000000001")
     dev_user_name: str = "Local developer"
     dev_auto_signin: bool = True
@@ -174,7 +178,12 @@ class Settings(BaseSettings):
         if self.payment_provider == "fake":
             problems.append("THREAD_PAYMENT_PROVIDER=fake is for development and tests only")
         if problems:
-            raise ValueError("Unsafe production settings: " + "; ".join(problems))
+            raise ValueError(
+                "Unsafe production settings: "
+                + "; ".join(problems)
+                + ". (THREAD_APP_ENV is production unless set; for local work, set "
+                "THREAD_APP_ENV=development in .env.)"
+            )
         return self
 
     @model_validator(mode="after")

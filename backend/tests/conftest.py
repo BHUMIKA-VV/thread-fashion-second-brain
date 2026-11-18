@@ -16,6 +16,9 @@ from typing import Any
 # This test process never loads the real image model at startup (set before the app imports;
 # affects only this process, not the user's environment).
 os.environ["THREAD_EMBEDDING_WARMUP"] = "false"
+# The settings default to production; tests run as development whether or not the repo has a
+# .env (CI has none). Tests that need another environment set it themselves.
+os.environ["THREAD_APP_ENV"] = "development"
 # Tests never see a real Anthropic key, even if one is in the repo .env (the environment
 # wins over .env), and never pick the local fake provider by accident.
 os.environ["THREAD_ANTHROPIC_API_KEY"] = ""

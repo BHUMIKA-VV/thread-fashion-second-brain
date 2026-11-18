@@ -1,5 +1,6 @@
 """Shared FastAPI dependencies."""
 
+import ipaddress
 from typing import Annotated
 from uuid import UUID
 
@@ -31,14 +32,32 @@ def get_auth_service(
     return AuthService(db, settings, mailer, storage)
 
 
+def from_this_machine(request: Request) -> bool:
+    """Whether the request's own connection comes from a loopback address.
+
+    The connection's peer, never X-Forwarded-For (anyone can send that header). Locally the
+    Next.js server reaches the API over loopback; a deployed site reaches it over a private
+    network, so a deployment never counts as this machine, whatever its settings say.
+    """
+    host = request.client.host if request.client else None
+    if not host:
+        return False
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    mapped = address.ipv4_mapped if isinstance(address, ipaddress.IPv6Address) else None
+    return (mapped or address).is_loopback
+
+
 def get_optional_user(
     request: Request,
     auth: Annotated[AuthService, Depends(get_auth_service)],
 ) -> Principal | None:
     """The signed-in user, or None.
 
-    In development (and only there) a request without a valid session acts as the local
-    development user, so working on Thread locally needs no sign-in. Set
+    In development (and only there), a request from this machine without a valid session
+    acts as the local development user, so working on Thread locally needs no sign-in. Set
     THREAD_DEV_AUTO_SIGNIN=false to try the real sign-in flow locally.
     """
     settings = auth.settings
@@ -47,7 +66,11 @@ def get_optional_user(
         principal = auth.principal_for_token(token)
         if principal is not None:
             return principal
-    if settings.app_env == "development" and settings.dev_auto_signin:
+    if (
+        settings.app_env == "development"
+        and settings.dev_auto_signin
+        and from_this_machine(request)
+    ):
         user = auth.db.get(User, settings.dev_user_id)
         if user is not None and user.disabled_at is None:
             # Locally you are the owner of your own archive, claimed or not.

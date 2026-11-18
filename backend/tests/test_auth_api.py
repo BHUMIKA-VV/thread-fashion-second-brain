@@ -487,11 +487,14 @@ def test_writes_from_another_site_are_refused(web: TestClient) -> None:
 # --- development auto sign-in, settings and IPs --------------------------------------------
 
 
-def _optional_user(db: Session, settings: Settings) -> object:
+LOCAL = ("127.0.0.1", 50000)
+
+
+def _optional_user(db: Session, settings: Settings, client: object = LOCAL) -> object:
     from starlette.requests import Request
 
-    request = Request({"type": "http", "headers": [], "method": "GET", "path": "/"})
-    return get_optional_user(request, AuthService(db, settings, LogMailer()))
+    scope = {"type": "http", "headers": [], "method": "GET", "path": "/", "client": client}
+    return get_optional_user(Request(scope), AuthService(db, settings, LogMailer()))
 
 
 def test_auto_sign_in_is_for_local_development_only(db: Session, settings: Settings) -> None:
@@ -499,13 +502,39 @@ def test_auto_sign_in_is_for_local_development_only(db: Session, settings: Setti
     db.flush()
 
     dev = settings.model_copy(update={"app_env": "development", "dev_auto_signin": True})
-    principal = _optional_user(db, dev)
-    assert principal is not None and principal.id == settings.dev_user_id  # type: ignore[attr-defined]
+    for here in (LOCAL, ("::1", 50000), ("::ffff:127.0.0.1", 50000)):
+        principal = _optional_user(db, dev, here)
+        assert principal is not None and principal.id == settings.dev_user_id  # type: ignore[attr-defined]
 
     off = dev.model_copy(update={"dev_auto_signin": False})
     assert _optional_user(db, off) is None
     for env in ("test", "production"):
         assert _optional_user(db, dev.model_copy(update={"app_env": env})) is None
+    # From anywhere but this machine (a deployed site's private network, another computer on
+    # the network, a test client, no client at all), development signs no one in.
+    for elsewhere in (("10.0.0.7", 1), ("fd12:3456::7", 1), ("192.168.1.20", 1), None):
+        assert _optional_user(db, dev, elsewhere) is None
+    assert _optional_user(db, dev, ("testclient", 50000)) is None
+
+
+def test_a_deployment_running_as_development_gives_no_one_owner_access(
+    web: TestClient, db: Session, settings: Settings
+) -> None:
+    """P0 (M15-0): a deployed API whose THREAD_APP_ENV says development must not make an
+    anonymous visitor the owner. Its requests arrive over a private network, not loopback."""
+    db.add(User(id=settings.dev_user_id, display_name="Local developer"))
+    db.flush()
+    dev = settings.model_copy(update={"app_env": "development", "dev_auto_signin": True})
+    app.dependency_overrides[get_settings] = lambda: dev
+
+    for peer in (("fd12:3456::7", 41000), ("10.0.0.7", 41000)):
+        visitor = TestClient(app, raise_server_exceptions=False, client=peer)
+        assert visitor.get("/admin/accounts").status_code == 401
+        assert visitor.get("/auth/me").status_code == 401
+        assert visitor.get("/admin/billing/summary").status_code == 401
+    # The same request from this machine is the local developer (what local work relies on).
+    local = TestClient(app, raise_server_exceptions=False, client=LOCAL)
+    assert local.get("/admin/accounts").status_code == 200
 
 
 def test_production_refuses_unsafe_account_settings() -> None:
@@ -562,8 +591,48 @@ def test_emails_and_their_links_stay_out_of_the_log(
 
 def test_the_dev_outbox_shows_local_emails(web: TestClient) -> None:
     sign_up(web, "ada@example.com")
-    mails = web.get("/dev/outbox", params={"to": "ADA@example.com"}).json()
+    local = TestClient(app, raise_server_exceptions=False, client=LOCAL)
+    mails = local.get("/dev/outbox", params={"to": "ADA@example.com"}).json()
     assert len(mails) == 1 and "verify-email" in mails[0]["text"]
+
+
+def test_the_dev_outbox_answers_only_this_machine(web: TestClient) -> None:
+    """The outbox holds verification and password-reset links: from anywhere else it is not
+    there, even in development."""
+    sign_up(web, "ada@example.com")
+    for peer in (("fd12:3456::7", 41000), ("10.0.0.7", 41000), ("testclient", 50000)):
+        visitor = TestClient(app, raise_server_exceptions=False, client=peer)
+        response = visitor.get("/dev/outbox", params={"to": "ada@example.com"})
+        assert response.status_code == 404
+        assert "verify-email" not in response.text
+
+
+def test_the_dev_outbox_is_mounted_in_development_only(monkeypatch: pytest.MonkeyPatch) -> None:
+    import app.main as main
+
+    base = {"_env_file": None, "database_url": "postgresql+psycopg://unused/db"}
+    for env in ("test", "development"):
+        local = Settings(**base, app_env=env, mail_provider="log")  # type: ignore[arg-type]
+        monkeypatch.setattr(main, "get_settings", lambda s=local: s)
+        paths = main.create_app().openapi()["paths"]
+        assert ("/dev/outbox" in paths) is (env == "development")
+
+
+def test_the_development_user_is_created_in_development_only(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from unittest.mock import MagicMock
+
+    import app.main as main
+
+    created: list[object] = []
+    monkeypatch.setattr(main, "ensure_user", lambda _db, user_id, _name: created.append(user_id))
+    monkeypatch.setattr(main, "get_session_factory", lambda: MagicMock())
+    for env in ("production", "test", "development"):
+        current = settings.model_copy(update={"app_env": env})
+        monkeypatch.setattr(main, "get_settings", lambda s=current: s)
+        main.ensure_dev_user()
+    assert created == [settings.dev_user_id]  # once: in development
 
 
 def test_the_dev_outbox_is_not_mounted_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
