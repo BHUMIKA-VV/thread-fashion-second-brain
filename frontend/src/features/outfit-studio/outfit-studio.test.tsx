@@ -244,7 +244,9 @@ describe("OutfitEditor", () => {
     );
     editorRoutes(outfit(placed(...twelve)));
     renderWithQuery(<OutfitEditor id="o1" />);
-    const add = await screen.findByRole("button", { name: "Add Silver jhumka" });
+    // Twelve placed pieces plus the archive list: ~0.8 s to render alone, so the default
+    // 1 s wait failed on a busy machine. A longer wait only; the checks are unchanged.
+    const add = await screen.findByRole("button", { name: "Add Silver jhumka" }, { timeout: 5_000 });
     expect(add).toHaveAttribute("aria-disabled", "true");
     fireEvent.click(add);
     expect(screen.queryByRole("button", { name: "Remove Silver jhumka" })).not.toBeInTheDocument();

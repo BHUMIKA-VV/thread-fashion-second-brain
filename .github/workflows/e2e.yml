@@ -1,0 +1,98 @@
+# End-to-end tests (Playwright, desktop and mobile) against the real stack: a production Next.js
+# build, the FastAPI app on a fresh database, and the real OpenCLIP model. Slower than CI, so it
+# runs on pushes to main and when started by hand (Actions > E2E > Run workflow), not on every
+# pull request. Nothing here deploys, and no secrets are used: the e2e API runs with the fake
+# deep analyzer, the fake payment provider and the local email outbox
+# (backend/scripts/e2e_server.py).
+#
+# Third-party actions are pinned to full commit SHAs (the tag is in the comment).
+name: E2E
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playwright:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          # A throwaway database for this run only; not a secret.
+          POSTGRES_USER: thread
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+          POSTGRES_DB: thread_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U thread -d thread_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      # The e2e API creates its own thread_e2e database next to thread_test.
+      THREAD_TEST_DATABASE_URL: postgresql+psycopg://thread:ci-only-not-a-secret@127.0.0.1:5432/thread_test
+      THREAD_DATABASE_URL: postgresql+psycopg://thread:ci-only-not-a-secret@127.0.0.1:5432/thread_test
+      NEXT_TELEMETRY_DISABLED: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          # The same Node as frontend/Dockerfile.
+          node-version: 24.22.3
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install backend dependencies
+        # playwright.config.ts starts the API with backend/.venv/bin/python. PyTorch comes from
+        # its CPU-only index, as in backend/Dockerfile.
+        working-directory: backend
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.1 torchvision==0.29.1
+          .venv/bin/pip install -r requirements.txt
+
+      - name: Cache the OpenCLIP weights
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/models
+          key: openclip-${{ hashFiles('backend/app/ml/model_spec.py') }}
+      - name: Fetch the OpenCLIP weights
+        # Downloads only when the cache missed, and always checks the pinned SHA-256.
+        # THREAD_APP_ENV=test for this step only: settings default to production.
+        working-directory: backend
+        run: THREAD_APP_ENV=test .venv/bin/python -m scripts.fetch_model
+
+      - name: Install frontend dependencies and Chromium
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Playwright
+        working-directory: frontend
+        run: npm run test:e2e
+
+      - name: Keep traces of failed tests
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-traces
+          path: frontend/test-results/
+          retention-days: 7

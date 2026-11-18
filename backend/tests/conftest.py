@@ -11,7 +11,7 @@ import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 
 # This test process never loads the real image model at startup (set before the app imports;
 # affects only this process, not the user's environment).
@@ -102,17 +102,29 @@ def client() -> Iterator[TestClient]:
     app.dependency_overrides.clear()
 
 
+def database_unavailable(reason: str) -> NoReturn:
+    """Skip a database test, or fail it where the database is required (CI).
+
+    Locally, database tests skip when Postgres isn't running. CI sets
+    THREAD_REQUIRE_TEST_DB=1 so that a missing database fails the run instead of
+    letting hundreds of tests skip quietly behind a green result.
+    """
+    if os.environ.get("THREAD_REQUIRE_TEST_DB") == "1":
+        pytest.fail(f"{reason} (THREAD_REQUIRE_TEST_DB=1: the test database is required)")
+    pytest.skip(reason)
+
+
 @pytest.fixture(scope="session")
 def maintenance_url() -> str:
     url = get_settings().test_database_url
     if not url:
-        pytest.skip("THREAD_TEST_DATABASE_URL is not set")
+        database_unavailable("THREAD_TEST_DATABASE_URL is not set")
     engine = create_engine(url, connect_args={"connect_timeout": 3})
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
     except OperationalError:
-        pytest.skip("Test database is not reachable; run `docker compose up -d` first")
+        database_unavailable("Test database is not reachable; run `docker compose up -d` first")
     finally:
         engine.dispose()
     return url

@@ -975,7 +975,27 @@ Run Ruff on migrations too: `.venv/Scripts/ruff check . ../database/migrations`.
 Database tests (`-m db`) never touch the development database. They connect to `thread_test` only
 to create **disposable databases with random names**, migrate them with the real Alembic
 migrations, and drop them afterwards. Each test runs inside a transaction that is rolled back.
-They are skipped with a clear reason if Postgres is not reachable.
+They are skipped with a clear reason if Postgres is not reachable; with
+`THREAD_REQUIRE_TEST_DB=1` (set in CI) they fail instead, so a missing database can't hide
+behind a green run.
+
+### Continuous integration
+
+GitHub Actions runs two workflows. Neither deploys anything or uses secrets: tests run with
+payments, email and Claude off.
+
+- **CI** (`.github/workflows/ci.yml`), on every push to `main` and every pull request:
+  - backend: Ruff (lint and format), then pytest against a throwaway pgvector Postgres
+    service. Tests marked `ml` skip, since CI doesn't download the model;
+  - frontend: ESLint, type check, Vitest, a production build, and
+    `npm audit --omit=dev --audit-level=high`.
+- **E2E** (`.github/workflows/e2e.yml`), on pushes to `main` and by hand from the Actions tab:
+  the Playwright suite (desktop and mobile), with the real OpenCLIP weights (cached between
+  runs, SHA-256 checked). When a test fails, its traces are kept for 7 days as the
+  `playwright-traces` artifact.
+
+Actions are pinned to full commit SHAs. CI uses Python 3.11 and the same Node as
+`frontend/Dockerfile`; the commands above are the ones it runs.
 
 ## Troubleshooting
 
