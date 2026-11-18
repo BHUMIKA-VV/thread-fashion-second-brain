@@ -38,6 +38,9 @@ jobs:
           --health-cmd "pg_isready -U thread -d thread_test"
           --health-interval 5s --health-timeout 5s --health-retries 20
     env:
+      # A test run, said explicitly: settings default to production when THREAD_APP_ENV is
+      # unset (CI has no .env), and the e2e server refuses to start in production.
+      THREAD_APP_ENV: test
       # The e2e API creates its own thread_e2e database next to thread_test.
       THREAD_TEST_DATABASE_URL: postgresql+psycopg://thread:ci-only-not-a-secret@127.0.0.1:5432/thread_test
       THREAD_DATABASE_URL: postgresql+psycopg://thread:ci-only-not-a-secret@127.0.0.1:5432/thread_test
@@ -75,9 +78,8 @@ jobs:
           key: openclip-${{ hashFiles('backend/app/ml/model_spec.py') }}
       - name: Fetch the OpenCLIP weights
         # Downloads only when the cache missed, and always checks the pinned SHA-256.
-        # THREAD_APP_ENV=test for this step only: settings default to production.
         working-directory: backend
-        run: THREAD_APP_ENV=test .venv/bin/python -m scripts.fetch_model
+        run: .venv/bin/python -m scripts.fetch_model
 
       - name: Install frontend dependencies and Chromium
         working-directory: frontend
